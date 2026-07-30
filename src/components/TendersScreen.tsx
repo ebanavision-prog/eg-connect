@@ -6,50 +6,17 @@ import {
   ExternalLink, FileText, Zap, Globe
 } from 'lucide-react';
 import { LocalContentOpportunity } from '../types';
-
-const MOCK_TENDERS: LocalContentOpportunity[] = [
-  {
-    id: 't1',
-    title: 'Modernización del Puerto de Bata - Fase II',
-    companyName: 'Ministerio de Obras Públicas',
-    companyLogo: 'https://logo.clearbit.com/ge.gov',
-    description: 'Buscamos proveedores locales para servicios de dragado y mantenimiento de infraestructura portuaria.',
-    budget: '500.000.000 FCFA',
-    deadline: '2026-06-15',
-    location: 'Bata, Litoral',
-    category: 'Construcción',
-    requirements: ['Certificación del Ministerio', 'Mano de obra 100% local', 'Experiencia previa en puertos']
-  },
-  {
-    id: 't2',
-    title: 'Transformación Digital Bancaria (BANGE)',
-    companyName: 'BANGE S.A.',
-    companyLogo: 'https://logo.clearbit.com/bange.ge',
-    description: 'Implementación de nuevos protocolos de ciberseguridad y plataforma de banca móvil de última generación.',
-    budget: '250.000.000 FCFA',
-    deadline: '2026-05-30',
-    location: 'Malabo II, Bioko Norte',
-    category: 'IT',
-    requirements: ['Estándares ISO 27001', 'Representación en Malabo', 'Software Open Source preferido']
-  },
-  {
-    id: 't3',
-    title: 'Instalación de Paneles Solares en Centros de Salud',
-    companyName: 'Ministerio de Sanidad / PNUD',
-    companyLogo: 'https://logo.clearbit.com/un.org',
-    description: 'Suministro e instalación de sistemas fotovoltaicos independientes para clínicas rurales en Annobón y Wele-Nzas.',
-    deadline: '2026-07-10',
-    location: 'Multiregional',
-    category: 'Energía',
-    requirements: ['Técnicos certificados', 'Mantenimiento por 2 años', 'Piezas de repuesto locales']
-  }
-];
+import { auth } from '../services/firebaseService';
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 export default function TendersScreen() {
   const [filter, setFilter] = useState<'all' | 'it' | 'const' | 'energy'>('all');
   const [search, setSearch] = useState('');
 
-  const filtered = MOCK_TENDERS.filter(t => {
+  const currentUid = auth.currentUser?.uid;
+  const { data: tenders, loading } = useFirestoreCollection<LocalContentOpportunity>(currentUid ? 'tenders' : null);
+
+  const filtered = tenders.filter(t => {
     const matchesFilter = filter === 'all' || 
                          (filter === 'it' && t.category === 'IT') ||
                          (filter === 'const' && t.category === 'Construcción') ||

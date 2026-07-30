@@ -80,5 +80,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
     }
+
+    // Licitaciones: contenido curado, no lo publica cualquier usuario todavía
+    // (eso requiere roles de administrador, ver plan de Backlog). Por ahora
+    // solo lectura; se añaden documentos manualmente desde la consola de
+    // Firebase hasta que exista un panel de admin.
+    match /tenders/{tenderId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
   }
 }
