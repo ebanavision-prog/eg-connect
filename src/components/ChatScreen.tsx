@@ -64,6 +64,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     };
   };
 
+  const [sendError, setSendError] = useState('');
+
   const startRecording = () => {
     setIsRecording(true);
     setRecordingTime(0);
@@ -74,14 +76,19 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     if (timerRef.current) clearInterval(timerRef.current);
     setIsRecording(false);
     if (recordingTime > 0 && activeConversationId && currentUid) {
-      sendMessage(activeConversationId, currentUid, { type: 'audio', audioUrl: '#', audioDuration: recordingTime });
+      sendMessage(activeConversationId, currentUid, { type: 'audio', audioUrl: '#', audioDuration: recordingTime })
+        .catch(() => setSendError('No se pudo enviar el audio.'));
     }
   };
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !activeConversationId || !currentUid) return;
-    sendMessage(activeConversationId, currentUid, { type: 'text', text: newMessage });
+    const text = newMessage;
     setNewMessage('');
+    sendMessage(activeConversationId, currentUid, { type: 'text', text }).catch(() => {
+      setSendError('No se pudo enviar el mensaje. Revisa tu conexión.');
+      setNewMessage(text);
+    });
   };
 
   const handleCreateGroup = async () => {
@@ -167,6 +174,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
         </div>
 
         <div className="p-4 border-t border-outline/10 bg-white shadow-lg">
+          {sendError && <p className="text-[10px] font-bold text-error mb-2 text-center">{sendError}</p>}
           <div className="flex items-center gap-3">
             <div className="flex gap-1">
               <button className="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">

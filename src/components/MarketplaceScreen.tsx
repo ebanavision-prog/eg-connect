@@ -18,6 +18,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState('');
   const [showShareSuccess, setShowShareSuccess] = useState<string | null>(null);
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -105,6 +106,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
   const handlePublish = async () => {
     if (!currentUid) return;
     setIsPublishing(true);
+    setPublishError('');
     try {
       await createMarketplacePost(currentUid, {
         ...newPost,
@@ -117,6 +119,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       });
       setIsModalOpen(false);
       setNewPost({ title: '', description: '', category: 'Consultoría', type: 'offer', location: 'Malabo', price: '' });
+    } catch (error) {
+      setPublishError('No se pudo publicar el anuncio. Inténtalo de nuevo.');
     } finally {
       setIsPublishing(false);
     }
@@ -643,7 +647,9 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                   </div>
                 </div>
 
-                <button 
+                {publishError && <p className="text-xs font-bold text-error text-center">{publishError}</p>}
+
+                <button
                   disabled={!newPost.title || !newPost.description || isPublishing}
                   onClick={handlePublish}
                   className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all flex items-center justify-center gap-3"

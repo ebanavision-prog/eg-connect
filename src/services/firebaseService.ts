@@ -12,7 +12,9 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import {
-  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc,
   getDoc,
   setDoc,
@@ -33,7 +35,15 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'fire
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Persistencia offline real de Firestore (lee/escribe desde caché local y
+// sincroniza solo al reconectar) en vez de la cola de sincronización simulada
+// que había antes en localDataService — esa nunca hablaba con un backend real.
+export const db = initializeFirestore(
+  app,
+  { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) },
+  firebaseConfig.firestoreDatabaseId
+);
 export const auth = getAuth();
 export const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();

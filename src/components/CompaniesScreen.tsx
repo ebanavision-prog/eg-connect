@@ -12,6 +12,7 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [registrationStep, setRegistrationStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const currentUid = auth.currentUser?.uid;
   const { data: companies, loading } = useFirestoreCollection<Company & { ownerId?: string }>(currentUid ? 'companies' : null);
@@ -75,6 +76,7 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
   const handleSubmit = async () => {
     if (!currentUid) return;
     setIsSubmitting(true);
+    setSubmitError('');
     try {
       await createCompany(currentUid, {
         ...formData,
@@ -91,6 +93,8 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
         leadership: [], certifications: [],
         social: { linkedin: '', instagram: '', twitter: '', facebook: '', website: '' }
       });
+    } catch (error) {
+      setSubmitError('No se pudo registrar la empresa. Inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -365,8 +369,8 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
                             type="url" 
                             className="input-field-custom"
                             placeholder="https://..."
-                            value={formData.website || ''}
-                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                            value={formData.social.website}
+                            onChange={(e) => setFormData({ ...formData, social: { ...formData.social, website: e.target.value } })}
                           />
                         </div>
                       </div>
@@ -672,6 +676,8 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
                     </motion.div>
                   )}
                 </div>
+
+                {submitError && <p className="text-xs font-bold text-error text-center mt-6">{submitError}</p>}
 
                 <div className="mt-12 flex gap-4">
                   {registrationStep > 1 && (

@@ -1,5 +1,5 @@
 import React, { useState, FC } from 'react';
-import { MapPin, MessageSquare, Send, User, Sparkles, Share2, Copy, Globe, Heart, Zap, Loader2 } from 'lucide-react';
+import { MapPin, MessageSquare, Send, User, Sparkles, Share2, Copy, Heart, Zap, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Contact } from '../types';
 import { localDataService } from '../services/localDataService';
@@ -190,13 +190,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
           <MapPin className="w-3 h-3 text-secondary" />
           <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">{contact.location}</span>
         </div>
-        {contact.website && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-full">
-            <Globe className="w-3 h-3 text-primary" />
-            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Sitio Web</span>
-          </div>
-        )}
-        <button 
+        <button
           onClick={handleShare}
           disabled={isSharing}
           className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-all active:scale-95 disabled:opacity-50"

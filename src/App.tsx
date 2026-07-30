@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff, RefreshCcw, Share2 } from 'lucide-react';
@@ -38,24 +38,28 @@ import {
 
 import { Screen } from './types';
 import HomeScreen from './components/HomeScreen';
-import TimelineScreen from './components/TimelineScreen';
-import ScanScreen from './components/ScanScreen';
-import MapScreen from './components/MapScreen';
-import ProfileScreen from './components/ProfileScreen';
-import DiscoverScreen from './components/DiscoverScreen';
-import InviteScreen from './components/InviteScreen';
-import SummaryScreen from './components/SummaryScreen';
-import TasksScreen from './components/TasksScreen';
 import OnboardingScreen from './components/OnboardingScreen';
-import SyncSettingsScreen from './components/SyncSettingsScreen';
-import EventsScreen from './components/EventsScreen';
-import MarketplaceScreen from './components/MarketplaceScreen';
-import CompaniesScreen from './components/CompaniesScreen';
-import LocalContentScreen from './components/LocalContentScreen';
-import ChatScreen from './components/ChatScreen';
-import FeedbackScreen from './components/FeedbackScreen';
-import TendersScreen from './components/TendersScreen';
-import CRMScreen from './components/CRMScreen';
+
+// El resto de pantallas se carga bajo demanda: Home es lo único que hace
+// falta de inmediato en la primera carga, todo lo demás baja el bundle
+// inicial en vez de venir todo junto (ver aviso de tamaño en `npm run build`).
+const TimelineScreen = lazy(() => import('./components/TimelineScreen'));
+const ScanScreen = lazy(() => import('./components/ScanScreen'));
+const MapScreen = lazy(() => import('./components/MapScreen'));
+const ProfileScreen = lazy(() => import('./components/ProfileScreen'));
+const DiscoverScreen = lazy(() => import('./components/DiscoverScreen'));
+const InviteScreen = lazy(() => import('./components/InviteScreen'));
+const SummaryScreen = lazy(() => import('./components/SummaryScreen'));
+const TasksScreen = lazy(() => import('./components/TasksScreen'));
+const SyncSettingsScreen = lazy(() => import('./components/SyncSettingsScreen'));
+const EventsScreen = lazy(() => import('./components/EventsScreen'));
+const MarketplaceScreen = lazy(() => import('./components/MarketplaceScreen'));
+const CompaniesScreen = lazy(() => import('./components/CompaniesScreen'));
+const LocalContentScreen = lazy(() => import('./components/LocalContentScreen'));
+const ChatScreen = lazy(() => import('./components/ChatScreen'));
+const FeedbackScreen = lazy(() => import('./components/FeedbackScreen'));
+const TendersScreen = lazy(() => import('./components/TendersScreen'));
+const CRMScreen = lazy(() => import('./components/CRMScreen'));
 
 import NotificationCenter from './components/NotificationCenter';
 import NetworkBackground from './components/NetworkBackground';
@@ -93,21 +97,30 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
-      if (user) {
-        const data = await getUserData(user.uid);
-        if (data) {
-          setProfileData(data);
-          setOnboarded(true);
-          // Sync with local service for backward compatibility if needed
-          localDataService.saveUserProfile(data as any);
+      try {
+        if (user) {
+          const data = await getUserData(user.uid);
+          if (data) {
+            setProfileData(data);
+            setOnboarded(true);
+            // Sync with local service for backward compatibility if needed
+            localDataService.saveUserProfile(data as any);
+          } else {
+            setOnboarded(false);
+          }
         } else {
+          setProfileData(null);
           setOnboarded(false);
         }
-      } else {
-        setProfileData(null);
+      } catch (error) {
+        // Sin esto, un fallo de red/Firestore aquí dejaba la app atascada
+        // para siempre en la pantalla de "Cargando..." — nunca se llegaba a
+        // setLoading(false).
+        console.error('Error cargando el perfil:', error);
         setOnboarded(false);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -620,7 +633,9 @@ export default function App() {
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            {renderScreen()}
+            <Suspense fallback={<div className="flex justify-center py-24"><div className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin" /></div>}>
+              {renderScreen()}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

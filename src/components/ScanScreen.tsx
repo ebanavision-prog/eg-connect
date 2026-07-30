@@ -7,24 +7,31 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedResult, setScannedResult] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleSaveContact = async () => {
     const uid = auth.currentUser?.uid;
     if (!uid || !scannedResult) return;
     setIsSaving(true);
-    await addContact(uid, {
-      name: scannedResult.name || 'Sin nombre',
-      role: scannedResult.role || '',
-      company: scannedResult.company || '',
-      location: scannedResult.location || '',
-      tags: scannedResult.tags || [],
-      note: scannedResult.note || '',
-      avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop',
-      lastMet: 'Hoy'
-    });
-    setIsSaving(false);
-    setScannedResult(null);
-    onBack();
+    setSaveError('');
+    try {
+      await addContact(uid, {
+        name: scannedResult.name || 'Sin nombre',
+        role: scannedResult.role || '',
+        company: scannedResult.company || '',
+        location: scannedResult.location || '',
+        tags: scannedResult.tags || [],
+        note: scannedResult.note || '',
+        avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop',
+        lastMet: 'Hoy'
+      });
+      setScannedResult(null);
+      onBack();
+    } catch (error) {
+      setSaveError('No se pudo guardar el contacto. Inténtalo de nuevo.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,6 +100,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
                 {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {isSaving ? 'Guardando...' : 'Guardar Contacto'}
               </button>
+              {saveError && <p className="text-[10px] font-bold text-error mt-3">{saveError}</p>}
             </div>
           ) : (
             <>
