@@ -1,0 +1,11 @@
+# Sirve index.html para cualquier ruta que no sea un archivo real, para que las
+# URLs de React Router (p. ej. /marketplace) funcionen al cargar directamente,
+# no solo al navegar dentro de la app. Necesario en el hosting actual (Apache/
+# cPanel); Firebase Hosting hace esto mismo vía el "rewrite" en firebase.json.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>

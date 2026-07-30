@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff, RefreshCcw, Share2 } from 'lucide-react';
 import { localDataService } from './services/localDataService';
@@ -64,7 +65,14 @@ import { AppNotification } from './types';
 import { notificationService } from './services/notificationService';
 
 export default function App() {
-  const [activeScreen, setActiveScreen] = useState<Screen>('home');
+  // La pantalla activa vive en la URL (React Router) en vez de en un useState —
+  // esto le da a cada pantalla su propia dirección: enlaces compartibles y el
+  // botón "atrás" del navegador funcionan de verdad. El resto del componente
+  // no cambia: sigue leyendo/comparando `activeScreen` igual que antes.
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeScreen = (location.pathname === '/' ? 'home' : location.pathname.slice(1)) as Screen;
+  const setActiveScreen = (screen: Screen) => navigate(screen === 'home' ? '/' : `/${screen}`);
   const [onboarded, setOnboarded] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [profileData, setProfileData] = useState<any>(null);

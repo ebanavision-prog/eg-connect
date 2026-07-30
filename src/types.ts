@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'local-content' | 'chat' | 'tenders' | 'crm';
+export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'local-content' | 'chat' | 'tenders' | 'crm';
 
 export interface LocalContentOpportunity {
   id: string;
