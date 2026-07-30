@@ -1,0 +1,6 @@
+{
+  "name": "EG CONNECT",
+  "description": "Una plataforma premium de networking, emprendimiento y responsabilidad para Guinea Ecuatorial. Conecta, sincroniza y crece con inteligencia artificial y capacidades offline-first.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["Inteligencia Artificial", "Networking Profesional", "Sincronización Offline"]
+}

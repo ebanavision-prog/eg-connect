@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'profileType']) &&
+             data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.profileType in ['individual', 'company'];
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      // The directory/home screens list all members for signed-in users; the
+      // client already hides profiles with privacyMode == 'private'.
+      allow list: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                      'name', 'phone', 'birthday', 'profession', 'role', 'city', 'avatar',
+                      'profileType', 'updatedAt', 'employees', 'yearsInMarket', 'website', 'privacyMode'
+                    ]));
+    }
+
+    // Contacts
+    match /users/{userId}/contacts/{contactId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Conversations and messages
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      allow create: if isSignedIn() && (request.auth.uid in request.resource.data.participants);
+      allow update: if isSignedIn() && (request.auth.uid in resource.data.participants) &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt']);
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants);
+        allow create: if isSignedIn() &&
+                      (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants) &&
+                      request.resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Companies directory
+    match /companies/{companyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid &&
+                    !('isVerified' in request.resource.data.diff(resource.data).affectedKeys()) &&
+                    !('verificationStatus' in request.resource.data.diff(resource.data).affectedKeys());
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Marketplace posts
+    match /marketplace_posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+    }
+  }
+}
