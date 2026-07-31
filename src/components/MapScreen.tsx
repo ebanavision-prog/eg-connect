@@ -93,7 +93,7 @@ export default function MapScreen() {
       {/* Map Pins */}
       <div 
         className="absolute top-[40%] left-[30%] z-10"
-        onClick={() => handlePinClick('Bernardino Edu', 'Especialista IT', 'Ebana Vision')}
+        onClick={() => handlePinClick('Bernardino Edu', 'Especialista IT', 'Consultora Malabo')}
       >
         <div className="relative group cursor-pointer">
           <div className="absolute -inset-4 bg-primary/20 rounded-full animate-ping" />

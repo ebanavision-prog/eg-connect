@@ -247,7 +247,7 @@ export default function CRMScreen() {
 
       <footer className="pt-8 text-center px-6">
         <p className="text-[9px] font-bold text-outline uppercase tracking-[0.2em] leading-relaxed">
-          Los datos del CRM se almacenan localmente y son totalmente privados de tu cuenta Ebana Vision.
+          Los datos del CRM se almacenan localmente y son totalmente privados de tu cuenta de EG Connect.
         </p>
       </footer>
     </div>

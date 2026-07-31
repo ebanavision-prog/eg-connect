@@ -56,7 +56,7 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a Ebana Vision CONNECT',
+          title: 'Únete a EG Connect',
           text: 'Estoy conectando con profesionales en Guinea Ecuatorial. ¡Únete tú también!',
           url: window.location.origin,
         });
@@ -323,7 +323,7 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
               </div>
               <span className="text-[10px] font-bold uppercase tracking-tighter">EG CONNECT V1.1</span>
             </div>
-            <span className="text-[8px] font-black text-white/50 uppercase">Ebana Vision Insight</span>
+            <span className="text-[8px] font-black text-white/50 uppercase">EG Connect Insight</span>
           </div>
         </div>
       </div>

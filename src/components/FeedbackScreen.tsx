@@ -138,8 +138,7 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
 
         <div className="text-center p-6 bg-surface-container-low/50 rounded-[2rem] border border-outline/5">
           <p className="text-[9px] font-bold text-on-surface-variant/60 uppercase tracking-[0.2em] leading-relaxed">
-            EG CONNECT - Versión 1.0<br/>
-            Desarrollado por Grupo Ebana Vision
+            EG CONNECT - Versión 1.0
           </p>
         </div>
       </div>

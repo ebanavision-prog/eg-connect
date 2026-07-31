@@ -32,7 +32,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a Ebana Vision CONNECT',
+          title: 'Únete a EG Connect',
           text: 'Estoy conectando con profesionales en Guinea Ecuatorial. ¡Únete tú también!',
           url: window.location.origin,
         });
@@ -98,7 +98,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
           <div className="space-y-2">
             <p className="text-lg font-black text-primary">¡Haz Crecer el Ecosistema!</p>
             <p className="text-sm font-medium text-on-surface-variant px-12 opacity-60">
-              No encontramos a nadie con ese filtro. Invita a tus socios para que Ebana Vision siga creciendo.
+              No encontramos a nadie con ese filtro. Invita a tus socios para que EG Connect siga creciendo.
             </p>
           </div>
           <button 

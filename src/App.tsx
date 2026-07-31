@@ -33,7 +33,9 @@ import {
   MessageSquare,
   Home,
   Heart,
-  Users
+  Users,
+  Handshake,
+  Rocket
 } from 'lucide-react';
 
 import { Screen } from './types';
@@ -60,6 +62,8 @@ const ChatScreen = lazy(() => import('./components/ChatScreen'));
 const FeedbackScreen = lazy(() => import('./components/FeedbackScreen'));
 const TendersScreen = lazy(() => import('./components/TendersScreen'));
 const CRMScreen = lazy(() => import('./components/CRMScreen'));
+const InvestorsScreen = lazy(() => import('./components/InvestorsScreen'));
+const InitiativesScreen = lazy(() => import('./components/InitiativesScreen'));
 
 import NotificationCenter from './components/NotificationCenter';
 import NetworkBackground from './components/NetworkBackground';
@@ -248,6 +252,8 @@ export default function App() {
       case 'feedback': return <FeedbackScreen onBack={() => setActiveScreen('home')} />;
       case 'tenders': return <TendersScreen />;
       case 'crm': return <CRMScreen />;
+      case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} />;
+      case 'initiatives': return <InitiativesScreen profileData={profileData} />;
       default: return <HomeScreen 
         onNavigate={handleNavClick} 
         onSearch={handleGlobalSearch} 
@@ -399,7 +405,21 @@ export default function App() {
                   <Building2 className="w-5 h-5 text-secondary" />
                   <span className="font-bold">Empresas (Ecosistema)</span>
                 </button>
-                <button 
+                <button
+                  onClick={() => handleNavClick('investors')}
+                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'investors' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
+                >
+                  <Handshake className="w-5 h-5 text-secondary" />
+                  <span className="font-bold">Inversionistas</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('initiatives')}
+                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'initiatives' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
+                >
+                  <Rocket className="w-5 h-5 text-secondary" />
+                  <span className="font-bold">Iniciativas y Proyectos</span>
+                </button>
+                <button
                   onClick={() => handleNavClick('local-content')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'local-content' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
@@ -495,9 +515,6 @@ export default function App() {
                 <div className="mt-6 text-center space-y-1">
                   <p className="text-[10px] text-on-surface-variant font-bold opacity-40 uppercase tracking-widest">
                     V1.0 • Guinea Ecuatorial
-                  </p>
-                  <p className="text-[8px] text-primary font-bold opacity-30 uppercase tracking-[0.2em]">
-                    Desarrollado por Grupo Ebana Vision
                   </p>
                 </div>
               </div>

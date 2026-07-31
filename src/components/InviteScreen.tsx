@@ -11,19 +11,19 @@ export default function InviteScreen() {
     {
       id: 'curiosity',
       title: 'Generar Curiosidad',
-      text: '¿Ya estás en Ebana Vision? He visto que los mejores profesionales de G.E. se están conectando ahí para nuevos proyectos. Te dejo mi link de acceso:',
+      text: '¿Ya estás en EG Connect? He visto que los mejores profesionales de G.E. se están conectando ahí para nuevos proyectos. Te dejo mi link de acceso:',
       icon: Sparkles
     },
     {
       id: 'professional',
       title: 'Enfoque Profesional',
-      text: 'Hola, estoy expandiendo mi red profesional en la nueva plataforma Ebana Vision CONNECT. Es el sitio ideal para networking en Guinea Ecuatorial. Únete aquí:',
+      text: 'Hola, estoy expandiendo mi red profesional en la nueva plataforma EG Connect. Es el sitio ideal para networking en Guinea Ecuatorial. Únete aquí:',
       icon: Linkedin
     },
     {
       id: 'collaborative',
       title: 'Colaboración',
-      text: 'Gente como nosotros, haciendo cosas como estas. Me gustaría tenerte en mi red de Ebana Vision para futuras sinergias:',
+      text: 'Gente como nosotros, haciendo cosas como estas. Me gustaría tenerte en mi red de EG Connect para futuras sinergias:',
       icon: Users
     }
   ];
@@ -47,7 +47,7 @@ export default function InviteScreen() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a Ebana Vision CONNECT',
+          title: 'Únete a EG Connect',
           text: fullText,
           url: inviteLink,
         });
