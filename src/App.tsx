@@ -29,7 +29,6 @@ import {
   ShoppingBag,
   Briefcase,
   Building2,
-  ShieldCheck,
   MessageSquare,
   Home,
   Heart,
@@ -57,7 +56,6 @@ const SyncSettingsScreen = lazy(() => import('./components/SyncSettingsScreen'))
 const EventsScreen = lazy(() => import('./components/EventsScreen'));
 const MarketplaceScreen = lazy(() => import('./components/MarketplaceScreen'));
 const CompaniesScreen = lazy(() => import('./components/CompaniesScreen'));
-const LocalContentScreen = lazy(() => import('./components/LocalContentScreen'));
 const ChatScreen = lazy(() => import('./components/ChatScreen'));
 const FeedbackScreen = lazy(() => import('./components/FeedbackScreen'));
 const TendersScreen = lazy(() => import('./components/TendersScreen'));
@@ -246,7 +244,6 @@ export default function App() {
         profileData={profileData}
       />;
       case 'companies': return <CompaniesScreen onChat={(p) => p ? startChat(p) : setActiveScreen('chat')} />;
-      case 'local-content': return <LocalContentScreen />;
       case 'chat': return <ChatScreen initialParticipant={chatParticipant} users={realUsers} />;
       case 'sync-settings': return <SyncSettingsScreen onBack={() => setActiveScreen('profile')} />;
       case 'feedback': return <FeedbackScreen onBack={() => setActiveScreen('home')} />;
@@ -420,13 +417,6 @@ export default function App() {
                   <span className="font-bold">Iniciativas y Proyectos</span>
                 </button>
                 <button
-                  onClick={() => handleNavClick('local-content')}
-                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'local-content' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
-                >
-                  <ShieldCheck className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Contenido Local</span>
-                </button>
-                <button 
                   onClick={() => handleNavClick('chat')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'chat' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
