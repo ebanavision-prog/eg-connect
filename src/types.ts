@@ -84,9 +84,9 @@ export interface Task {
   id: string;
   title: string;
   priority: 'high' | 'medium' | 'low';
-  source: string;
-  timeAgo: string;
+  note?: string;
   completed: boolean;
+  createdAt: Timestamp | null;
 }
 
 export interface Group {

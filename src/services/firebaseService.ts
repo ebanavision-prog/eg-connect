@@ -21,6 +21,7 @@ import {
   setDoc,
   updateDoc,
   addDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -256,6 +257,38 @@ export const addContact = async (ownerId: string, contact: Record<string, unknow
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+// Tareas personales: subcolección privada del propio usuario.
+export const createTask = async (ownerId: string, data: Record<string, unknown>) => {
+  const path = `users/${ownerId}/tasks`;
+  try {
+    await addDoc(collection(db, path), {
+      ...data,
+      completed: false,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const toggleTaskCompletion = async (ownerId: string, taskId: string, completed: boolean) => {
+  const path = `users/${ownerId}/tasks/${taskId}`;
+  try {
+    await updateDoc(doc(db, path), { completed });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const deleteTask = async (ownerId: string, taskId: string) => {
+  const path = `users/${ownerId}/tasks/${taskId}`;
+  try {
+    await deleteDoc(doc(db, path));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 };
 
