@@ -1,6 +1,30 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'local-content' | 'chat' | 'tenders' | 'crm';
+export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'local-content' | 'chat' | 'tenders' | 'crm' | 'investors' | 'initiatives';
+
+export interface InvestorProfile {
+  uid: string;
+  name: string;
+  avatar: string;
+  role?: string;
+  city?: string;
+  sectors: string[];
+  ticketRange: string;
+  stagePreference: string;
+  bio?: string;
+}
+
+export interface Initiative {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string;
+  members: string[];
+  createdAt: Timestamp | null;
+}
 
 export interface LocalContentOpportunity {
   id: string;

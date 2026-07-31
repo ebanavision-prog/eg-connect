@@ -13,5 +13,13 @@
   ],
   "storage": {
     "rules": "storage.rules"
+  },
+  "emulators": {
+    "firestore": { "port": 8181 },
+    "auth": { "port": 9198 },
+    "storage": { "port": 9197 },
+    "ui": { "enabled": true, "port": 4101 },
+    "hub": { "port": 4501 },
+    "singleProjectMode": true
   }
 }

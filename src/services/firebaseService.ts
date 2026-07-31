@@ -14,7 +14,8 @@ import {
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
+  connectFirestoreEmulator,
   doc,
   getDoc,
   setDoc,
@@ -29,9 +30,12 @@ import {
   Timestamp,
   serverTimestamp,
   orderBy,
-  limit
+  limit,
+  arrayUnion,
+  arrayRemove
 } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, connectStorageEmulator } from 'firebase/storage';
+import { connectAuthEmulator } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const app = initializeApp(firebaseConfig);
@@ -39,13 +43,35 @@ export const app = initializeApp(firebaseConfig);
 // Persistencia offline real de Firestore (lee/escribe desde caché local y
 // sincroniza solo al reconectar) en vez de la cola de sincronización simulada
 // que había antes en localDataService — esa nunca hablaba con un backend real.
+//
+// Single-tab a propósito (2026-07-30), no multi-tab: `persistentMultipleTabManager`
+// usa por debajo un protocolo de "elección de pestaña líder" sobre IndexedDB que es
+// una causa real y documentada de cuelgues/clics que dejan de responder en apps de
+// Firebase — coincide con un problema que el usuario confirma haber visto ya en
+// producción. Contra el emulador local esto queda enmascarado por un bug propio y
+// ya identificado del SDK (ver github.com/firebase/firebase-js-sdk/issues/9267,
+// confirmado por su reportero como exclusivo del emulador), así que no se pudo
+// verificar este cambio de forma 100% limpia en local — pero el razonamiento aplica
+// igual a producción, y el coste de perder sincronización entre pestañas simultáneas
+// del mismo usuario es bajo en una app mobile-first.
 export const db = initializeFirestore(
   app,
-  { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) },
+  { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({}) }) },
   firebaseConfig.firestoreDatabaseId
 );
 export const auth = getAuth();
 export const storage = getStorage(app);
+
+// Pruebas locales contra el emulador (Firestore+Auth+Storage), nunca contra datos
+// reales. Storage funciona en el emulador aunque el proyecto real siga sin activarlo
+// (eso solo bloquea producción, ver Fase 0 del plan). Activar con VITE_USE_FIREBASE_EMULATOR=true.
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+  connectFirestoreEmulator(db, '127.0.0.1', 8181);
+  connectAuthEmulator(auth, 'http://127.0.0.1:9198', { disableWarnings: true });
+  connectStorageEmulator(storage, '127.0.0.1', 9197);
+  console.log('[eg-connect] Conectado a emuladores locales de Firebase — sin tocar datos reales.');
+}
+
 const googleProvider = new GoogleAuthProvider();
 const virtualDomain = '@connect.ebanavision.com';
 
@@ -203,10 +229,20 @@ export const uploadImage = async (path: string, file: Blob): Promise<string> => 
 // antes de que exista un uid al que subirla. Esto sube esa preview a Storage justo
 // antes de guardar y devuelve la URL — si ya es una URL normal (avatar por defecto,
 // no tocado), la deja igual.
+// Firebase Storage no está activado en este proyecto todavía (exige plan Blaze,
+// rechazado por decisión del usuario — ver Fase 0 del plan de eg-connect). Mientras
+// tanto, cualquier fallo de subida cae de vuelta al base64 tal cual se guardaba antes
+// de esta función existir, así que registro/edición de perfil nunca se rompen por esto.
+// El día que se active Storage, empezará a usarlo solo, sin tocar este código de nuevo.
 export const uploadAvatarIfNeeded = async (path: string, avatarValue: string): Promise<string> => {
   if (!avatarValue || !avatarValue.startsWith('data:')) return avatarValue;
-  const blob = await (await fetch(avatarValue)).blob();
-  return uploadImage(path, blob);
+  try {
+    const blob = await (await fetch(avatarValue)).blob();
+    return await uploadImage(path, blob);
+  } catch (error) {
+    console.warn('Firebase Storage no disponible, guardando avatar como base64:', error);
+    return avatarValue;
+  }
 };
 
 // Contactos guardados por el usuario (CRM / escaneo de tarjetas).
@@ -252,6 +288,33 @@ export const createMarketplacePost = async (authorId: string, data: Record<strin
     return docRef.id;
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+// Iniciativas y Proyectos: el creador queda como primer miembro automáticamente.
+export const createInitiative = async (creatorId: string, data: Record<string, unknown>) => {
+  const path = 'initiatives';
+  try {
+    const docRef = await addDoc(collection(db, path), {
+      ...data,
+      creatorId,
+      members: [creatorId],
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const toggleInitiativeMembership = async (initiativeId: string, uid: string, joining: boolean) => {
+  const path = `initiatives/${initiativeId}`;
+  try {
+    await updateDoc(doc(db, path), {
+      members: joining ? arrayUnion(uid) : arrayRemove(uid)
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 };
 

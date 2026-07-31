@@ -393,8 +393,87 @@ export default function ProfileScreen({
                   </div>
                 </div>
 
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1 flex items-center justify-between pt-3">
+                    <span>Soy Inversionista</span>
+                    <button
+                      onClick={() => setEditForm({ ...editForm, isInvestor: !editForm.isInvestor })}
+                      className={`w-11 h-6 rounded-full transition-all relative ${editForm.isInvestor ? 'bg-amber-400' : 'bg-white/20'}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${editForm.isInvestor ? 'left-5' : 'left-0.5'}`} />
+                    </button>
+                  </label>
+
+                  {editForm.isInvestor && (
+                    <div className="space-y-3 bg-white/5 rounded-2xl p-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sectores de Interés</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo'].map((sector) => {
+                            const selected = (editForm.investorSectors || []).includes(sector);
+                            return (
+                              <button
+                                key={sector}
+                                type="button"
+                                onClick={() => {
+                                  const current = editForm.investorSectors || [];
+                                  setEditForm({
+                                    ...editForm,
+                                    investorSectors: selected ? current.filter((s: string) => s !== sector) : [...current, sector]
+                                  });
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${selected ? 'bg-amber-400 text-primary' : 'bg-white/10 text-white/60'}`}
+                              >
+                                {sector}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Rango de Ticket</label>
+                          <select
+                            value={editForm.investorTicketRange || '5.000 - 25.000 USD'}
+                            onChange={(e) => setEditForm({ ...editForm, investorTicketRange: e.target.value })}
+                            className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-3 text-white focus:bg-white/20 outline-hidden font-bold appearance-none text-xs"
+                          >
+                            <option value="< 5.000 USD" className="text-primary">&lt; 5.000 USD</option>
+                            <option value="5.000 - 25.000 USD" className="text-primary">5.000 - 25.000 USD</option>
+                            <option value="25.000 - 100.000 USD" className="text-primary">25.000 - 100.000 USD</option>
+                            <option value="100.000+ USD" className="text-primary">100.000+ USD</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Etapa Preferida</label>
+                          <select
+                            value={editForm.investorStage || 'Idea / Semilla'}
+                            onChange={(e) => setEditForm({ ...editForm, investorStage: e.target.value })}
+                            className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-3 text-white focus:bg-white/20 outline-hidden font-bold appearance-none text-xs"
+                          >
+                            <option value="Idea / Semilla" className="text-primary">Idea / Semilla</option>
+                            <option value="Operando" className="text-primary">Operando</option>
+                            <option value="En Crecimiento" className="text-primary">En Crecimiento</option>
+                            <option value="Cualquier etapa" className="text-primary">Cualquier etapa</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sobre tu Tesis de Inversión</label>
+                        <textarea
+                          placeholder="¿Qué tipo de proyectos buscas?"
+                          rows={2}
+                          value={editForm.investorBio || ''}
+                          onChange={(e) => setEditForm({ ...editForm, investorBio: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold resize-none text-xs"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-4 pt-4 pb-6">
-                  <button 
+                  <button
                     onClick={handleSave}
                     disabled={loading}
                     className="flex-1 bg-secondary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-secondary/20"
