@@ -233,7 +233,7 @@ export default function App() {
         onUpdateProfile={(data) => setProfileData(data)}
       />;
       case 'groups': return <DiscoverScreen users={realUsers} onContact={startChat} />;
-      case 'summary': return <SummaryScreen />;
+      case 'summary': return <SummaryScreen onNavigate={(s) => setActiveScreen(s as Screen)} />;
       case 'invite': return <InviteScreen />;
       case 'tasks': return <TasksScreen />;
       case 'events': return <EventsScreen profileData={profileData} />;
