@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, Shield, Zap, Globe, User, Calendar, Check, Phone, Camera, LogIn, RefreshCcw, Lock, UserPlus, ChevronLeft, Sparkles } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Globe, User, Calendar, Check, Phone, Camera, LogIn, RefreshCcw, Lock, UserPlus, ChevronLeft, Sparkles, Handshake, Rocket } from 'lucide-react';
 import NetworkBackground from './NetworkBackground';
 import Logo from './Logo';
 import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, registerWithUsername, resetPassword, uploadAvatarIfNeeded } from '../services/firebaseService';
@@ -16,6 +16,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
   // Auth fields
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [backupEmail, setBackupEmail] = useState('');
   const [recoveryEmail, setRecoveryEmail] = useState('');
   
   // Registration fields
@@ -66,6 +68,16 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
         if (data) onComplete(data as any);
         else setStep('register');
       } else {
+        if (password.length < 8) {
+          setError('La contraseña debe tener al menos 8 caracteres.');
+          setLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          setError('Las contraseñas no coinciden.');
+          setLoading(false);
+          return;
+        }
         setStep('register');
       }
     } catch (err: any) {
@@ -84,7 +96,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
     setSuccess('');
     try {
       await resetPassword(recoveryEmail);
-      setSuccess('Si el usuario existe, se ha enviado un enlace de recuperación. Nota: Los usuarios sin correo real no recibirán el link.');
+      setSuccess('Solicitud enviada. Si no recibes nada en unos minutos, es porque este correo no está vinculado a una cuenta activa — contacta a un administrador.');
     } catch (err: any) {
       console.error(err);
       setError('Error al procesar la solicitud.');
@@ -138,7 +150,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
             avatar,
             profileType,
             employees: profileType === 'company' ? employees : null,
-            yearsInMarket: profileType === 'company' ? yearsInMarket : null
+            yearsInMarket: profileType === 'company' ? yearsInMarket : null,
+            recoveryEmail: backupEmail || null
           });
           // registerWithUsername already calls saveUserData and returns user
           // onAuthStateChanged will handle the rest or we can call onComplete
@@ -204,20 +217,17 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 transition={{ delay: 0.3 }}
                 className="space-y-4 max-w-sm"
               >
-                <h1 className="text-3xl font-extrabold font-display text-primary leading-tight">
-                  Ebana Vision <br />
-                  <span className="text-secondary">CONNECT</span>
-                </h1>
                 <p className="text-on-surface-variant text-base leading-relaxed opacity-80">
                   La plataforma definitiva para el networking y emprendimiento en Guinea Ecuatorial.
                 </p>
               </motion.div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10 w-full max-w-2xl px-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10 w-full max-w-3xl px-4">
                 {[
                   { icon: Shield, title: 'Ofertas', desc: 'Oportunidades GE', color: 'text-primary', bg: 'bg-primary/10' },
                   { icon: Globe, title: 'Networking', desc: 'Canal Directo', color: 'text-secondary', bg: 'bg-secondary/10' },
-                  { icon: Zap, title: 'Talento Local', desc: 'Contenido Nacional', color: 'text-amber-500', bg: 'bg-amber-50' }
+                  { icon: Handshake, title: 'Inversionistas', desc: 'Conecta con Capital', color: 'text-amber-500', bg: 'bg-amber-50' },
+                  { icon: Rocket, title: 'Iniciativas', desc: 'Crea o Únete a Proyectos', color: 'text-emerald-600', bg: 'bg-emerald-50' }
                 ].map((item, idx) => (
                   <motion.div 
                     key={item.title}
@@ -309,15 +319,50 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                   <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Contraseña</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
-                    <input 
-                      type="password" 
-                      placeholder="••••••••"
+                    <input
+                      type="password"
+                      placeholder="Mínimo 8 caracteres"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
                     />
                   </div>
                 </div>
+
+                {authMode === 'register' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Confirmar Contraseña</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
+                        <input
+                          type="password"
+                          placeholder="Repite tu contraseña"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Correo de Respaldo (opcional)</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
+                        <input
+                          type="email"
+                          placeholder="tucorreo@ejemplo.com"
+                          value={backupEmail}
+                          onChange={(e) => setBackupEmail(e.target.value)}
+                          className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
+                        />
+                      </div>
+                      <p className="text-[9px] text-on-surface-variant/60 font-medium ml-1 pt-1">
+                        Sin esto, si olvidas tu contraseña solo un administrador podrá recuperar tu cuenta.
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 {error && <p className="text-[10px] font-bold text-error text-center px-4">{error}</p>}
 
@@ -331,9 +376,9 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                   </button>
                 </div>
 
-                <button 
+                <button
                   type="submit"
-                  disabled={loading || !username || !password}
+                  disabled={loading || !username || !password || (authMode === 'register' && (password.length < 8 || password !== confirmPassword))}
                   className="w-full py-4 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-base disabled:opacity-50"
                 >
                   {loading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : (
@@ -380,18 +425,18 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 <Logo size={60} className="mx-auto mb-4" />
                 <h2 className="text-2xl font-black text-primary">Recuperar Acceso</h2>
                 <p className="text-sm font-medium text-on-surface-variant opacity-60 px-4">
-                  Ingresa tu Nombre de Usuario o Correo para recibir instrucciones.
+                  La recuperación automática solo funciona si registraste un correo de respaldo. Si no lo hiciste, contacta a un administrador — no hay otra vía todavía.
                 </p>
               </div>
 
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Usuario / Email</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Correo de Respaldo Registrado</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
-                    <input 
-                      type="text" 
-                      placeholder="Ej: bernardino_edu"
+                    <input
+                      type="text"
+                      placeholder="tucorreo@ejemplo.com"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
@@ -402,7 +447,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 {error && <p className="text-[10px] font-bold text-error text-center px-4">{error}</p>}
                 {success && <p className="text-[10px] font-bold text-secondary text-center px-4">{success}</p>}
 
-                <button 
+                <button
                   type="submit"
                   disabled={loading || !recoveryEmail}
                   className="w-full py-4 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-base disabled:opacity-50"
@@ -414,6 +459,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                     </>
                   )}
                 </button>
+
+                <p className="text-[10px] text-on-surface-variant/60 text-center px-4 leading-relaxed">
+                  ¿No registraste un correo de respaldo? Un administrador puede recrear tu acceso desde la consola de Firebase.
+                </p>
               </form>
             </div>
           </motion.div>
