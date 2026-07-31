@@ -102,11 +102,14 @@ export interface Group {
 export interface Event {
   id: string;
   title: string;
-  date: string;
+  date: string; // ISO 'YYYY-MM-DD'
   location: string;
   category: string;
   image: string;
-  attendees: number;
+  authorId: string;
+  authorName: string;
+  attendeeIds: string[];
+  createdAt: Timestamp | null;
 }
 
 export interface SuggestedConnection extends Contact {

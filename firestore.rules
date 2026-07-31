@@ -92,6 +92,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Eventos locales: cualquier miembro puede publicar uno y marcar asistencia
+    // en el de otros. El creador controla el contenido; el resto solo puede
+    // tocar `attendeeIds` (asistir/no asistir).
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isSignedIn() && (
+                      resource.data.authorId == request.auth.uid ||
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeIds'])
+                    );
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+    }
+
     // Iniciativas y Proyectos: cualquier miembro puede crear una y luego
     // sumarse a las de otros. El creador controla título/descripción; el resto
     // de usuarios solo puede tocar el campo `members` (unirse/salir), nunca el

@@ -291,6 +291,33 @@ export const createMarketplacePost = async (authorId: string, data: Record<strin
   }
 };
 
+// Eventos locales: el creador queda como primer asistente automáticamente.
+export const createEvent = async (authorId: string, data: Record<string, unknown>) => {
+  const path = 'events';
+  try {
+    const docRef = await addDoc(collection(db, path), {
+      ...data,
+      authorId,
+      attendeeIds: [authorId],
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const toggleEventAttendance = async (eventId: string, uid: string, attending: boolean) => {
+  const path = `events/${eventId}`;
+  try {
+    await updateDoc(doc(db, path), {
+      attendeeIds: attending ? arrayUnion(uid) : arrayRemove(uid)
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
 // Iniciativas y Proyectos: el creador queda como primer miembro automáticamente.
 export const createInitiative = async (creatorId: string, data: Record<string, unknown>) => {
   const path = 'initiatives';

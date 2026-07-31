@@ -238,7 +238,7 @@ export default function App() {
       case 'summary': return <SummaryScreen />;
       case 'invite': return <InviteScreen />;
       case 'tasks': return <TasksScreen />;
-      case 'events': return <EventsScreen />;
+      case 'events': return <EventsScreen profileData={profileData} />;
       case 'marketplace': return <MarketplaceScreen
         activeProfile={activeProfile}
         onContact={(p) => p ? startChat(p) : setActiveScreen('chat')}
