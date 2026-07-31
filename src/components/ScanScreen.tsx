@@ -8,6 +8,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
   const [scannedResult, setScannedResult] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [scanError, setScanError] = useState('');
 
   const handleSaveContact = async () => {
     const uid = auth.currentUser?.uid;
@@ -39,12 +40,17 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
     if (!file) return;
 
     setIsScanning(true);
+    setScanError('');
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result?.toString().split(',')[1];
       if (base64String) {
         const result = await extractContactFromImage(base64String);
-        setScannedResult(result);
+        if (result) {
+          setScannedResult(result);
+        } else {
+          setScanError('No se pudo leer la tarjeta. Inténtalo de nuevo o usa "Manual".');
+        }
       }
       setIsScanning(false);
     };
@@ -108,6 +114,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
               <p className="text-xs font-medium text-on-surface-variant leading-relaxed">
                 Apunta a una tarjeta de visita o sube una foto para que el sistema la guarde automáticamente.
               </p>
+              {scanError && <p className="text-[10px] font-bold text-error mt-3">{scanError}</p>}
             </>
           )}
         </div>
