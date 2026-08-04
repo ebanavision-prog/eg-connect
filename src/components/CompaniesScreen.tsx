@@ -250,10 +250,10 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
               </div>
 
               <div className="flex w-full md:w-auto gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-outline/5">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onChat?.({ id: company.id, name: company.name, avatar: company.logo });
+                    onChat?.({ id: company.ownerId || company.id, name: company.name, avatar: company.logo });
                   }}
                   className="flex-1 md:flex-none px-6 py-3 bg-primary/5 text-primary rounded-xl font-bold text-xs hover:bg-primary hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
