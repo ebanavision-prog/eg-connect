@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Users, Search, Filter, Star, Clock, 
-  ChevronRight, MessageSquare, Phone, MapPin, 
-  Calendar, MoreVertical, Edit3, Trash2,
+import {
+  Users, Search, Filter, Star, Clock,
+  ChevronRight, MapPin,
+  MoreVertical, Trash2,
   TrendingUp, Circle, CheckCircle2, UserPlus,
   StickyNote
 } from 'lucide-react';
@@ -198,39 +198,26 @@ export default function CRMScreen() {
                 <h2 className="text-2xl font-black text-primary">{selectedContact.name}</h2>
                 <p className="text-sm font-medium text-on-surface-variant mb-6">{selectedContact.role} en {selectedContact.company}</p>
 
-                <div className="grid grid-cols-3 gap-3 mb-8">
-                  <button className="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-2xl active:scale-95 transition-all text-secondary">
-                    <MessageSquare className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Chat</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-2xl active:scale-95 transition-all text-secondary">
-                    <Phone className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Llamar</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-2 p-3 bg-surface-container rounded-2xl active:scale-95 transition-all text-secondary">
-                    <Edit3 className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Notas</span>
-                  </button>
-                </div>
-
                 <div className="space-y-4 text-left">
                   <div className="p-4 bg-surface-container rounded-2xl border border-outline/5">
                     <div className="flex items-center gap-2 mb-2 text-primary">
                       <StickyNote className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Notas Privadas</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Notas</span>
                     </div>
                     <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                      Interesado en el proyecto de expansión en Bata. Nos reuniremos en el próximo Foro de Inversión.
+                      {selectedContact.note || 'Sin notas guardadas para este contacto.'}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <span className="text-[10px] font-black uppercase">Próximo Seguimiento</span>
+                  {selectedContact.location && (
+                    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        <span className="text-[10px] font-black uppercase">Ubicación</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-primary">{selectedContact.location}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-primary">15 Mayo, 2026</span>
-                  </div>
+                  )}
                 </div>
 
                 <button 
