@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   QrCode, Share, Globe, Link2, MessageCircle, Settings, 
@@ -6,8 +6,11 @@ import {
   ChevronDown, Mail, Phone, MapPin, Sparkles, Users, Zap, Cake,
   ChevronLeft, Camera, Edit2, Save, X, RefreshCcw, Lock, ShieldCheck, Edit3
 } from 'lucide-react';
+import { where } from 'firebase/firestore';
+import { Contact, Task, ServicePost } from '../types';
 import { localDataService } from '../services/localDataService';
-import { saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
+import { auth, saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import NetworkBackground from './NetworkBackground';
 
 export default function ProfileScreen({ 
@@ -34,6 +37,18 @@ export default function ProfileScreen({
   const [birthDay, setBirthDay] = useState(initialBirthday[1]);
   
   const [privacyMode, setPrivacyMode] = useState(profileData?.privacyMode || 'public');
+
+  // Estadísticas reales — antes esta sección mostraba números y nombres de
+  // dominio inventados ("1.2k Conexiones", "adriant.design") para cualquier
+  // perfil, sin relación con el usuario real.
+  const currentUid = auth.currentUser?.uid;
+  const { data: myContacts } = useFirestoreCollection<Contact>(currentUid ? `users/${currentUid}/contacts` : null);
+  const { data: myTasks } = useFirestoreCollection<Task>(currentUid && isIndividual ? `users/${currentUid}/tasks` : null);
+  const marketplaceConstraints = useMemo(
+    () => (currentUid ? [where('authorId', '==', currentUid)] : []),
+    [currentUid]
+  );
+  const { data: myPosts } = useFirestoreCollection<ServicePost>(currentUid && !isIndividual ? 'marketplace_posts' : null, marketplaceConstraints);
 
   const [expandedSections, setExpandedSections] = useState({
     contact: true,
@@ -539,33 +554,32 @@ export default function ProfileScreen({
           className="editorial-card p-6 flex flex-col justify-between h-36 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
         >
           <span className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest opacity-60">
-            {isIndividual ? 'Conexiones' : 'Seguidores'}
+            Conexiones
           </span>
-          <motion.div 
+          <motion.div
             key={`${activeProfile}-stat-1`}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-end justify-between"
           >
-            <span className="text-4xl font-extrabold text-primary font-display">{isIndividual ? '1.2k' : '850'}</span>
-            <span className="text-secondary font-bold text-[10px] bg-secondary/10 px-2 py-1 rounded-full">+12%</span>
+            <span className="text-4xl font-extrabold text-primary font-display">{myContacts.length}</span>
           </motion.div>
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           layout
           className="editorial-card p-6 flex flex-col justify-between h-36 bg-surface-container-low border-none shadow-none"
         >
           <span className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest opacity-60">
             {isIndividual ? 'Tareas' : 'Anuncios'}
           </span>
-          <motion.div 
+          <motion.div
             key={`${activeProfile}-stat-2`}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-end justify-between"
           >
-            <span className="text-4xl font-extrabold text-on-surface font-display">{isIndividual ? '24' : '12'}</span>
+            <span className="text-4xl font-extrabold text-on-surface font-display">{isIndividual ? myTasks.length : myPosts.length}</span>
             <div className="bg-primary/5 p-2 rounded-lg">
               <Settings className="w-4 h-4 text-primary" />
             </div>
@@ -697,22 +711,22 @@ export default function ProfileScreen({
             >
               <div className="editorial-card p-2 border-none shadow-sm h-full">
                 {[
-                  { 
-                    icon: Globe, 
-                    label: isIndividual ? 'Portfolio' : 'Sitio Web', 
-                    value: isIndividual ? 'adriant.design' : (profileData?.website || 'gepetrol.com'), 
-                    color: 'bg-primary/5 text-primary' 
+                  {
+                    icon: Globe,
+                    label: isIndividual ? 'Portfolio' : 'Sitio Web',
+                    value: isIndividual ? (profileData?.portfolio || 'Sin portfolio añadido') : (profileData?.website || 'No especificado'),
+                    color: 'bg-primary/5 text-primary'
                   },
-                  { 
-                    icon: Users, 
-                    label: isIndividual ? 'Red' : 'Empleados', 
-                    value: isIndividual ? '1.2k Conexiones' : (profileData?.employees || '200+'), 
-                    color: 'bg-primary/5 text-primary' 
+                  {
+                    icon: Users,
+                    label: isIndividual ? 'Red' : 'Empleados',
+                    value: isIndividual ? `${myContacts.length} Conexiones` : (profileData?.employees || 'No especificado'),
+                    color: 'bg-primary/5 text-primary'
                   },
-                  { 
-                    icon: Link2, 
-                    label: isIndividual ? 'LinkedIn' : 'Trayectoria', 
-                    value: isIndividual ? (profileData?.linkedin || '/in/adriant-egc') : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : '10+ años'), 
+                  {
+                    icon: Link2,
+                    label: isIndividual ? 'LinkedIn' : 'Trayectoria',
+                    value: isIndividual ? (profileData?.linkedin || 'Sin enlace añadido') : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : 'No especificado'),
                     color: 'bg-primary/5 text-primary' 
                   }
                 ].map((item, i) => (
