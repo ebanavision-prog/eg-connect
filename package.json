@@ -7,6 +7,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:emulator": "VITE_USE_FIREBASE_EMULATOR=true vite --port=3034 --host=127.0.0.1",
     "emulators": "npx firebase-tools emulators:start --only firestore,auth,storage",
+    "test:rules": "tsx src/test/firestoreRules.test.ts",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -24,6 +25,7 @@
     "vite": "^6.2.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
