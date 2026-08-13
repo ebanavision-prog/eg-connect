@@ -223,7 +223,7 @@ export default function App() {
         userProfile={profileData}
         realUsers={realUsers}
       />;
-      case 'timeline': return <TimelineScreen onChat={startChat} users={realUsers} />;
+      case 'timeline': return <TimelineScreen onChat={startChat} users={realUsers} currentUserName={profileData?.name || 'Yo'} />;
       case 'scan': return <ScanScreen onBack={() => setActiveScreen('home')} />;
       case 'map': return <MapScreen />;
       case 'profile': return <ProfileScreen 

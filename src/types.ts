@@ -89,6 +89,15 @@ export interface Contact {
   lastMet: string;
   isVerified?: boolean;
   birthday?: string; // ISO format or MM-DD
+  kudos?: number;
+}
+
+export interface ContactComment {
+  id: string;
+  authorName: string;
+  text: string;
+  parentId?: string | null;
+  createdAt?: unknown;
 }
 
 export interface Task {

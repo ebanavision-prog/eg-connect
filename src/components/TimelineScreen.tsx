@@ -9,11 +9,12 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 interface TimelineScreenProps {
   onChat?: (participant: { id: string; name: string; avatar: string }) => void;
   users?: any[];
+  currentUserName?: string;
 }
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop';
 
-export default function TimelineScreen({ onChat, users = [] }: TimelineScreenProps) {
+export default function TimelineScreen({ onChat, users = [], currentUserName = 'Yo' }: TimelineScreenProps) {
   const currentUid = auth.currentUser?.uid;
   const { data: contacts, loading } = useFirestoreCollection<Contact>(
     currentUid ? `users/${currentUid}/contacts` : null
@@ -138,7 +139,7 @@ export default function TimelineScreen({ onChat, users = [] }: TimelineScreenPro
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {today.map((contact) => (
-              <FeedItem key={contact.id} contact={contact} onChat={onChat} />
+              <FeedItem key={contact.id} contact={contact} onChat={onChat} currentUserName={currentUserName} />
             ))}
           </div>
         </div>
@@ -154,7 +155,7 @@ export default function TimelineScreen({ onChat, users = [] }: TimelineScreenPro
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {yesterday.map((contact) => (
-              <FeedItem key={contact.id} contact={contact} onChat={onChat} />
+              <FeedItem key={contact.id} contact={contact} onChat={onChat} currentUserName={currentUserName} />
             ))}
           </div>
         </div>
@@ -170,7 +171,7 @@ export default function TimelineScreen({ onChat, users = [] }: TimelineScreenPro
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {earlier.map((contact) => (
-              <FeedItem key={contact.id} contact={contact} onChat={onChat} />
+              <FeedItem key={contact.id} contact={contact} onChat={onChat} currentUserName={currentUserName} />
             ))}
           </div>
         </div>

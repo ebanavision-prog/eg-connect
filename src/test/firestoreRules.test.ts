@@ -128,6 +128,23 @@ async function main() {
     await assertFails(setDoc(doc(userB, 'users/user-a/tasks/t1'), { title: 'Intrusa' }));
   });
 
+  // --- notas sobre un contacto guardado: solo el dueño del contacto ---
+  await check('El dueño SÍ puede añadir una nota a su propio contacto', async () => {
+    await assertSucceeds(addDoc(collection(userA, 'users/user-a/contacts/c1/comments'), {
+      authorName: 'Usuario A', text: 'Nos vimos en la conferencia', parentId: null
+    }));
+  });
+
+  await check('Un usuario NO puede leer las notas de un contacto ajeno', async () => {
+    await assertFails(getDoc(doc(userB, 'users/user-a/contacts/c1/comments/x')));
+  });
+
+  await check('Un usuario NO puede escribir una nota en el contacto de otro', async () => {
+    await assertFails(addDoc(collection(userB, 'users/user-a/contacts/c1/comments'), {
+      authorName: 'Intruso', text: 'Nota ajena', parentId: null
+    }));
+  });
+
   // --- feedback: cualquiera envía el suyo, nadie lee el de otros salvo admin ---
   await check('Un usuario SÍ puede enviar su propio feedback', async () => {
     await assertSucceeds(addDoc(collection(userA, 'feedback'), { userId: 'user-a', type: 'feedback', rating: 5, message: 'Genial' }));

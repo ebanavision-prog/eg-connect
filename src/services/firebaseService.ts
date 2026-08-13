@@ -33,7 +33,8 @@ import {
   orderBy,
   limit,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  increment
 } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, connectStorageEmulator } from 'firebase/storage';
 import { connectAuthEmulator } from 'firebase/auth';
@@ -328,6 +329,38 @@ export const deleteTask = async (ownerId: string, taskId: string) => {
   const path = `users/${ownerId}/tasks/${taskId}`;
   try {
     await deleteDoc(doc(db, path));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+// Notas propias sobre un contacto guardado (antes esto vivía solo en
+// localStorage con un autor inventado — ahora es una subcolección privada
+// real, igual que el resto de datos del dueño del contacto).
+export const addContactComment = async (
+  ownerId: string,
+  contactId: string,
+  data: { authorName: string; text: string; parentId?: string | null }
+) => {
+  const path = `users/${ownerId}/contacts/${contactId}/comments`;
+  try {
+    await addDoc(collection(db, path), {
+      ...data,
+      parentId: data.parentId ?? null,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+// "Destacar" un contacto guardado — antes era un contador local que se
+// reiniciaba al recargar y nunca llegaba a Firestore; ahora es un campo real
+// del propio documento del contacto.
+export const toggleContactKudo = async (ownerId: string, contactId: string, add: boolean) => {
+  const path = `users/${ownerId}/contacts/${contactId}`;
+  try {
+    await updateDoc(doc(db, path), { kudos: increment(add ? 1 : -1) });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }

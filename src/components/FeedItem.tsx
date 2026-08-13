@@ -1,36 +1,57 @@
-import React, { useState, FC } from 'react';
-import { MapPin, MessageSquare, Send, User, Sparkles, Share2, Copy, Heart, Zap, Loader2 } from 'lucide-react';
+import React, { useState, FC, useEffect } from 'react';
+import { MapPin, MessageSquare, Send, User, Sparkles, Share2, Copy, Zap, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Contact } from '../types';
-import { localDataService } from '../services/localDataService';
 import { notificationService } from '../services/notificationService';
 import { generateIcebreaker } from '../services/aiService';
+import { auth, addContactComment, toggleContactKudo } from '../services/firebaseService';
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 interface Comment {
   id: string;
   author: string;
   text: string;
   timestamp: string;
-  replies?: Comment[];
-  likes?: number;
-  isLiked?: boolean;
+  parentId?: string | null;
 }
 
 interface FeedItemProps {
   contact: Contact;
   onChat?: (participant: { id: string; name: string; avatar: string }) => void;
+  currentUserName?: string;
 }
 
-const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
-  const [comments, setComments] = useState<Comment[]>([]);
+const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }) => {
+  const ownerId = auth.currentUser?.uid;
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [kudos, setKudos] = useState(contact.isVerified ? 12 : 0);
   const [hasKudoed, setHasKudoed] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [icebreaker, setIcebreaker] = useState<string | null>(null);
   const [isGeneratingIcebreaker, setIsGeneratingIcebreaker] = useState(false);
+
+  // Notas reales del propio usuario sobre este contacto — antes vivían solo
+  // en localStorage bajo un autor inventado ("Bernardino Edu"); ahora es una
+  // subcolección privada real bajo el propio contacto.
+  const { data: rawComments } = useFirestoreCollection<{ id: string; authorName: string; text: string; parentId?: string | null; createdAt?: any }>(
+    ownerId ? `users/${ownerId}/contacts/${contact.id}/comments` : null
+  );
+  const comments: Comment[] = rawComments.map((c) => ({
+    id: c.id,
+    author: c.authorName,
+    text: c.text,
+    parentId: c.parentId ?? null,
+    timestamp: c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Ahora'
+  }));
+  const topLevelComments = comments.filter((c) => !c.parentId);
+  const repliesOf = (parentId: string) => comments.filter((c) => c.parentId === parentId);
+
+  const kudos = contact.kudos || 0;
+
+  useEffect(() => {
+    setHasKudoed(false);
+  }, [contact.id]);
 
   const handleGenerateIcebreaker = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,38 +67,12 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
     }
   };
 
-  // Load comments from localStorage on mount
-  React.useEffect(() => {
-    const savedComments = localStorage.getItem(`comments_${contact.id}`);
-    if (savedComments) {
-      try {
-        setComments(JSON.parse(savedComments));
-      } catch (e) {
-        console.error('Failed to load comments', e);
-      }
-    }
-  }, [contact.id]);
-
-  // Save comments to localStorage whenever they change
-  React.useEffect(() => {
-    if (comments.length > 0) {
-      localStorage.setItem(`comments_${contact.id}`, JSON.stringify(comments));
-    }
-  }, [comments, contact.id]);
-
   const handleKudo = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const action = hasKudoed ? 'remove_kudo' : 'add_kudo';
-    
-    if (hasKudoed) {
-      setKudos(kudos - 1);
-      setHasKudoed(false);
-    } else {
-      setKudos(kudos + 1);
-      setHasKudoed(true);
-    }
-
-    localDataService.queueAction('update_profile', { contactId: contact.id, action });
+    if (!ownerId) return;
+    const wasKudoed = hasKudoed;
+    setHasKudoed(!wasKudoed);
+    toggleContactKudo(ownerId, contact.id, !wasKudoed).catch(() => setHasKudoed(wasKudoed));
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -104,55 +99,14 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
   };
 
   const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    
-    const comment: Comment = {
-      id: Date.now().toString(),
-      author: 'Bernardino Edu', // Mock current user
-      text: newComment,
-      timestamp: 'Ahora',
-      replies: [],
-      likes: 0,
-      isLiked: false
-    };
-    
-    if (replyingTo) {
-      setComments(prevComments => 
-        prevComments.map(c => 
-          c.id === replyingTo 
-            ? { ...c, replies: [...(c.replies || []), comment] }
-            : c
-        )
-      );
-      setReplyingTo(null);
-    } else {
-      setComments([...comments, comment]);
-    }
-    
-    setNewComment('');
-    localDataService.queueAction('send_message', { contactId: contact.id, comment, parentId: replyingTo });
-  };
-
-  const handleLikeComment = (commentId: string, isReply = false, parentId: string | null = null) => {
-    setComments(prevComments => {
-      const updateList = (list: Comment[]): Comment[] => {
-        return list.map(c => {
-          if (c.id === commentId) {
-            const currentlyLiked = c.isLiked || false;
-            return {
-              ...c,
-              isLiked: !currentlyLiked,
-              likes: (c.likes || 0) + (currentlyLiked ? -1 : 1)
-            };
-          }
-          if (c.replies && c.replies.length > 0) {
-            return { ...c, replies: updateList(c.replies) };
-          }
-          return c;
-        });
-      };
-      return updateList(prevComments);
+    if (!newComment.trim() || !ownerId) return;
+    addContactComment(ownerId, contact.id, {
+      authorName: currentUserName,
+      text: newComment.trim(),
+      parentId: replyingTo
     });
+    setReplyingTo(null);
+    setNewComment('');
   };
 
   return (
@@ -327,7 +281,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
               </div>
             </div>
             <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-              {comments.map((comment) => (
+              {topLevelComments.map((comment) => (
                 <div key={comment.id} className="space-y-3">
                   <div className="flex gap-3 group/comment">
                     <div className="w-8 h-8 rounded-full bg-white border border-outline/10 flex items-center justify-center text-primary flex-shrink-0 shadow-sm">
@@ -337,11 +291,8 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
                       <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
                         <span className="text-primary">{comment.author}</span>
                         <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => {
-                              setReplyingTo(comment.id);
-                              // Focus input? 
-                            }}
+                          <button
+                            onClick={() => setReplyingTo(comment.id)}
                             className="text-secondary hover:underline cursor-pointer"
                           >
                             Responder
@@ -349,31 +300,16 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
                           <span className="text-outline-variant italic">{comment.timestamp}</span>
                         </div>
                       </div>
-                      <div className="bg-white rounded-2xl rounded-tl-none p-3 border border-outline/5 group-hover/comment:border-primary/20 transition-all shadow-xs relative">
+                      <div className="bg-white rounded-2xl rounded-tl-none p-3 border border-outline/5 group-hover/comment:border-primary/20 transition-all shadow-xs">
                         <p className="text-xs text-on-surface-variant leading-relaxed font-sans">{comment.text}</p>
-                        <button 
-                          onClick={() => handleLikeComment(comment.id)}
-                          className={`absolute -right-2 -bottom-2 w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
-                            comment.isLiked 
-                              ? 'bg-red-50 border-red-200 text-red-500 scale-110' 
-                              : 'bg-white border-outline/10 text-outline-variant hover:text-red-400 hover:scale-105'
-                          } shadow-xs z-10`}
-                        >
-                          <Heart className={`w-3 h-3 ${comment.isLiked ? 'fill-current' : ''}`} />
-                        </button>
                       </div>
-                      {(comment.likes || 0) > 0 && (
-                        <div className="flex items-center gap-1 pl-1 pt-1">
-                          <span className="text-[9px] font-bold text-outline-variant">{comment.likes}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   {/* Nested Replies */}
-                  {comment.replies && comment.replies.length > 0 && (
+                  {repliesOf(comment.id).length > 0 && (
                     <div className="pl-11 space-y-3 border-l-2 border-outline/5 ml-4">
-                      {comment.replies.map((reply) => (
+                      {repliesOf(comment.id).map((reply) => (
                         <div key={reply.id} className="flex gap-3 group/reply">
                           <div className="w-6 h-6 rounded-full bg-white border border-outline/10 flex items-center justify-center text-primary flex-shrink-0 shadow-sm">
                             <User className="w-3 h-3" />
@@ -383,24 +319,9 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat }) => {
                               <span className="text-primary">{reply.author}</span>
                               <span className="text-outline-variant italic">{reply.timestamp}</span>
                             </div>
-                            <div className="bg-surface-container-lowest rounded-2xl rounded-tl-none p-2 border border-outline/5 group-hover/reply:border-primary/20 transition-all shadow-xs relative">
+                            <div className="bg-surface-container-lowest rounded-2xl rounded-tl-none p-2 border border-outline/5 group-hover/reply:border-primary/20 transition-all shadow-xs">
                               <p className="text-xs text-on-surface-variant leading-relaxed font-sans">{reply.text}</p>
-                              <button 
-                                onClick={() => handleLikeComment(reply.id, true, comment.id)}
-                                className={`absolute -right-2 -bottom-2 w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
-                                  reply.isLiked 
-                                    ? 'bg-red-50 border-red-200 text-red-500 scale-110' 
-                                    : 'bg-white border-outline/10 text-outline-variant hover:text-red-400 hover:scale-105'
-                                } shadow-xs z-10`}
-                              >
-                                <Heart className={`w-2.5 h-2.5 ${reply.isLiked ? 'fill-current' : ''}`} />
-                              </button>
                             </div>
-                            {(reply.likes || 0) > 0 && (
-                              <div className="flex items-center gap-1 pl-1 pt-0.5">
-                                <span className="text-[8px] font-bold text-outline-variant">{reply.likes}</span>
-                              </div>
-                            )}
                           </div>
                         </div>
                       ))}
