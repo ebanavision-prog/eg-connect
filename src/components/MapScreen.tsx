@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Search, SlidersHorizontal, MessageSquare, UserPlus, Verified, MapPin, WifiOff, X, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { notificationService } from '../services/notificationService';
 
 export default function MapScreen() {
   const [showToast, setShowToast] = useState(false);
   const [selectedContact, setSelectedContact] = useState<{ name: string; role: string; company: string } | null>(null);
 
+  // NOTA: este mapa es una maqueta visual — fondo estático, pines y
+  // distancias de ejemplo, sin geolocalización real todavía. Antes esta
+  // función mandaba una notificación push REAL (notificationService, la
+  // misma API que usan los mensajes de verdad) anunciando un "contacto
+  // cercano" inventado — eso sí era engañoso de verdad, no solo una maqueta
+  // visual, así que se quitó. El resto de la pantalla sigue siendo un
+  // mockup a propósito hasta que exista geolocalización real que mostrar.
   const handlePinClick = (name: string, role: string, company: string) => {
     setSelectedContact({ name, role, company });
     setShowToast(true);
-    notificationService.sendNotification('Contacto Cercano', `${name} - ${role} en ${company}`);
-    
-    // Auto-hide toast
     setTimeout(() => {
       setShowToast(false);
     }, 5000);
