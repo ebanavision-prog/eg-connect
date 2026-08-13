@@ -30,6 +30,15 @@ service cloud.firestore {
              data.profileType in ['individual', 'company'];
     }
 
+    // Admin: nunca auto-otorgable — solo un admin ya existente puede tocar el
+    // campo isAdmin de otro usuario (ver la regla de update de /users abajo).
+    // El primer admin se arranca a mano vía Admin SDK, fuera de estas reglas.
+    function isCallerAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     // User profiles
     match /users/{userId} {
       allow get: if isSignedIn();
@@ -37,13 +46,16 @@ service cloud.firestore {
       // client already hides profiles with privacyMode == 'private'.
       allow list: if isSignedIn();
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
-                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                      'name', 'phone', 'birthday', 'profession', 'role', 'city', 'avatar',
-                      'profileType', 'updatedAt', 'employees', 'yearsInMarket', 'website', 'privacyMode',
-                      'isInvestor', 'investorSectors', 'investorTicketRange', 'investorStage', 'investorBio',
-                      'recoveryEmail'
-                    ]));
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) &&
+                        (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'name', 'phone', 'birthday', 'profession', 'role', 'city', 'avatar',
+                          'profileType', 'updatedAt', 'employees', 'yearsInMarket', 'website', 'privacyMode',
+                          'isInvestor', 'investorSectors', 'investorTicketRange', 'investorStage', 'investorBio',
+                          'recoveryEmail'
+                        ])))
+                      // Un admin puede promover/degradar a otro usuario — y solo ese campo,
+                      // nunca el resto del perfil de esa persona.
+                      || (isCallerAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin']));
     }
 
     // Contacts
@@ -75,9 +87,11 @@ service cloud.firestore {
     match /companies/{companyId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid &&
-                    !('isVerified' in request.resource.data.diff(resource.data).affectedKeys()) &&
-                    !('verificationStatus' in request.resource.data.diff(resource.data).affectedKeys());
+      allow update: if (isSignedIn() && resource.data.ownerId == request.auth.uid &&
+                        !('isVerified' in request.resource.data.diff(resource.data).affectedKeys()) &&
+                        !('verificationStatus' in request.resource.data.diff(resource.data).affectedKeys()))
+                      // Solo un admin puede tocar la verificación, y solo esos dos campos.
+                      || (isCallerAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isVerified', 'verificationStatus']));
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
@@ -88,13 +102,11 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
     }
 
-    // Licitaciones: contenido curado, no lo publica cualquier usuario todavía
-    // (eso requiere roles de administrador, ver plan de Backlog). Por ahora
-    // solo lectura; se añaden documentos manualmente desde la consola de
-    // Firebase hasta que exista un panel de admin.
+    // Licitaciones: contenido curado — ahora que existe el rol de admin,
+    // solo un admin puede publicar/editar/borrar. Cualquier miembro puede leer.
     match /tenders/{tenderId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      allow create, update, delete: if isCallerAdmin();
     }
 
     // Eventos locales: cualquier miembro puede publicar uno y marcar asistencia

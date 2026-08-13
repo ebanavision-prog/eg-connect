@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Building2, Search, Filter, Globe, MapPin, Users, CheckCircle2, ChevronRight, X, ShieldCheck, Plus, Trash2, Linkedin, Instagram, Twitter, Facebook, Award, Network, Loader2, MessageSquare, UserCircle, Grid, LayoutList, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Company } from '../types';
-import { auth, createCompany } from '../services/firebaseService';
+import { auth, createCompany, setCompanyVerified } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
-export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { id: string; name: string; avatar: string }) => void }) {
+export default function CompaniesScreen({ onChat, profileData }: { onChat?: (participant?: { id: string; name: string; avatar: string }) => void, profileData?: any }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,9 +13,21 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
   const [registrationStep, setRegistrationStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
+  const isAdmin = !!profileData?.isAdmin;
   const currentUid = auth.currentUser?.uid;
   const { data: companies, loading } = useFirestoreCollection<Company & { ownerId?: string }>(currentUid ? 'companies' : null);
+
+  const handleToggleVerified = async (company: Company) => {
+    setIsVerifying(true);
+    try {
+      await setCompanyVerified(company.id, !company.isVerified);
+      setSelectedCompany({ ...company, isVerified: !company.isVerified });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -874,13 +886,26 @@ export default function CompaniesScreen({ onChat }: { onChat?: (participant?: { 
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => onChat?.({ id: (selectedCompany as any).ownerId || selectedCompany.id, name: selectedCompany.name, avatar: selectedCompany.logo })}
                       className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                     >
                       <MessageSquare className="w-5 h-5" />
                       Contactar Empresa
                     </button>
+
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleToggleVerified(selectedCompany)}
+                        disabled={isVerifying}
+                        className={`w-full py-4 font-bold rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
+                          selectedCompany.isVerified ? 'bg-surface-container-high text-on-surface-variant' : 'bg-secondary text-white shadow-secondary/20'
+                        }`}
+                      >
+                        {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                        {selectedCompany.isVerified ? 'Quitar Verificación (Admin)' : 'Verificar Empresa (Admin)'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

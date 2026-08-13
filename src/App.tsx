@@ -243,11 +243,11 @@ export default function App() {
         initialSearchQuery={globalSearchTerm}
         profileData={profileData}
       />;
-      case 'companies': return <CompaniesScreen onChat={(p) => p ? startChat(p) : setActiveScreen('chat')} />;
+      case 'companies': return <CompaniesScreen onChat={(p) => p ? startChat(p) : setActiveScreen('chat')} profileData={profileData} />;
       case 'chat': return <ChatScreen initialParticipant={chatParticipant} users={realUsers} />;
       case 'sync-settings': return <SyncSettingsScreen onBack={() => setActiveScreen('profile')} />;
       case 'feedback': return <FeedbackScreen onBack={() => setActiveScreen('home')} />;
-      case 'tenders': return <TendersScreen />;
+      case 'tenders': return <TendersScreen profileData={profileData} />;
       case 'crm': return <CRMScreen />;
       case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} />;
       case 'initiatives': return <InitiativesScreen profileData={profileData} />;

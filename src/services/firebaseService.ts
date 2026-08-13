@@ -351,6 +351,51 @@ export const toggleEventAttendance = async (eventId: string, uid: string, attend
   }
 };
 
+// Panel de administrador — solo un admin ya existente puede promover a otro
+// (las reglas de Firestore lo exigen; esto es un atajo, no el control real).
+export const setUserAdmin = async (targetUid: string, isAdmin: boolean) => {
+  const path = `users/${targetUid}`;
+  try {
+    await updateDoc(doc(db, path), { isAdmin });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const createTender = async (data: Record<string, unknown>) => {
+  const path = 'tenders';
+  try {
+    const docRef = await addDoc(collection(db, path), {
+      ...data,
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const deleteTender = async (tenderId: string) => {
+  const path = `tenders/${tenderId}`;
+  try {
+    await deleteDoc(doc(db, path));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const setCompanyVerified = async (companyId: string, isVerified: boolean) => {
+  const path = `companies/${companyId}`;
+  try {
+    await updateDoc(doc(db, path), {
+      isVerified,
+      verificationStatus: isVerified ? 'verified' : 'pending'
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
 // Iniciativas y Proyectos: el creador queda como primer miembro automáticamente.
 export const createInitiative = async (creatorId: string, data: Record<string, unknown>) => {
   const path = 'initiatives';
