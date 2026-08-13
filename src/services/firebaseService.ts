@@ -172,6 +172,47 @@ export const loginWithGoogle = async () => {
   }
 };
 
+export interface GoogleImportedContact {
+  name: string;
+  phone: string;
+  company: string;
+  role: string;
+}
+
+// Importar contactos reales de Gmail — funciona igual en iPhone y Android
+// porque es un permiso de la cuenta de Google, no del navegador (a
+// diferencia de la Contact Picker API, que solo existe en Chrome/Android).
+// Requiere que la API de Contactos ("People API") esté activada en la
+// consola de Google Cloud del proyecto — si no lo está, Google devuelve un
+// error claro al pedir el permiso, no falla en silencio.
+export const importGoogleContacts = async (): Promise<GoogleImportedContact[]> => {
+  const provider = new GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+  const result = await signInWithPopup(auth, provider);
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  const accessToken = credential?.accessToken;
+  if (!accessToken) throw new Error('No se obtuvo permiso de acceso a Contactos de Google.');
+
+  const response = await fetch(
+    'https://people.googleapis.com/v1/people/me/connections?personFields=names,phoneNumbers,organizations&pageSize=200',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!response.ok) {
+    throw new Error(`Google People API respondió ${response.status}. Verifica que la People API esté activada en Google Cloud Console.`);
+  }
+  const data = await response.json();
+  const connections = (data.connections || []) as any[];
+
+  return connections
+    .map((c) => ({
+      name: c.names?.[0]?.displayName || '',
+      phone: c.phoneNumbers?.[0]?.value || '',
+      company: c.organizations?.[0]?.name || '',
+      role: c.organizations?.[0]?.title || ''
+    }))
+    .filter((c) => c.name);
+};
+
 export const logout = () => signOut(auth);
 
 export const getUserData = async (uid: string) => {

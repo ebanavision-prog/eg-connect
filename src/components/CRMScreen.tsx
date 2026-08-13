@@ -5,19 +5,62 @@ import {
   ChevronRight, MapPin,
   MoreVertical, Trash2,
   TrendingUp, Circle, CheckCircle2, UserPlus,
-  StickyNote
+  StickyNote, Mail, Loader2, X, Check
 } from 'lucide-react';
 import { Contact } from '../types';
-import { auth } from '../services/firebaseService';
+import { auth, addContact, importGoogleContacts, GoogleImportedContact } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 export default function CRMScreen() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'Prospecto' | 'Socio' | 'Aliado' | 'Cliente'>('all');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [googleContacts, setGoogleContacts] = useState<GoogleImportedContact[] | null>(null);
+  const [selectedGoogle, setSelectedGoogle] = useState<Set<number>>(new Set());
+  const [isSavingImport, setIsSavingImport] = useState(false);
 
   const currentUid = auth.currentUser?.uid;
   const { data: contacts, loading } = useFirestoreCollection<Contact>(currentUid ? `users/${currentUid}/contacts` : null);
+
+  const handleImportGoogle = async () => {
+    setIsImporting(true);
+    setImportError('');
+    try {
+      const results = await importGoogleContacts();
+      setGoogleContacts(results);
+      setSelectedGoogle(new Set(results.map((_, i) => i)));
+    } catch (error: any) {
+      setImportError(error?.message || 'No se pudo conectar con Google Contactos.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleSaveImport = async () => {
+    if (!currentUid || !googleContacts) return;
+    setIsSavingImport(true);
+    try {
+      const toImport = googleContacts.filter((_, i) => selectedGoogle.has(i));
+      for (const c of toImport) {
+        await addContact(currentUid, {
+          name: c.name,
+          role: c.role,
+          company: c.company,
+          location: '',
+          tags: ['Google'],
+          note: c.phone ? `Tel: ${c.phone}` : '',
+          avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop',
+          lastMet: 'Importado'
+        });
+      }
+      setGoogleContacts(null);
+      setSelectedGoogle(new Set());
+    } finally {
+      setIsSavingImport(false);
+    }
+  };
 
   // El estado de relación (Prospecto/Socio/...) todavía no se guarda por contacto —
   // se deriva del orden mientras se construye esa función de verdad.
@@ -60,10 +103,21 @@ export default function CRMScreen() {
             Optimiza tu red de contactos y haz seguimiento a tus alianzas estratégicas.
           </p>
         </div>
-        <button className="bg-primary text-white p-4 rounded-2xl shadow-lg active:scale-90 transition-all">
-          <UserPlus className="w-5 h-5" />
+        <button
+          onClick={handleImportGoogle}
+          disabled={isImporting}
+          className="bg-white border-2 border-outline/10 text-primary p-4 rounded-2xl shadow-sm active:scale-90 transition-all disabled:opacity-50"
+          title="Importar contactos de Google"
+        >
+          {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
         </button>
       </header>
+
+      {importError && (
+        <div className="mx-1 p-4 bg-error/5 border border-error/20 rounded-2xl">
+          <p className="text-xs font-bold text-error">{importError}</p>
+        </div>
+      )}
 
       {/* CRM Stats Summary */}
       <div className="grid grid-cols-2 gap-4 px-1 text-center">
@@ -229,6 +283,84 @@ export default function CRMScreen() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {googleContacts && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isSavingImport && setGoogleContacts(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+            >
+              <div className="p-8 pb-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-extrabold font-display text-on-surface">Elige qué importar</h2>
+                    <p className="text-xs text-on-surface-variant mt-1">{googleContacts.length} contactos encontrados en Google</p>
+                  </div>
+                  <button onClick={() => setGoogleContacts(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                    <X className="w-5 h-5 text-on-surface-variant" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-8 space-y-2">
+                {googleContacts.length === 0 && (
+                  <p className="text-sm text-on-surface-variant text-center py-8">No encontramos contactos con nombre en tu cuenta de Google.</p>
+                )}
+                {googleContacts.map((c, i) => {
+                  const isSelected = selectedGoogle.has(i);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        const next = new Set(selectedGoogle);
+                        if (isSelected) next.delete(i); else next.add(i);
+                        setSelectedGoogle(next);
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all ${
+                        isSelected ? 'bg-primary/5 border-primary' : 'bg-surface-container-low border-outline/5'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${isSelected ? 'bg-primary text-white' : 'bg-white border border-outline/20'}`}>
+                        {isSelected && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-on-surface truncate">{c.name}</p>
+                        {(c.company || c.phone) && (
+                          <p className="text-[10px] text-on-surface-variant truncate">{[c.role, c.company, c.phone].filter(Boolean).join(' · ')}</p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="p-8 pt-4">
+                <button
+                  disabled={selectedGoogle.size === 0 || isSavingImport}
+                  onClick={handleSaveImport}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                >
+                  {isSavingImport ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" />Importando...</>
+                  ) : (
+                    `Importar ${selectedGoogle.size} contacto${selectedGoogle.size !== 1 ? 's' : ''}`
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
