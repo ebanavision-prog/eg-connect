@@ -250,7 +250,7 @@ export default function App() {
       case 'feedback': return <FeedbackScreen onBack={() => setActiveScreen('home')} />;
       case 'tenders': return <TendersScreen profileData={profileData} />;
       case 'crm': return <CRMScreen />;
-      case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} />;
+      case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} profileData={profileData} />;
       case 'initiatives': return <InitiativesScreen profileData={profileData} />;
       case 'search': return <SearchResultsScreen query={globalSearchTerm} users={realUsers} onContact={startChat} onNavigate={(s) => setActiveScreen(s as Screen)} />;
       default: return <HomeScreen 

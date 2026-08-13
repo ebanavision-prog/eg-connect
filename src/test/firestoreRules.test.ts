@@ -128,6 +128,36 @@ async function main() {
     await assertFails(setDoc(doc(userB, 'users/user-a/tasks/t1'), { title: 'Intrusa' }));
   });
 
+  // --- connectionRequests: emprendedor propone, inversionista decide ---
+  let requestId = '';
+  await check('Un usuario SÍ puede enviar una solicitud de conexión', async () => {
+    const ref = await assertSucceeds(addDoc(collection(userA, 'connectionRequests'), {
+      fromUid: 'user-a', toUid: 'admin-a', fromName: 'Usuario A', fromAvatar: '', pitch: 'Mi proyecto...', status: 'pending'
+    }));
+    requestId = (ref as any).id;
+  });
+
+  await check('Nadie puede crear una solicitud suplantando a otro remitente', async () => {
+    await assertFails(addDoc(collection(userA, 'connectionRequests'), {
+      fromUid: 'user-b', toUid: 'admin-a', fromName: 'Falso', fromAvatar: '', pitch: 'x', status: 'pending'
+    }));
+  });
+
+  await check('El destinatario SÍ puede aceptar la solicitud', async () => {
+    await assertSucceeds(updateDoc(doc(admin, `connectionRequests/${requestId}`), { status: 'accepted' }));
+  });
+
+  await check('Alguien que no es el destinatario NO puede responder la solicitud de otro', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'connectionRequests/req-2'), { fromUid: 'user-a', toUid: 'admin-a', fromName: 'A', fromAvatar: '', pitch: 'x', status: 'pending' });
+    });
+    await assertFails(updateDoc(doc(userB, 'connectionRequests/req-2'), { status: 'accepted' }));
+  });
+
+  await check('Un tercero ajeno a la solicitud NO puede leerla', async () => {
+    await assertFails(getDoc(doc(userB, `connectionRequests/${requestId}`)));
+  });
+
   // --- conversations: solo participantes ---
   await check('Un tercero (no participante) NO puede leer una conversación ajena', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

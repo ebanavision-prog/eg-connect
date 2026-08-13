@@ -14,6 +14,17 @@ export interface InvestorProfile {
   bio?: string;
 }
 
+export interface ConnectionRequest {
+  id: string;
+  fromUid: string;
+  fromName: string;
+  fromAvatar: string;
+  toUid: string;
+  pitch: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: Timestamp | null;
+}
+
 export interface Initiative {
   id: string;
   title: string;

@@ -396,6 +396,32 @@ export const setCompanyVerified = async (companyId: string, isVerified: boolean)
   }
 };
 
+// Solicitudes de conexión con inversionistas — reemplaza el chat abierto
+// directo: el emprendedor propone, el inversionista decide.
+export const createConnectionRequest = async (fromUid: string, data: Record<string, unknown>) => {
+  const path = 'connectionRequests';
+  try {
+    const docRef = await addDoc(collection(db, path), {
+      ...data,
+      fromUid,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const respondToConnectionRequest = async (requestId: string, status: 'accepted' | 'declined') => {
+  const path = `connectionRequests/${requestId}`;
+  try {
+    await updateDoc(doc(db, path), { status });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
 // Iniciativas y Proyectos: el creador queda como primer miembro automáticamente.
 export const createInitiative = async (creatorId: string, data: Record<string, unknown>) => {
   const path = 'initiatives';
