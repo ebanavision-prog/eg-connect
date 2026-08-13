@@ -600,8 +600,22 @@ export const sendMessage = async (
     });
     await updateDoc(conversationRef, {
       lastMessage: message.type === 'audio' ? '🎤 Mensaje de voz' : (message.text || ''),
-      lastMessageAt: serverTimestamp()
+      lastMessageAt: serverTimestamp(),
+      lastSenderId: senderId
     });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+// Antes unreadMessageCount vivía hardcodeado en 0 en App.tsx — el badge de
+// mensajes no leídos nunca podía encender. `readReceipts` guarda, por
+// conversación, cuándo leyó cada participante por última vez (solo su
+// propia entrada del mapa — ver la regla de update en firestore.rules).
+export const markConversationRead = async (conversationId: string, uid: string) => {
+  const path = `conversations/${conversationId}`;
+  try {
+    await updateDoc(doc(db, path), { [`readReceipts.${uid}`]: serverTimestamp() });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }

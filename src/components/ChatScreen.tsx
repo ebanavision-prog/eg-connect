@@ -3,7 +3,7 @@ import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck,
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
 import { Conversation, Message } from '../types';
-import { auth, getOrCreateConversation, createGroupConversation, sendMessage } from '../services/firebaseService';
+import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 interface ChatScreenProps {
@@ -54,6 +54,22 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  // Marca la conversación como leída al abrirla y cada vez que llega un
+  // mensaje nuevo mientras sigue abierta — antes no existía ningún rastro
+  // de "leído" y el badge de mensajes no leídos vivía fijo en 0.
+  useEffect(() => {
+    if (activeConversationId && currentUid) {
+      markConversationRead(activeConversationId, currentUid);
+    }
+  }, [activeConversationId, currentUid, messages.length]);
+
+  const isConversationUnread = (conv: Conversation) => {
+    if (!currentUid || !conv.lastSenderId || conv.lastSenderId === currentUid || !conv.lastMessageAt) return false;
+    const readAt = conv.readReceipts?.[currentUid];
+    if (!readAt) return true;
+    return readAt.toMillis() < conv.lastMessageAt.toMillis();
+  };
 
   const resolveParticipant = (conv: Conversation) => {
     const otherUid = conv.participants.find((id) => id !== currentUid);
@@ -270,25 +286,27 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
         <div className="space-y-3">
           {filteredConversations.map((conv) => {
             const other = conv.isGroup ? null : resolveParticipant(conv);
+            const unread = isConversationUnread(conv);
             return (
               <motion.div
                 key={conv.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 onClick={() => setActiveConversationId(conv.id)}
-                className="group flex items-center gap-4 p-4 bg-white border border-outline/10 rounded-[2rem] hover:bg-primary/5 hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98]"
+                className={`group flex items-center gap-4 p-4 bg-white border rounded-[2rem] hover:bg-primary/5 hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98] ${unread ? 'border-primary/40 shadow-sm' : 'border-outline/10'}`}
               >
                 <img src={conv.isGroup ? conv.groupAvatar : other?.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform" />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-on-surface text-base truncate flex items-center gap-1.5">
+                    <h3 className={`text-base truncate flex items-center gap-1.5 ${unread ? 'font-black text-primary' : 'font-bold text-on-surface'}`}>
                       {conv.isGroup ? conv.groupName : other?.name}
                       {conv.isGroup && <Users className="w-3 h-3 text-on-surface-variant/40" />}
                     </h3>
                     <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter shrink-0">{formatTime(conv.lastMessageAt)}</span>
                   </div>
-                  <p className="text-xs truncate text-on-surface-variant/70">{conv.lastMessage || 'Sin mensajes todavía'}</p>
+                  <p className={`text-xs truncate ${unread ? 'text-primary font-bold' : 'text-on-surface-variant/70'}`}>{conv.lastMessage || 'Sin mensajes todavía'}</p>
                 </div>
+                {unread && <div className="w-2.5 h-2.5 bg-secondary rounded-full shrink-0" />}
               </motion.div>
             );
           })}

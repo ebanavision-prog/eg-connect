@@ -217,6 +217,19 @@ async function main() {
     await assertFails(addDoc(collection(userB, 'conversations/conv-ab/messages'), { senderId: 'user-a', text: 'Suplantado', type: 'text' }));
   });
 
+  // --- readReceipts: cada participante solo puede tocar su propia entrada ---
+  await check('Un participante SÍ puede marcar su propia entrada de lectura', async () => {
+    await assertSucceeds(updateDoc(doc(userB, 'conversations/conv-ab'), { 'readReceipts.user-b': new Date() }));
+  });
+
+  await check('Un participante NO puede marcar la entrada de lectura de otro', async () => {
+    await assertFails(updateDoc(doc(userB, 'conversations/conv-ab'), { 'readReceipts.user-a': new Date() }));
+  });
+
+  await check('Un participante NO puede colar otro campo junto con su lectura', async () => {
+    await assertFails(updateDoc(doc(userB, 'conversations/conv-ab'), { 'readReceipts.user-b': new Date(), lastMessage: 'Colado' }));
+  });
+
   console.log(`\n📊 [Firestore Rules] ${passed}/${passed + failed} aserciones pasaron con éxito.\n`);
 
   await testEnv.cleanup();

@@ -71,6 +71,7 @@ import { AppNotification } from './types';
 
 import { notificationService } from './services/notificationService';
 import { useAppNotifications } from './hooks/useAppNotifications';
+import { useUnreadMessages } from './hooks/useUnreadMessages';
 
 export default function App() {
   // La pantalla activa vive en la URL (React Router) en vez de en un useState —
@@ -193,7 +194,7 @@ export default function App() {
     }
   }, [notifications]);
 
-  const unreadMessageCount = 0; // Sin conteo real de mensajes no leídos todavía — pendiente de trackear lastReadAt por conversación.
+  const { unreadCount: unreadMessageCount } = useUnreadMessages(firebaseUser?.uid);
 
   if (loading) {
     return (

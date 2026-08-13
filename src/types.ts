@@ -184,5 +184,7 @@ export interface Conversation {
   participants: string[]; // UIDs — for 1-on-1 chats this is always length 2
   lastMessage: string;
   lastMessageAt: Timestamp | null;
+  lastSenderId?: string;
+  readReceipts?: Record<string, Timestamp>;
   createdAt?: Timestamp | null;
 }
