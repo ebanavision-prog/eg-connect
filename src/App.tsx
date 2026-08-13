@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff, RefreshCcw, Share2 } from 'lucide-react';
@@ -70,6 +70,7 @@ import Logo from './components/Logo';
 import { AppNotification } from './types';
 
 import { notificationService } from './services/notificationService';
+import { useAppNotifications } from './hooks/useAppNotifications';
 
 export default function App() {
   // La pantalla activa vive en la URL (React Router) en vez de en un useState —
@@ -161,41 +162,38 @@ export default function App() {
   const [showToast, setShowToast] = useState(false);
   const [lastNotification, setLastNotification] = useState<AppNotification | null>(null);
   const [chatParticipant, setChatParticipant] = useState<{ id: string; name: string; avatar: string } | undefined>(undefined);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  // Simulation: Add a new tender notification for companies after a delay
+  // El centro de notificaciones antes era 100% de mentira: un único aviso de
+  // licitación fabricado por un setTimeout de 15s, siempre el mismo texto,
+  // sin relación con datos reales. Ahora se deriva de Firestore de verdad
+  // (solicitudes de conexión + licitaciones publicadas) — ver el hook.
+  const usersById = useMemo(() => {
+    const map: Record<string, string> = {};
+    realUsers.forEach((u) => { if (u.uid) map[u.uid] = u.name; });
+    return map;
+  }, [realUsers]);
+  const { notifications, markAsRead, clearAll: clearAllNotifications, unreadCount: unreadNotifCount } =
+    useAppNotifications(firebaseUser?.uid, usersById);
+
+  // Avisa con un toast solo cuando llega una notificación nueva de verdad
+  // mientras la app está abierta — no en la carga inicial de las que ya existían.
+  const seenNotifIds = useRef<Set<string> | null>(null);
   useEffect(() => {
-    if (activeProfile === 'company' && onboarded) {
-      const timer = setTimeout(() => {
-        const newNotif: AppNotification = {
-          id: `notif-${Date.now()}`,
-          title: 'Nueva Licitación Coincidente',
-          message: 'Se ha detectado una nueva oportunidad en tu sector que coincide con tu perfil corporativo.',
-          type: 'tender',
-          timestamp: 'Ahora mismo',
-          isRead: false
-        };
-        setNotifications(prev => [newNotif, ...prev]);
-        setLastNotification(newNotif);
-        setShowToast(true);
-        
-        // Hide toast after 5 seconds
-        setTimeout(() => setShowToast(false), 5000);
-      }, 15000);
+    if (seenNotifIds.current === null) {
+      seenNotifIds.current = new Set(notifications.map((n) => n.id));
+      return;
+    }
+    const fresh = notifications.find((n) => !seenNotifIds.current!.has(n.id));
+    notifications.forEach((n) => seenNotifIds.current!.add(n.id));
+    if (fresh) {
+      setLastNotification(fresh);
+      setShowToast(true);
+      const timer = setTimeout(() => setShowToast(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [activeProfile, onboarded]);
+  }, [notifications]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
-  };
-
-  const clearAllNotifications = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-  };
-
-  const unreadNotifCount = notifications.filter(n => !n.isRead).length;
-  const unreadMessageCount = 0; // Reset unread messages count
+  const unreadMessageCount = 0; // Sin conteo real de mensajes no leídos todavía — pendiente de trackear lastReadAt por conversación.
 
   if (loading) {
     return (
@@ -595,16 +593,17 @@ export default function App() {
       {/* Notification Center overlay */}
       <AnimatePresence>
         {isNotificationOpen && (
-          <NotificationCenter 
-            notifications={notifications} 
+          <NotificationCenter
+            notifications={notifications}
             onClose={() => setIsNotificationOpen(false)}
             onMarkAsRead={markAsRead}
             onClearAll={clearAllNotifications}
+            onNavigate={setActiveScreen}
           />
         )}
       </AnimatePresence>
 
-      {/* Toast Alert for matching tenders */}
+      {/* Toast para una notificación real recién llegada */}
       <AnimatePresence>
         {showToast && lastNotification && (
           <motion.div
@@ -618,7 +617,9 @@ export default function App() {
                 <Briefcase className="w-5 h-5 text-on-secondary-container" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Nueva Coincidencia</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                  {lastNotification.type === 'tender' ? 'Nueva Licitación' : 'Notificación'}
+                </p>
                 <p className="text-sm font-bold leading-tight">{lastNotification.title}</p>
               </div>
               <button 

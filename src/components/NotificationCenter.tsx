@@ -1,15 +1,27 @@
 import { Bell, X, Briefcase, MessageSquare, Info, CheckCircle, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AppNotification } from '../types';
+import { AppNotification, Screen } from '../types';
 
 interface NotificationCenterProps {
   notifications: AppNotification[];
   onClose: () => void;
   onMarkAsRead: (id: string) => void;
   onClearAll: () => void;
+  onNavigate?: (screen: Screen) => void;
 }
 
-export default function NotificationCenter({ notifications, onClose, onMarkAsRead, onClearAll }: NotificationCenterProps) {
+export default function NotificationCenter({ notifications, onClose, onMarkAsRead, onClearAll, onNavigate }: NotificationCenterProps) {
+  const handleOpenRelated = (notif: AppNotification) => {
+    onMarkAsRead(notif.id);
+    if (notif.type === 'tender') {
+      onNavigate?.('tenders');
+      onClose();
+    } else if (notif.type === 'message') {
+      onNavigate?.('investors');
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-100 flex justify-end">
       <motion.div 
@@ -53,7 +65,7 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
                     ? 'bg-surface-container-low border-outline/5' 
                     : 'bg-white border-primary shadow-sm ring-1 ring-primary/10'
                 }`}
-                onClick={() => onMarkAsRead(notif.id)}
+                onClick={() => (notif.type === 'message' ? handleOpenRelated(notif) : onMarkAsRead(notif.id))}
               >
                 <div className="flex gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
@@ -76,7 +88,10 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-on-surface-variant/60 font-medium">{notif.timestamp}</span>
                       {notif.type === 'tender' && (
-                        <button className="flex items-center gap-1 text-[10px] font-bold text-secondary uppercase tracking-widest hover:underline">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenRelated(notif); }}
+                          className="flex items-center gap-1 text-[10px] font-bold text-secondary uppercase tracking-widest hover:underline"
+                        >
                           Ver Licitación <ExternalLink className="w-3 h-3" />
                         </button>
                       )}
