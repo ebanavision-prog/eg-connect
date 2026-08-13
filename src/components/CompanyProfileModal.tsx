@@ -152,15 +152,21 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
             )}
 
             <div className="mt-12">
-              <a 
-                href={company.social?.website || "#"} 
-                target="_blank" 
-                rel="noreferrer"
-                className="w-full h-14 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-all"
-              >
-                Visitar Sitio Web
-                <ExternalLink className="w-5 h-5" />
-              </a>
+              {company.social?.website ? (
+                <a
+                  href={company.social.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full h-14 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-all"
+                >
+                  Visitar Sitio Web
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+              ) : (
+                <div className="w-full h-14 bg-surface-container-low text-on-surface-variant/60 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 border border-outline/10">
+                  Esta empresa no añadió un sitio web
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

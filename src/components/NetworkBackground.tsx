@@ -15,6 +15,16 @@ export default function NetworkBackground({ color = 'rgba(1, 102, 114, 0.15)' }:
     const particleCount = 40;
     const connectionDistance = 150;
 
+    // El fundido de las líneas por distancia usaba `color.replace('0.15', ...)`
+    // — un literal fijo. Los tres llamadores de este componente pasan alphas
+    // distintos (0.1, 0.15, 0.2), así que para cualquiera que no fuera
+    // exactamente "0.15" el replace no encontraba nada y la línea se
+    // dibujaba siempre a la opacidad base, sin fundido real. Se extrae el
+    // alpha real del color recibido en vez de asumir uno fijo.
+    const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    const baseAlpha = rgbaMatch ? parseFloat(rgbaMatch[4]) : 0.15;
+    const rgbPrefix = rgbaMatch ? `${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}` : '1, 102, 114';
+
     class Particle {
       x: number;
       y: number;
@@ -77,7 +87,7 @@ export default function NetworkBackground({ color = 'rgba(1, 102, 114, 0.15)' }:
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             const opacity = 1 - dist / connectionDistance;
-            ctx.strokeStyle = color.replace('0.15', (parseFloat('0.15') * opacity).toString());
+            ctx.strokeStyle = `rgba(${rgbPrefix}, ${(baseAlpha * opacity).toFixed(3)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }

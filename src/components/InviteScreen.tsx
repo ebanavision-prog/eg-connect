@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Share2, Copy, Check, MessageSquare, Linkedin, Twitter, Users, Sparkles, Send } from 'lucide-react';
+import { where } from 'firebase/firestore';
+import { auth } from '../services/firebaseService';
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
+
+const REFERRAL_GOAL = 5;
 
 export default function InviteScreen() {
   const [copied, setCopied] = useState(false);
-  
-  const inviteLink = window.location.origin;
-  
+  const uid = auth.currentUser?.uid;
+
+  // El link ahora lleva el uid propio como código de invitación real —
+  // OnboardingScreen lo lee de `?ref=` y lo guarda como `referredBy` en la
+  // cuenta nueva. Antes esta pantalla prometía una insignia "Embajador de
+  // Red" a los 5 invitados sin que existiera ningún rastreo: el link era
+  // solo el origen, sin código, así que nunca se podría haber sabido quién
+  // invitó a quién.
+  const inviteLink = uid ? `${window.location.origin}/?ref=${uid}` : window.location.origin;
+  const { data: referredUsers } = useFirestoreCollection<{ id: string }>(
+    uid ? 'users' : null,
+    uid ? [where('referredBy', '==', uid)] : []
+  );
+  const referralCount = referredUsers.length;
+  const isAmbassador = referralCount >= REFERRAL_GOAL;
+
   const messages = [
     {
       id: 'curiosity',
@@ -127,7 +145,7 @@ export default function InviteScreen() {
         </div>
       </section>
 
-      {/* Viral Perk Banner */}
+      {/* Viral Perk Banner — progreso real, no una promesa sin rastreo */}
       <div className="bg-secondary text-white p-8 rounded-[3rem] relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-8 -translate-y-8" />
         <div className="relative z-10 space-y-4">
@@ -135,9 +153,26 @@ export default function InviteScreen() {
             <Send className="w-5 h-5 text-amber-300" />
             <h4 className="font-black text-xs uppercase tracking-widest">Recompensa Viral</h4>
           </div>
-          <p className="text-sm font-medium leading-relaxed opacity-90">
-            Los perfiles que traigan a 5 nuevos miembros obtendrán la insignia de <span className="text-amber-300 font-black">"Embajador de Red"</span> y aparecerán como sugerencia prioritaria.
-          </p>
+          {isAmbassador ? (
+            <p className="text-sm font-medium leading-relaxed opacity-90">
+              Ya eres <span className="text-amber-300 font-black">"Embajador de Red"</span> — trajiste a {referralCount} {referralCount === 1 ? 'nuevo miembro' : 'nuevos miembros'} con tu link.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm font-medium leading-relaxed opacity-90">
+                Trae a {REFERRAL_GOAL} nuevos miembros con tu link y obtén la insignia de <span className="text-amber-300 font-black">"Embajador de Red"</span>.
+              </p>
+              <div className="space-y-2">
+                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-300 rounded-full transition-all"
+                    style={{ width: `${Math.min(100, (referralCount / REFERRAL_GOAL) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{referralCount} / {REFERRAL_GOAL} invitados reales</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

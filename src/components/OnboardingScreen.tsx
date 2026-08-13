@@ -7,6 +7,11 @@ import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, re
 import { onAuthStateChanged } from 'firebase/auth';
 
 export default function OnboardingScreen({ onComplete }: { onComplete: (data: { uid: string; name: string; phone: string; birthday: string; profession: string; city: string; role: string; avatar: string; profileType: string }) => void }) {
+  // Si llegó por un link de invitación (InviteScreen le añade ?ref=<uid>), se
+  // guarda una sola vez al crear la cuenta — es lo que hace real el conteo
+  // de "Embajador de Red" en InviteScreen (antes era una promesa sin ningún
+  // rastreo detrás).
+  const [referredBy] = useState<string | null>(() => new URLSearchParams(window.location.search).get('ref'));
   const [step, setStep] = useState<'welcome' | 'auth' | 'register' | 'forgot-password'>('welcome');
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
@@ -151,7 +156,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
             profileType,
             employees: profileType === 'company' ? employees : null,
             yearsInMarket: profileType === 'company' ? yearsInMarket : null,
-            recoveryEmail: backupEmail || null
+            recoveryEmail: backupEmail || null,
+            referredBy: referredBy || null
           });
           // registerWithUsername already calls saveUserData and returns user
           // onAuthStateChanged will handle the rest or we can call onComplete
@@ -180,7 +186,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
         avatar: avatarUrl,
         profileType,
         employees: profileType === 'company' ? employees : null,
-        yearsInMarket: profileType === 'company' ? yearsInMarket : null
+        yearsInMarket: profileType === 'company' ? yearsInMarket : null,
+        referredBy: referredBy || null
       };
       await saveUserData(auth.currentUser.uid, data);
       onComplete(data);
