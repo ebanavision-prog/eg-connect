@@ -122,6 +122,13 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
     }
 
+    // Feedback de usuarios: cualquiera puede enviar el suyo, nadie puede leer
+    // ni editar el de otros — solo un admin puede leer la bandeja completa.
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isCallerAdmin();
+    }
+
     // Solicitudes de conexión con inversionistas: en vez de chat abierto directo,
     // el emprendedor manda una propuesta breve y el inversionista la acepta o
     // la rechaza. Solo se abre el chat real si el inversionista acepta.

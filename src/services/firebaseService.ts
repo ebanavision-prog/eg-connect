@@ -437,6 +437,19 @@ export const setCompanyVerified = async (companyId: string, isVerified: boolean)
   }
 };
 
+export const submitFeedback = async (userId: string, data: Record<string, unknown>) => {
+  const path = 'feedback';
+  try {
+    await addDoc(collection(db, path), {
+      ...data,
+      userId,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
 // Solicitudes de conexión con inversionistas — reemplaza el chat abierto
 // directo: el emprendedor propone, el inversionista decide.
 export const createConnectionRequest = async (fromUid: string, data: Record<string, unknown>) => {

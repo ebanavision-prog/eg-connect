@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, MessageSquare, AlertCircle, Sparkles, Star, CheckCircle2, Loader2, ArrowLeft, ChevronRight } from 'lucide-react';
+import { auth, submitFeedback } from '../services/firebaseService';
 
 interface FeedbackScreenProps {
   onBack: () => void;
@@ -12,13 +13,21 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !message.trim()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+    try {
+      await submitFeedback(uid, { type, rating, message: message.trim() });
       setIsSent(true);
-    }, 1500);
+    } catch (error) {
+      setSubmitError('No se pudo enviar tu mensaje. Inténtalo de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSent) {
@@ -117,6 +126,8 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
             />
           </div>
         </section>
+
+        {submitError && <p className="text-xs font-bold text-error text-center px-4">{submitError}</p>}
 
         <button
           disabled={!message || isSubmitting}

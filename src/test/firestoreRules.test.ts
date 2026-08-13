@@ -128,6 +128,31 @@ async function main() {
     await assertFails(setDoc(doc(userB, 'users/user-a/tasks/t1'), { title: 'Intrusa' }));
   });
 
+  // --- feedback: cualquiera envía el suyo, nadie lee el de otros salvo admin ---
+  await check('Un usuario SÍ puede enviar su propio feedback', async () => {
+    await assertSucceeds(addDoc(collection(userA, 'feedback'), { userId: 'user-a', type: 'feedback', rating: 5, message: 'Genial' }));
+  });
+
+  await check('Nadie puede enviar feedback en nombre de otro usuario', async () => {
+    await assertFails(addDoc(collection(userA, 'feedback'), { userId: 'user-b', type: 'feedback', rating: 1, message: 'Suplantado' }));
+  });
+
+  await check('Un usuario normal NO puede leer la bandeja de feedback', async () => {
+    // user-b no sirve aquí: una prueba anterior lo ascendió a admin de verdad
+    // (mismo estado del emulador para toda la suite) — se usa un usuario
+    // fresco, garantizado sin privilegios, para no dar un falso negativo.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/user-plain'), { uid: 'user-plain', name: 'Usuario Normal', profileType: 'individual' });
+      await setDoc(doc(ctx.firestore(), 'feedback/fb-1'), { userId: 'user-a', type: 'feedback', message: 'x' });
+    });
+    const userPlain = testEnv.authenticatedContext('user-plain').firestore();
+    await assertFails(getDoc(doc(userPlain, 'feedback/fb-1')));
+  });
+
+  await check('Un admin SÍ puede leer la bandeja de feedback', async () => {
+    await assertSucceeds(getDoc(doc(admin, 'feedback/fb-1')));
+  });
+
   // --- connectionRequests: emprendedor propone, inversionista decide ---
   let requestId = '';
   await check('Un usuario SÍ puede enviar una solicitud de conexión', async () => {
