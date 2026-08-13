@@ -62,6 +62,7 @@ const TendersScreen = lazy(() => import('./components/TendersScreen'));
 const CRMScreen = lazy(() => import('./components/CRMScreen'));
 const InvestorsScreen = lazy(() => import('./components/InvestorsScreen'));
 const InitiativesScreen = lazy(() => import('./components/InitiativesScreen'));
+const SearchResultsScreen = lazy(() => import('./components/SearchResultsScreen'));
 
 import NotificationCenter from './components/NotificationCenter';
 import NetworkBackground from './components/NetworkBackground';
@@ -251,6 +252,7 @@ export default function App() {
       case 'crm': return <CRMScreen />;
       case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} />;
       case 'initiatives': return <InitiativesScreen profileData={profileData} />;
+      case 'search': return <SearchResultsScreen query={globalSearchTerm} users={realUsers} onContact={startChat} onNavigate={(s) => setActiveScreen(s as Screen)} />;
       default: return <HomeScreen 
         onNavigate={handleNavClick} 
         onSearch={handleGlobalSearch} 
@@ -270,14 +272,16 @@ export default function App() {
 
   const handleNavClick = (id: string) => {
     if (id !== 'chat') setChatParticipant(undefined);
-    if (id !== 'marketplace') setGlobalSearchTerm('');
+    if (id !== 'marketplace' && id !== 'search') setGlobalSearchTerm('');
     setActiveScreen(id as Screen);
     setIsSidebarOpen(false);
   };
 
+  // Antes esto solo mandaba a Marketplace, aunque la caja de búsqueda decía
+  // "Buscar profesionales, socios o licitaciones" — ahora sí busca en toda la red.
   const handleGlobalSearch = (query: string) => {
     setGlobalSearchTerm(query);
-    setActiveScreen('marketplace');
+    setActiveScreen('search');
   };
 
   const startChat = (participant: { id: string; name: string; avatar: string }) => {
