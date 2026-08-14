@@ -1,11 +1,40 @@
-import { useState, useMemo, useEffect } from 'react';
-import { ShoppingBag, Search, Filter, Plus, MessageSquare, MapPin, Tag, ArrowUpRight, ArrowDownRight, Users, Building2, User, X, CheckCircle2, Loader2, DollarSign, Trash2, Share2, Info } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ShoppingBag, Search, Filter, Plus, MessageSquare, MapPin, Tag, ArrowUpRight, ArrowDownRight, Users, Building2, User, X, CheckCircle2, Loader2, DollarSign, Trash2, Share2, Info, GraduationCap, Camera, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ServicePost, Company } from '../types';
-import { notificationService } from '../services/notificationService';
 import { auth, createMarketplacePost } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import CompanyProfileModal from './CompanyProfileModal';
+
+// Hub de servicios aliados, al estilo "mini-programas" de WeChat — enlaces
+// reales a webs de terceros verificadas a mano (no inventadas), no
+// integraciones dentro de la app. Cada una queda claramente marcada como
+// "fuera de EG CONNECT" para no dar la impresión de que el pago, la reserva
+// o el trámite ocurre dentro de esta app cuando en realidad pasa en el sitio
+// del socio. Añadir un socio nuevo es solo agregar una entrada aquí.
+const PARTNER_SERVICES = [
+  {
+    id: 'soyca',
+    name: 'SOYCA Group',
+    description: 'Becas universitarias en China, compras internacionales y energía solar.',
+    url: 'https://www.soycagroup.com',
+    icon: GraduationCap
+  },
+  {
+    id: 'oltinde',
+    name: 'Oltinde',
+    description: 'Directorio de empresas de Guinea Ecuatorial.',
+    url: 'https://oltinde.com',
+    icon: Building2
+  },
+  {
+    id: 'ebanavision',
+    name: 'Ebana Visión',
+    description: 'Producción audiovisual, diseño y marketing.',
+    url: 'https://ebanavision.com',
+    icon: Camera
+  }
+];
 
 export default function MarketplaceScreen({ activeProfile, onContact, initialSearchQuery = '', profileData }: {
   activeProfile: 'individual' | 'company',
@@ -33,16 +62,6 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       setSelectedCompany(company);
     }
   };
-
-  useEffect(() => {
-    const tendersCount = posts.filter(p => p.tags.some(t => t.toLowerCase() === 'licitación')).length;
-    if (tendersCount > 0) {
-      notificationService.sendNotification(
-        'Nuevas Oportunidades',
-        `Hay ${tendersCount} nuevas licitaciones disponibles en el Marketplace.`
-      );
-    }
-  }, []);
 
   // Filter State
   const [filters, setFilters] = useState({
@@ -150,6 +169,36 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
           <Plus className="w-6 h-6 relative z-10" />
         </button>
       </header>
+
+      {/* Hub de Servicios Aliados */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Servicios Aliados</h3>
+          <span className="text-[9px] font-bold text-outline-variant uppercase tracking-widest">Fuera de EG CONNECT</span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+          {PARTNER_SERVICES.map((service) => (
+            <a
+              key={service.id}
+              href={service.url}
+              target="_blank"
+              rel="noreferrer"
+              className="group min-w-[200px] max-w-[200px] p-5 bg-white border border-outline/10 rounded-[2rem] flex flex-col gap-3 hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                  <service.icon className="w-5 h-5" />
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-outline-variant group-hover:text-primary transition-colors" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-on-surface leading-tight">{service.name}</h4>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed mt-1 line-clamp-2">{service.description}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
 
       {/* Tabs */}
       <div className="flex bg-surface-container-high p-1.5 rounded-3xl">
