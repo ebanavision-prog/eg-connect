@@ -205,10 +205,10 @@ export default function ProfileScreen({
           <div className="relative z-10 flex flex-col items-center w-full">
             <div className="bg-white p-4 rounded-[2.5rem] shadow-xl mb-7 relative group border-4 border-white/20">
               <img 
-                src={isEditing ? editForm.avatar : (isIndividual 
+                src={isEditing ? editForm.avatar : (isIndividual
                   ? (profileData?.avatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop")
-                  : "https://logo.clearbit.com/gepetrol.com")
-                } 
+                  : (profileData?.avatar || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=400&fit=crop"))
+                }
                 alt="Avatar" 
                 className="w-36 h-36 rounded-3xl object-cover"
                 referrerPolicy="no-referrer"
