@@ -14,10 +14,12 @@ export function useFirestoreCollection<T>(path: string | null, constraints: Quer
     if (!path) {
       setData([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
     const q = query(collection(db, path), ...constraints);
     const unsubscribe = onSnapshot(
       q,
