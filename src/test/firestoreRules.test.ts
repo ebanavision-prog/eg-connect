@@ -16,7 +16,7 @@ import {
   RulesTestEnvironment
 } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc, updateDoc, getDoc, deleteDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc, deleteDoc, collection, addDoc, deleteField } from 'firebase/firestore';
 
 let testEnv: RulesTestEnvironment;
 let passed = 0;
@@ -80,6 +80,42 @@ async function main() {
 
   await check('Un usuario normal (no admin) NO puede otorgar isAdmin a otro', async () => {
     await assertFails(updateDoc(doc(userA, 'users/user-b'), { isAdmin: true }));
+  });
+
+  // --- users: compartir ubicación en el Mapa (opt-in explícito, MapScreen) ---
+  await check('El dueño SÍ puede activar compartir su propia ubicación', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'users/user-a'), {
+      locationSharing: true,
+      location: { lat: 3.75, lng: 8.77, updatedAt: new Date() }
+    }));
+  });
+
+  await check('Un usuario NO puede escribir la ubicación de otro usuario', async () => {
+    await assertFails(updateDoc(doc(userB, 'users/user-a'), {
+      locationSharing: true,
+      location: { lat: 3.75, lng: 8.77, updatedAt: new Date() }
+    }));
+  });
+
+  await check('Un usuario NO puede colar isAdmin junto con su propia ubicación', async () => {
+    await assertFails(updateDoc(doc(userA, 'users/user-a'), {
+      locationSharing: true,
+      location: { lat: 3.75, lng: 8.77, updatedAt: new Date() },
+      isAdmin: true
+    }));
+  });
+
+  await check('El dueño SÍ puede apagar el compartir y borrar su ubicación guardada', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'users/user-a'), {
+      locationSharing: false,
+      location: deleteField()
+    }));
+  });
+
+  await check('La ubicación queda realmente borrada tras apagar el compartir', async () => {
+    const snap = await getDoc(doc(userA, 'users/user-a'));
+    if (snap.data()?.location !== undefined) throw new Error('El campo location debería haber sido borrado, no solo locationSharing:false');
+    if (snap.data()?.locationSharing !== false) throw new Error('locationSharing debería quedar en false');
   });
 
   // --- companies: verificación solo por admin ---

@@ -224,7 +224,12 @@ export default function App() {
       />;
       case 'timeline': return <TimelineScreen onChat={startChat} users={realUsers} currentUserName={profileData?.name || 'Yo'} />;
       case 'scan': return <ScanScreen onBack={() => setActiveScreen('home')} />;
-      case 'map': return <MapScreen />;
+      case 'map': return <MapScreen
+        users={realUsers}
+        profileData={profileData}
+        onContact={startChat}
+        onUpdateProfile={(data) => setProfileData(data)}
+      />;
       case 'profile': return <ProfileScreen 
         onSettings={() => setActiveScreen('sync-settings')} 
         activeProfile={activeProfile} 

@@ -34,7 +34,8 @@ import {
   limit,
   arrayUnion,
   arrayRemove,
-  increment
+  increment,
+  deleteField
 } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, connectStorageEmulator } from 'firebase/storage';
 import { connectAuthEmulator } from 'firebase/auth';
@@ -237,6 +238,32 @@ export const saveUserData = async (uid: string, data: any) => {
     }, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+// Compartir ubicación en el Mapa: opt-in explícito, campo por campo — nunca
+// se toca el resto del perfil. `coords` no nulo activa el compartir y guarda
+// la posición; `null` lo apaga y BORRA la ubicación guardada (deleteField,
+// no solo locationSharing:false) para que no quede una posición vieja
+// flotando en la base de datos de alguien que ya dijo que no quiere
+// compartirla. Ver firestore.rules: 'location'/'locationSharing' están en
+// la lista blanca de auto-edición de users/{userId}, nada más.
+export const setUserLocationSharing = async (uid: string, coords: { lat: number; lng: number } | null) => {
+  const path = `users/${uid}`;
+  try {
+    await updateDoc(doc(db, path), coords
+      ? {
+          locationSharing: true,
+          location: { lat: coords.lat, lng: coords.lng, updatedAt: serverTimestamp() },
+          updatedAt: serverTimestamp()
+        }
+      : {
+          locationSharing: false,
+          location: deleteField(),
+          updatedAt: serverTimestamp()
+        });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
   }
 };
 
