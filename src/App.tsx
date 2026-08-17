@@ -236,7 +236,14 @@ export default function App() {
         activeProfile={activeProfile} 
         onToggleProfile={setActiveProfile}
         profileData={profileData}
-        onUpdateProfile={(data) => setProfileData(data)}
+        onUpdateProfile={(data) => {
+          setProfileData(data);
+          // realUsers is a one-shot snapshot fetched on boot -- without this,
+          // toggling "Soy Inversionista" (or any profile change) saved fine but
+          // never showed up in InvestorsScreen/HomeScreen until a full reload,
+          // even though those screens filter the very same realUsers array.
+          getAllUsers(100).then(setRealUsers);
+        }}
       />;
       case 'groups': return <DiscoverScreen users={realUsers} onContact={startChat} />;
       case 'summary': return <SummaryScreen onNavigate={(s) => setActiveScreen(s as Screen)} />;
