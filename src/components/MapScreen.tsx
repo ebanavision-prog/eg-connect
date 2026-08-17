@@ -1,48 +1,249 @@
-import { useState } from 'react';
-import { Search, SlidersHorizontal, MessageSquare, UserPlus, Verified, MapPin, WifiOff, X, Info } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import {
+  Search, MessageSquare, WifiOff, X, LocateFixed, RefreshCw,
+  Users, Loader2, ShieldQuestion, Eye, EyeOff
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth, setUserLocationSharing } from '../services/firebaseService';
+import { localDataService } from '../services/localDataService';
 
-export default function MapScreen() {
-  const [showToast, setShowToast] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<{ name: string; role: string; company: string } | null>(null);
+// Guinea Ecuatorial es la base de usuarios entera de esta app — nunca
+// arrancar en una vista genérica de mundo/0,0. Malabo, zoom que muestra
+// la ciudad completa sin estar demasiado alejado.
+const MALABO_CENTER: [number, number] = [3.7523, 8.7742];
+const DEFAULT_ZOOM = 13;
+const MY_LOCATION_ZOOM = 14;
 
-  // NOTA: este mapa es una maqueta visual — fondo estático, pines y
-  // distancias de ejemplo, sin geolocalización real todavía. Antes esta
-  // función mandaba una notificación push REAL (notificationService, la
-  // misma API que usan los mensajes de verdad) anunciando un "contacto
-  // cercano" inventado — eso sí era engañoso de verdad, no solo una maqueta
-  // visual, así que se quitó. El resto de la pantalla sigue siendo un
-  // mockup a propósito hasta que exista geolocalización real que mostrar.
-  const handlePinClick = (name: string, role: string, company: string) => {
-    setSelectedContact({ name, role, company });
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 5000);
+const FALLBACK_AVATAR = 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop';
+
+type LatLng = { lat: number; lng: number };
+
+// Distancia real entre dos puntos (fórmula de Haversine) — nunca una cifra
+// inventada tipo "200m". Si no tenemos la posición del usuario actual,
+// simplemente no se calcula (ver honestDistanceLabel).
+function haversineKm(a: LatLng, b: LatLng): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+// Construye el icono del pin como un elemento DOM real (no una cadena HTML)
+// para que la URL del avatar nunca pueda inyectar marcado — se asigna como
+// propiedad `.src`, no se interpola en un string.
+function createAvatarIcon(avatarUrl: string | undefined, variant: 'self' | 'user'): L.DivIcon {
+  const wrapper = document.createElement('div');
+  wrapper.className = `relative w-11 h-11 rounded-full border-[3px] shadow-xl overflow-hidden bg-surface-container-high ${
+    variant === 'self' ? 'border-secondary ring-4 ring-secondary/25' : 'border-white ring-2 ring-primary-container/30'
+  }`;
+  const img = document.createElement('img');
+  img.src = avatarUrl || FALLBACK_AVATAR;
+  img.alt = '';
+  img.className = 'w-full h-full object-cover';
+  wrapper.appendChild(img);
+  return L.divIcon({ html: wrapper, className: '', iconSize: [44, 44], iconAnchor: [22, 22] });
+}
+
+// Recentra el mapa una sola vez cuando aparece una posición nueva (p.ej. al
+// conseguir el primer fix de geolocalización), sin pelearse con el usuario
+// si luego mueve o hace zoom manualmente.
+function RecenterOnce({ position, zoom }: { position: LatLng | null; zoom: number }) {
+  const map = useMap();
+  const done = useRef(false);
+  useEffect(() => {
+    if (position && !done.current) {
+      done.current = true;
+      map.flyTo([position.lat, position.lng], zoom, { duration: 0.8 });
+    }
+  }, [position, zoom, map]);
+  return null;
+}
+
+type GeoState = 'idle' | 'loading' | 'granted' | 'denied' | 'unsupported';
+
+interface MapScreenProps {
+  users: any[];
+  profileData: any;
+  onContact: (user: any) => void;
+  onUpdateProfile: (data: any) => void;
+}
+
+export default function MapScreen({ users, profileData, onContact, onUpdateProfile }: MapScreenProps) {
+  const currentUid = auth.currentUser?.uid;
+
+  const [geoState, setGeoState] = useState<GeoState>('idle');
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [myPosition, setMyPosition] = useState<LatLng | null>(null);
+
+  const [sharing, setSharing] = useState<boolean>(profileData?.locationSharing === true);
+  const [sharingBusy, setSharingBusy] = useState(false);
+  const [sharingError, setSharingError] = useState<string | null>(null);
+
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOnline, setIsOnline] = useState(localDataService.getIsOnline());
+
+  useEffect(() => {
+    const unsubscribe = localDataService.onStatusChange(setIsOnline);
+    return unsubscribe;
+  }, []);
+
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoState('unsupported');
+      setGeoError('Este navegador no soporta geolocalización. Mostramos Malabo por defecto.');
+      return Promise.resolve<LatLng | null>(null);
+    }
+    setGeoState('loading');
+    setGeoError(null);
+    return new Promise<LatLng | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setMyPosition(coords);
+          setGeoState('granted');
+          resolve(coords);
+        },
+        (err) => {
+          setGeoState('denied');
+          setGeoError(
+            err.code === err.PERMISSION_DENIED
+              ? 'Rechazaste el permiso de ubicación. Mostramos Malabo por defecto y no podemos calcular distancias reales.'
+              : 'No se pudo obtener tu ubicación ahora mismo. Mostramos Malabo por defecto.'
+          );
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  }, []);
+
+  const handleToggleSharing = async () => {
+    if (!currentUid) return;
+    setSharingError(null);
+
+    if (sharing) {
+      // Apagar: nunca dejar una ubicación vieja flotando en la base de datos.
+      setSharingBusy(true);
+      try {
+        await setUserLocationSharing(currentUid, null);
+        setSharing(false);
+        onUpdateProfile({ ...profileData, locationSharing: false, location: undefined });
+      } catch {
+        setSharingError('No se pudo desactivar el compartir. Inténtalo de nuevo.');
+      } finally {
+        setSharingBusy(false);
+      }
+      return;
+    }
+
+    // Encender: hace falta una posición real primero.
+    let coords = myPosition;
+    if (!coords) {
+      coords = await requestLocation();
+    }
+    if (!coords) {
+      setSharingError('Activa tu ubicación arriba antes de poder compartirla.');
+      return;
+    }
+    setSharingBusy(true);
+    try {
+      await setUserLocationSharing(currentUid, coords);
+      setSharing(true);
+      onUpdateProfile({ ...profileData, locationSharing: true, location: { lat: coords.lat, lng: coords.lng } });
+    } catch {
+      setSharingError('No se pudo activar el compartir. Inténtalo de nuevo.');
+    } finally {
+      setSharingBusy(false);
+    }
   };
+
+  const handleRefreshLocation = async () => {
+    const coords = await requestLocation();
+    if (coords && sharing && currentUid) {
+      try {
+        await setUserLocationSharing(currentUid, coords);
+        onUpdateProfile({ ...profileData, locationSharing: true, location: { lat: coords.lat, lng: coords.lng } });
+      } catch {
+        setSharingError('Se actualizó tu posición localmente, pero no se pudo guardar. Inténtalo de nuevo.');
+      }
+    }
+  };
+
+  // Solo gente que se apuntó de verdad: locationSharing===true, coordenadas
+  // numéricas reales, nunca el propio usuario, y siempre respetando
+  // privacyMode==='private' aunque por algún motivo tuviera ubicación guardada.
+  const visibleUsers = useMemo(() => {
+    return (users || []).filter((u) => {
+      if (!u || u.uid === currentUid) return false;
+      if (u.privacyMode === 'private') return false;
+      if (u.locationSharing !== true) return false;
+      const loc = u.location;
+      return loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
+    });
+  }, [users, currentUid]);
+
+  const searchedUsers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return visibleUsers;
+    return visibleUsers.filter((u) =>
+      [u.name, u.profession, u.role, u.city].filter(Boolean).some((f) => String(f).toLowerCase().includes(term))
+    );
+  }, [visibleUsers, searchTerm]);
+
+  const distanceLabelFor = (loc: LatLng): string | null => {
+    if (!myPosition) return null;
+    return formatDistance(haversineKm(myPosition, loc));
+  };
+
+  const selfIcon = useMemo(() => createAvatarIcon(profileData?.avatar, 'self'), [profileData?.avatar]);
 
   return (
     <div className="relative h-[calc(100vh-160px)] -mx-6 overflow-hidden">
-      {/* Toast Notification */}
+      {/* Toast al seleccionar un pin */}
       <AnimatePresence>
-        {showToast && selectedContact && (
+        {selectedUser && (
           <motion.div
             initial={{ opacity: 0, y: -20, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className="fixed top-28 left-1/2 z-[100] w-[calc(100%-3rem)] max-w-sm"
+            className="fixed top-28 left-1/2 z-100 w-[calc(100%-3rem)] max-w-sm"
           >
             <div className="bg-surface-container-highest/95 backdrop-blur-md text-on-surface p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Info className="w-5 h-5 text-primary" />
-              </div>
+              <img
+                src={selectedUser.avatar || FALLBACK_AVATAR}
+                alt={selectedUser.name}
+                className="w-10 h-10 rounded-full object-cover shrink-0"
+              />
               <div className="flex-1 overflow-hidden">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary opacity-70">Contacto Disponible</p>
-                <p className="text-sm font-bold truncate">{selectedContact.name}</p>
-                <p className="text-[10px] text-on-surface-variant font-medium truncate">{selectedContact.role} @ {selectedContact.company}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-primary opacity-70">
+                  {distanceLabelFor(selectedUser.location) || 'Distancia no disponible'}
+                </p>
+                <p className="text-sm font-bold truncate">{selectedUser.name}</p>
+                <p className="text-[10px] text-on-surface-variant font-medium truncate">
+                  {selectedUser.profession || selectedUser.role || 'Miembro de EG Connect'}
+                  {selectedUser.city ? ` · ${selectedUser.city}` : ''}
+                </p>
               </div>
-              <button 
-                onClick={() => setShowToast(false)}
+              <button
+                onClick={() => onContact(selectedUser)}
+                className="p-2.5 bg-primary text-white rounded-full shrink-0 active:scale-90 transition-transform outline-hidden"
+                aria-label="Enviar mensaje"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setSelectedUser(null)}
                 className="p-1.5 hover:bg-black/5 rounded-full outline-hidden transition-colors"
               >
                 <X className="w-4 h-4 text-outline-variant" />
@@ -52,103 +253,138 @@ export default function MapScreen() {
         )}
       </AnimatePresence>
 
-      {/* Map Background Mock */}
-      <div className="absolute inset-0 z-0 text-balance">
-        <img 
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuB68nDawo22qZ9Zmm2MPApE0T7bw3I7OvDp8_xsMNt3290mXBSigTK7EE1Z6VhKYUc_UzJ6X59lgFn71kxAXm2ZfvDcHJu0wPP2LISXjdFHypNnzbzXNyLrkrNlm2ETlc5JDfBLAo6I2y_nsFEjX2R_XyNlJTVkv3m2uJ2y49aA3HME8jLF-RkyH1kMLjiRv7ri0AkYeW_Uf81u-tlLs1t57Fsha_cLPK4NgQAtiX4n4vt6G-3pzoE8AUzFzXl2ACcycn-oBJ-Iv0c" 
-          alt="Mapa de Guinea Ecuatorial" 
-          className="w-full h-full object-cover grayscale-[0.2]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface/90 via-transparent to-surface/90 pointer-events-none" />
+      {/* Mapa real (OpenStreetMap, sin clave/facturación) */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer center={MALABO_CENTER} zoom={DEFAULT_ZOOM} className="w-full h-full" zoomControl={false}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <RecenterOnce position={myPosition} zoom={MY_LOCATION_ZOOM} />
+
+          {myPosition && (
+            <Marker position={[myPosition.lat, myPosition.lng]} icon={selfIcon} />
+          )}
+
+          {searchedUsers.map((u) => (
+            <Marker
+              key={u.uid}
+              position={[u.location.lat, u.location.lng]}
+              icon={createAvatarIcon(u.avatar, 'user')}
+              eventHandlers={{ click: () => setSelectedUser(u) }}
+            />
+          ))}
+        </MapContainer>
       </div>
 
-      {/* Offline Badge */}
-      <div className="absolute top-24 right-6 z-30 flex items-center gap-2 bg-secondary-container px-3 py-1.5 rounded-full shadow-lg border border-white/20">
-        <WifiOff className="w-3 h-3 text-on-secondary-container" />
-        <span className="text-[10px] font-bold text-on-secondary-container uppercase tracking-widest">Mapa Offline</span>
-      </div>
+      {/* Badge de sin conexión — solo aparece si realmente estamos offline */}
+      {!isOnline && (
+        <div className="absolute top-24 right-6 z-30 flex items-center gap-2 bg-secondary-container px-3 py-1.5 rounded-full shadow-lg border border-white/20">
+          <WifiOff className="w-3 h-3 text-on-secondary-container" />
+          <span className="text-[10px] font-bold text-on-secondary-container uppercase tracking-widest">Sin Conexión</span>
+        </div>
+      )}
 
-      {/* Floating Controls */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-lg z-20 space-y-3">
+      {/* Controles flotantes: búsqueda + estado de ubicación */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-lg z-30 space-y-3">
         <div className="glass-effect p-2 rounded-full flex items-center shadow-lg">
           <div className="pl-4 pr-2 text-on-surface-variant">
             <Search className="w-5 h-5" />
           </div>
-          <input 
-            type="text" 
-            placeholder="Buscar contactos cercanos..." 
+          <input
+            type="text"
+            placeholder="Buscar contactos en el mapa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-transparent border-none focus:ring-0 text-on-surface w-full font-sans text-sm outline-hidden"
           />
-          <button className="bg-primary text-white p-3 rounded-full flex items-center justify-center transition-transform active:scale-90 shadow-md outline-hidden">
-            <SlidersHorizontal className="w-4 h-4" />
-          </button>
-        </div>
-        
-        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
-          {['Todo GE', 'Empresas', 'Tecnología', 'Energía'].map((tag, i) => (
-            <button key={tag} className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm outline-hidden ${i === 0 ? 'bg-secondary-container text-on-secondary-container' : 'glass-effect text-on-surface-variant font-medium'}`}>
-              {tag}
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="p-2 text-on-surface-variant outline-hidden">
+              <X className="w-4 h-4" />
             </button>
-          ))}
+          )}
         </div>
-      </div>
 
-      {/* Map Pins */}
-      <div 
-        className="absolute top-[40%] left-[30%] z-10"
-        onClick={() => handlePinClick('Bernardino Edu', 'Especialista IT', 'Consultora Malabo')}
-      >
-        <div className="relative group cursor-pointer">
-          <div className="absolute -inset-4 bg-primary/20 rounded-full animate-ping" />
-          <div className="relative w-12 h-12 rounded-full border-4 border-white shadow-xl overflow-hidden ring-4 ring-primary-container/20 transition-transform group-hover:scale-110">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150" className="w-full h-full object-cover" alt="Pin" />
+        {geoState !== 'granted' && (
+          <div className="glass-effect rounded-[1.5rem] p-4 shadow-lg space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <ShieldQuestion className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-on-surface">Activa tu ubicación</p>
+                <p className="text-[11px] text-on-surface-variant leading-snug mt-0.5">
+                  {geoError || 'Para centrar el mapa donde estás y calcular distancias reales, necesitamos tu ubicación del navegador. Nunca se comparte con nadie hasta que tú lo actives abajo.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={requestLocation}
+              disabled={geoState === 'loading'}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-full font-bold text-xs disabled:opacity-60 active:scale-95 transition-all outline-hidden"
+            >
+              {geoState === 'loading' ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Buscando tu posición...</>
+              ) : (
+                <><LocateFixed className="w-4 h-4" />Usar mi ubicación</>
+              )}
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
-      <div 
-        className="absolute top-[55%] right-[25%] z-10 flex flex-col items-center cursor-pointer group"
-        onClick={() => handlePinClick('Manuel Nguema', 'Ingeniero de Minas', 'GEPetrol')}
-      >
-         <div className="bg-primary-container text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-lg mb-2 uppercase tracking-widest text-center transition-transform group-hover:scale-105">12 Conexiones</div>
-         <div className="w-10 h-10 rounded-full bg-secondary-container border-2 border-white shadow-xl flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
-           <MapPin className="w-5 h-5" />
-         </div>
-      </div>
-
-      {/* Bottom Sheet Preview */}
+      {/* Panel de compartir ubicación + refrescar */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-30">
-        <div className="bg-surface-container-lowest rounded-[2.5rem] p-6 shadow-2xl border-t border-white ring-1 ring-black/5">
+        <div className="bg-surface-container-lowest rounded-[2.5rem] p-6 shadow-2xl border-t border-white ring-1 ring-black/5 space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150" 
-                className="w-16 h-16 rounded-2xl object-cover shadow-sm" 
-                alt="Esperanza B." 
-              />
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-secondary-container rounded-full flex items-center justify-center border-2 border-surface-container-lowest text-on-secondary-container shadow-sm">
-                <Verified className="w-3.5 h-3.5" />
-              </div>
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${sharing ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant'}`}>
+              {sharing ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
             </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start text-balance">
-                <h3 className="text-xl font-bold font-display text-primary">Esperanza Bindang</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant uppercase tracking-widest">200m</span>
-              </div>
-              <p className="text-sm text-secondary font-semibold font-sans leading-tight">Arquitecta de Software @ EG Connect</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold font-display text-primary">Compartir mi ubicación</h3>
+              <p className="text-[11px] text-on-surface-variant leading-snug">
+                {sharing
+                  ? 'Otros miembros de EG Connect pueden verte en este mapa.'
+                  : 'Solo tú ves tu posición. Actívalo para aparecer en el mapa de otros.'}
+              </p>
             </div>
-          </div>
-          
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 py-3.5 bg-surface-container-low text-primary rounded-full font-bold text-xs transition-transform active:scale-95 outline-hidden">
-              <MessageSquare className="w-4 h-4" />
-              Mensaje
-            </button>
-            <button className="flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-full font-bold text-xs transition-transform active:scale-95 shadow-lg shadow-primary/20 outline-hidden">
-              <UserPlus className="w-4 h-4" />
-              Conectar
+            <button
+              onClick={handleToggleSharing}
+              disabled={sharingBusy || !currentUid}
+              className={`w-12 h-7 rounded-full transition-all relative shrink-0 disabled:opacity-50 outline-hidden ${sharing ? 'bg-secondary' : 'bg-surface-container-high'}`}
+              role="switch"
+              aria-checked={sharing}
+              aria-label="Compartir mi ubicación"
+            >
+              {sharingBusy ? (
+                <Loader2 className="w-4 h-4 animate-spin absolute top-1.5 left-1/2 -translate-x-1/2 text-on-surface-variant" />
+              ) : (
+                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${sharing ? 'left-6' : 'left-1'}`} />
+              )}
             </button>
           </div>
+
+          {sharingError && <p className="text-[11px] font-bold text-error text-center">{sharingError}</p>}
+
+          {myPosition && (
+            <button
+              onClick={handleRefreshLocation}
+              disabled={geoState === 'loading'}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-surface-container-low text-primary rounded-full font-bold text-[11px] disabled:opacity-60 active:scale-95 transition-all outline-hidden"
+            >
+              {geoState === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Actualizar mi posición
+            </button>
+          )}
+
+          {visibleUsers.length === 0 && (
+            <div className="flex items-center gap-3 pt-1 border-t border-outline/10">
+              <Users className="w-4 h-4 text-on-surface-variant/50 shrink-0 mt-3" />
+              <p className="text-[11px] text-on-surface-variant/70 leading-snug pt-3">
+                Todavía nadie ha activado compartir ubicación. Actívalo tú y sé el primero en el mapa.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

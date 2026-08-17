@@ -51,7 +51,7 @@ service cloud.firestore {
                           'name', 'phone', 'birthday', 'profession', 'role', 'city', 'avatar',
                           'profileType', 'updatedAt', 'employees', 'yearsInMarket', 'website', 'privacyMode',
                           'isInvestor', 'investorSectors', 'investorTicketRange', 'investorStage', 'investorBio',
-                          'recoveryEmail'
+                          'recoveryEmail', 'location', 'locationSharing'
                         ])))
                       // Un admin puede promover/degradar a otro usuario — y solo ese campo,
                       // nunca el resto del perfil de esa persona.
