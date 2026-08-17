@@ -273,12 +273,18 @@ export const uploadImage = async (path: string, file: Blob): Promise<string> => 
 // antes de guardar y devuelve la URL — si ya es una URL normal (avatar por defecto,
 // no tocado), la deja igual.
 // Firebase Storage no está activado en este proyecto todavía (exige plan Blaze,
-// rechazado por decisión del usuario — ver Fase 0 del plan de eg-connect). Mientras
-// tanto, cualquier fallo de subida cae de vuelta al base64 tal cual se guardaba antes
-// de esta función existir, así que registro/edición de perfil nunca se rompen por esto.
-// El día que se active Storage, empezará a usarlo solo, sin tocar este código de nuevo.
+// rechazado por decisión del usuario — ver Fase 0 del plan de eg-connect). Antes,
+// esta función igual INTENTABA subir a Storage en cada registro/edición con foto —
+// la llamada estaba condenada a fallar siempre, pero el SDK tarda varios segundos
+// en darse por vencido antes de caer al base64, así que cada onboarding con foto
+// se sentía "colgado" sin motivo real (reportado por el usuario en producción).
+// Ahora, mientras VITE_FIREBASE_STORAGE_ENABLED no esté en 'true', ni se intenta —
+// va directo al base64, igual de bien mientras el bucket no exista, pero al
+// instante. El día que se active Storage, basta con poner esa variable en true.
+const storageEnabled = import.meta.env.VITE_FIREBASE_STORAGE_ENABLED === 'true';
+
 export const uploadAvatarIfNeeded = async (path: string, avatarValue: string): Promise<string> => {
-  if (!avatarValue || !avatarValue.startsWith('data:')) return avatarValue;
+  if (!avatarValue || !avatarValue.startsWith('data:') || !storageEnabled) return avatarValue;
   try {
     const blob = await (await fetch(avatarValue)).blob();
     return await uploadImage(path, blob);
