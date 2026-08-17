@@ -30,6 +30,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
   const [isSharing, setIsSharing] = useState(false);
   const [icebreaker, setIcebreaker] = useState<string | null>(null);
   const [isGeneratingIcebreaker, setIsGeneratingIcebreaker] = useState(false);
+  const [icebreakerError, setIcebreakerError] = useState('');
 
   // Notas reales del propio usuario sobre este contacto — antes vivían solo
   // en localStorage bajo un autor inventado ("Bernardino Edu"); ahora es una
@@ -56,12 +57,18 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
   const handleGenerateIcebreaker = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsGeneratingIcebreaker(true);
+    setIcebreakerError('');
     try {
       const text = await generateIcebreaker(contact.name, contact.role, contact.company, contact.tags);
-      setIcebreaker(text);
-      notificationService.sendNotification('Idea de Gemini', 'Hemos generado una frase de apertura personalizada.');
+      if (text) {
+        setIcebreaker(text);
+        notificationService.sendNotification('Idea de Gemini', 'Hemos generado una frase de apertura personalizada.');
+      } else {
+        setIcebreakerError('El asistente de IA no está disponible ahora mismo. Inténtalo más tarde.');
+      }
     } catch (err) {
       console.error(err);
+      setIcebreakerError('El asistente de IA no está disponible ahora mismo. Inténtalo más tarde.');
     } finally {
       setIsGeneratingIcebreaker(false);
     }
@@ -166,6 +173,10 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           <span className="text-[10px] font-bold uppercase tracking-wider">Rompehielo AI</span>
         </button>
       </div>
+
+      {icebreakerError && !icebreaker && (
+        <p className="text-[10px] font-bold text-error mb-4 px-1">{icebreakerError}</p>
+      )}
 
       {/* Icebreaker Display */}
       <AnimatePresence>

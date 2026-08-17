@@ -35,5 +35,8 @@ export async function generateActionSteps(context: string) {
 
 export async function generateIcebreaker(contactName: string, role: string, company: string, tags: string[] = []) {
   const result = await callProxy('icebreaker', { contactName, role, company, tags });
-  return (result?.text as string) || '¡Hola! Me encantaría conectar contigo profesionalmente.';
+  // No inventar una frase "de Gemini" cuando el proxy no responde: devolver null
+  // para que la UI lo distinga de una sugerencia real en vez de hacer pasar un
+  // texto fijo como si fuera IA genuina.
+  return (result?.text as string) || null;
 }
