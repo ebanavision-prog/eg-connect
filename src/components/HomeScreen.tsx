@@ -18,9 +18,12 @@ interface HomeScreenProps {
   };
   userProfile: any;
   realUsers?: any[];
+  onContact?: (participant: { id: string; name: string; avatar: string }) => void;
 }
 
-export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, realUsers = [] }: HomeScreenProps) {
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop';
+
+export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, realUsers = [], onContact }: HomeScreenProps) {
   const [searchValue, setSearchValue] = useState('');
   
   // Profile completeness calculation
@@ -48,7 +51,7 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
 
   const newcomers = useMemo(() => {
     return realUsers
-      .filter(u => u.uid !== userProfile?.uid)
+      .filter(u => u.uid !== userProfile?.uid && u.privacyMode !== 'private')
       .slice(0, 5);
   }, [realUsers, userProfile]);
 
@@ -242,8 +245,10 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
                     <MapPin className="w-2.5 h-2.5" />
                     {person.city || 'G.E.'}
                   </div>
-                  <button 
-                    onClick={() => onNavigate('groups')}
+                  <button
+                    onClick={() => onContact
+                      ? onContact({ id: person.uid, name: person.name, avatar: person.avatar || DEFAULT_AVATAR })
+                      : onNavigate('groups')}
                     className="bg-primary text-white p-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-110 active:scale-90 transition-all font-black text-[9px] uppercase tracking-widest px-4"
                   >
                     Conectar

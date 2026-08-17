@@ -215,12 +215,13 @@ export default function App() {
 
   const renderScreen = () => {
     switch (activeScreen) {
-      case 'home': return <HomeScreen 
-        onNavigate={handleNavClick} 
-        onSearch={handleGlobalSearch} 
-        stats={{ connections: realUsers.length || 0, tasks: 0, unreadChats: unreadMessageCount }} 
+      case 'home': return <HomeScreen
+        onNavigate={handleNavClick}
+        onSearch={handleGlobalSearch}
+        stats={{ connections: realUsers.length || 0, tasks: 0, unreadChats: unreadMessageCount }}
         userProfile={profileData}
         realUsers={realUsers}
+        onContact={startChat}
       />;
       case 'timeline': return <TimelineScreen onChat={startChat} users={realUsers} currentUserName={profileData?.name || 'Yo'} />;
       case 'scan': return <ScanScreen onBack={() => setActiveScreen('home')} />;
@@ -257,12 +258,13 @@ export default function App() {
       case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} profileData={profileData} />;
       case 'initiatives': return <InitiativesScreen profileData={profileData} />;
       case 'search': return <SearchResultsScreen query={globalSearchTerm} users={realUsers} onContact={startChat} onNavigate={(s) => setActiveScreen(s as Screen)} />;
-      default: return <HomeScreen 
-        onNavigate={handleNavClick} 
-        onSearch={handleGlobalSearch} 
-        stats={{ connections: realUsers.length || 0, tasks: 0, unreadChats: unreadMessageCount }} 
+      default: return <HomeScreen
+        onNavigate={handleNavClick}
+        onSearch={handleGlobalSearch}
+        stats={{ connections: realUsers.length || 0, tasks: 0, unreadChats: unreadMessageCount }}
         userProfile={profileData}
         realUsers={realUsers}
+        onContact={startChat}
       />;
     }
   };
