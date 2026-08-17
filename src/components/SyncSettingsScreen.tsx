@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
 import { notificationService, NotificationPreference } from '../services/notificationService';
 import { localDataService } from '../services/localDataService';
 
@@ -142,12 +142,6 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 pb-20">
-        <button className="editorial-card p-6 flex items-center justify-between hover:bg-white hover:shadow-md cursor-pointer border-none shadow-sm outline-hidden group">
-          <span className="font-bold text-primary font-display">Ver Historial de Uso de Datos</span>
-          <ChevronRight className="w-5 h-5 text-outline group-hover:translate-x-1 transition-transform" />
-        </button>
-      </div>
     </div>
   );
 }
