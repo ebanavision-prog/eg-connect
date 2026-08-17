@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, MapPin, MessageSquare, UserPlus, Filter, Grid, List as ListIcon, Building2, User, Share2 } from 'lucide-react';
+import { auth } from '../services/firebaseService';
 
 interface DiscoverScreenProps {
   users: any[];
@@ -8,12 +9,18 @@ interface DiscoverScreenProps {
 }
 
 export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps) {
+  const currentUid = auth.currentUser?.uid;
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterType, setFilterType] = useState<'all' | 'individual' | 'company'>('all');
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
+      // Exclude the logged-in user's own profile from their directory,
+      // matching TimelineScreen/InvestorsScreen/SearchResultsScreen -- without
+      // this, users saw themselves listed and could "Conectar" with themselves.
+      if (user.uid === currentUid) return false;
+
       // Respect privacy mode: exclude private profiles
       if (user.privacyMode === 'private') return false;
 
@@ -26,7 +33,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
       
       return matchesSearch && matchesType;
     });
-  }, [users, searchTerm, filterType]);
+  }, [users, searchTerm, filterType, currentUid]);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -144,15 +151,12 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
                 
                 {viewMode === 'list' && (
                   <div className="mt-4 flex gap-2">
-                    <button 
+                    <button
                       onClick={() => onContact(user)}
                       className="flex-1 py-2 bg-primary/10 text-primary rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <MessageSquare className="w-3 h-3" />
                       Hola
-                    </button>
-                    <button className="p-2 bg-secondary/10 text-secondary rounded-xl">
-                      <UserPlus className="w-4 h-4" />
                     </button>
                   </div>
                 )}
