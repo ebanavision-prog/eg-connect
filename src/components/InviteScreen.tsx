@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  Share2, Copy, Check, MessageSquare, Linkedin, Twitter, Users, Sparkles, Send,
+  Share2, Copy, Check, MessageSquare, Linkedin, Users, Sparkles, Send,
   MessageCircle as MessageStyle, Image as ImageIcon, Download, Facebook, Instagram, Loader2, QrCode
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
@@ -12,9 +12,11 @@ import { generateShareCard } from '../services/shareCardService';
 const REFERRAL_GOAL = 5;
 
 // Igual que VITE_GEMINI_PROXY_URL en aiService.ts y VITE_FIREBASE_STORAGE_ENABLED
-// en firebaseService.ts: config opcional, la funcionalidad que depende de ella
-// (botón "Compartir en Instagram") solo aparece cuando está configurada, y el
-// resto de la pantalla funciona igual de bien sin ella.
+// en firebaseService.ts: config opcional. A diferencia de esas dos, el botón
+// "Compartir en Instagram" SIEMPRE aparece (es la red que de verdad se usa
+// en Malabo — X/Twitter se quitó por eso) — este valor solo se usa como el
+// parámetro opcional `source_application` del deep link cuando existe, para
+// atribución. Sin él, el deep link se manda igual, sin ese parámetro.
 const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID as string | undefined;
 
 export default function InviteScreen({ profileData }: { profileData?: any }) {
@@ -328,11 +330,6 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: any; invi
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(inviteLink)}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handleTwitter = () => {
-    const text = 'Me uní a EG Connect, la red profesional de Guinea Ecuatorial. ¡Únete tú también!';
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(inviteLink)}`, '_blank', 'noopener,noreferrer');
-  };
-
   const handleFacebook = () => {
     // El sharer.php de Facebook solo lee metaetiquetas Open Graph (og:image,
     // og:title, etc.) del propio HTML de la URL que se comparte — no acepta
@@ -356,12 +353,14 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: any; invi
   // Instagram instalado — implementado según la forma documentada de la API,
   // pero sin poder confirmar el resultado final end-to-end en este entorno.
   const handleInstagramShare = async () => {
-    if (!FACEBOOK_APP_ID || !cardBlob) return;
+    if (!cardBlob) return;
     try {
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && 'write' in navigator.clipboard) {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': cardBlob })]);
       }
-      window.location.href = `instagram-stories://share?source_application=${encodeURIComponent(FACEBOOK_APP_ID)}`;
+      window.location.href = FACEBOOK_APP_ID
+        ? `instagram-stories://share?source_application=${encodeURIComponent(FACEBOOK_APP_ID)}`
+        : 'instagram-stories://share';
       setTimeout(() => {
         if (document.visibilityState === 'visible') {
           handleNativeShare();
@@ -451,18 +450,6 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: any; invi
           </button>
         )}
 
-        {FACEBOOK_APP_ID && (
-          <button
-            onClick={handleInstagramShare}
-            disabled={cardState !== 'ready'}
-            title="Best-effort: puede no funcionar según el dispositivo/navegador — ver comentario en el código"
-            className="col-span-2 flex items-center justify-center gap-3 p-5 bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] text-white rounded-[2rem] shadow-lg active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
-          >
-            <Instagram className="w-5 h-5" />
-            <span className="font-black text-[10px] uppercase tracking-widest">Compartir en Instagram</span>
-          </button>
-        )}
-
         <button
           onClick={handleLinkedIn}
           className="flex flex-col items-center gap-3 p-6 bg-[#0A66C2]/10 text-[#0A66C2] rounded-[2rem] border border-[#0A66C2]/20 active:scale-95 transition-all group"
@@ -474,13 +461,15 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: any; invi
         </button>
 
         <button
-          onClick={handleTwitter}
-          className="flex flex-col items-center gap-3 p-6 bg-black/5 text-black rounded-[2rem] border border-black/10 active:scale-95 transition-all group"
+          onClick={handleInstagramShare}
+          disabled={cardState !== 'ready'}
+          title="Best-effort: abre Instagram Stories con la tarjeta ya cargada si tienes la app instalada — no se puede garantizar en todos los dispositivos"
+          className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-[#833AB4]/10 via-[#E1306C]/10 to-[#F77737]/10 text-[#E1306C] rounded-[2rem] border border-[#E1306C]/20 active:scale-95 transition-all group disabled:opacity-40 disabled:pointer-events-none"
         >
-          <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-            <Twitter className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+            <Instagram className="w-6 h-6" />
           </div>
-          <span className="font-black text-[10px] uppercase tracking-widest">X / Twitter</span>
+          <span className="font-black text-[10px] uppercase tracking-widest">Instagram</span>
         </button>
 
         <button
