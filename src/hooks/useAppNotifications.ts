@@ -69,15 +69,22 @@ export function useAppNotifications(uid: string | undefined, usersById: Record<s
       setMine([]);
       return;
     }
+    // Antes estos 3 listeners no tenían callback de error: si Firestore los
+    // rechazaba (reglas no desplegadas, índice faltante, lo que sea), el SDK
+    // solo tiraba un "Uncaught Error in snapshot listener" genérico a la
+    // consola y esta lista se quedaba vacía para siempre sin ningún aviso —
+    // así se descubrió que las reglas de connectionRequests nunca se habían
+    // desplegado a producción. Un error real y explícito es mucho más barato
+    // de diagnosticar que un silencio.
     const qIncoming = query(collection(db, 'connectionRequests'), where('toUid', '==', uid), where('status', '==', 'pending'));
     const unsub1 = onSnapshot(qIncoming, (snap) => {
       setIncoming(snap.docs.map((d) => ({ id: d.id, ...d.data() } as RawRequest)));
-    });
+    }, (err) => console.error('[useAppNotifications] No se pudieron cargar las solicitudes de conexión recibidas:', err.code, err.message));
 
     const qMine = query(collection(db, 'connectionRequests'), where('fromUid', '==', uid));
     const unsub2 = onSnapshot(qMine, (snap) => {
       setMine(snap.docs.map((d) => ({ id: d.id, ...d.data() } as RawRequest)).filter((r) => r.status !== 'pending'));
-    });
+    }, (err) => console.error('[useAppNotifications] No se pudieron cargar mis solicitudes de conexión enviadas:', err.code, err.message));
 
     return () => {
       unsub1();
@@ -93,7 +100,7 @@ export function useAppNotifications(uid: string | undefined, usersById: Record<s
     const qTenders = query(collection(db, 'tenders'), orderBy('createdAt', 'desc'), limit(5));
     const unsub = onSnapshot(qTenders, (snap) => {
       setTenders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as RawTender)));
-    });
+    }, (err) => console.error('[useAppNotifications] No se pudieron cargar las licitaciones recientes:', err.code, err.message));
     return () => unsub();
   }, [uid]);
 
