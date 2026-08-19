@@ -7,4 +7,5 @@ coverage/
 .env*
 !.env.example
 server/config.php
+server/firebase-service-account.json
 .firebase/

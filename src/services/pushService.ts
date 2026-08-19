@@ -1,6 +1,6 @@
 import { getMessaging, getToken, onMessage, isSupported, type Messaging } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { app, db } from './firebaseService';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { app, auth, db } from './firebaseService';
 
 // Notificaciones push reales (FCM), 100% gratis — FCM en sí nunca ha pedido
 // plan Blaze, sea cual sea el volumen. Lo que sí pide Blaze es un disparador
@@ -97,4 +97,70 @@ export async function listenForForegroundPush(onMessageReceived: (title: string,
     const body = payload.notification?.body || payload.data?.body || '';
     onMessageReceived(title, body);
   });
+}
+
+// URL del endpoint PHP que de verdad dispara el push (server/fcm-send.php),
+// mismo patrón opcional que VITE_GEMINI_PROXY_URL. Sin ella, sendPushToUser
+// no intenta ninguna llamada de red — falla en silencio y con honestidad, no
+// rompe nada de lo que sí funciona hoy.
+const FCM_SEND_URL = import.meta.env.VITE_FCM_SEND_URL as string | undefined;
+
+// Dispara un push REAL al usuario `targetUid`, a través del proxy PHP
+// server/fcm-send.php (que a su vez llama a la API HTTP v1 de FCM con las
+// credenciales de la cuenta de servicio que solo vive en el servidor).
+//
+// Quién llama a esto es responsabilidad de cada call site, no de esta
+// función: pensada para ChatScreen (nuevo mensaje), solicitudes de conexión,
+// etc. — deliberadamente NO se engancha sola a ningún evento todavía.
+//
+// Por qué el propio cliente lee fcmTokens de Firestore en vez de que lo haga
+// el PHP: firestore.rules ya permite `get` en users/{uid} a cualquier
+// usuario con sesión (línea ~44), así que no hace falta que el servidor PHP
+// tenga ninguna credencial de Firestore — se mantiene fcm-send.php sin
+// ninguna dependencia de Firestore, tal y como pide el diseño.
+//
+// Devuelve { ok: true } si se pudo intentar el envío (aunque algún token
+// individual falle en el servidor — ver el array `results` en la respuesta
+// del PHP), o { ok: false, error } si no se pudo ni intentar (sin configurar,
+// sin sesión, el usuario destino no tiene tokens, etc.). Pensado para
+// llamarse "best-effort": un fallo aquí nunca debe romper la acción principal
+// (enviar el mensaje, crear la solicitud de conexión...) que lo dispara.
+export async function sendPushToUser(
+  targetUid: string,
+  title: string,
+  body: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!FCM_SEND_URL) {
+    return { ok: false, error: 'Push real no configurado todavía (falta VITE_FCM_SEND_URL).' };
+  }
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    return { ok: false, error: 'No hay sesión activa.' };
+  }
+
+  try {
+    const targetSnap = await getDoc(doc(db, `users/${targetUid}`));
+    const tokens: string[] = targetSnap.exists() ? targetSnap.data().fcmTokens ?? [] : [];
+    if (tokens.length === 0) {
+      return { ok: false, error: 'El usuario destino no tiene notificaciones push activadas.' };
+    }
+
+    const idToken = await currentUser.getIdToken();
+
+    const response = await fetch(FCM_SEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tokens, title, body, idToken }),
+    });
+
+    if (!response.ok) {
+      const errPayload = await response.json().catch(() => ({}));
+      return { ok: false, error: errPayload.error || `El servidor de push respondió ${response.status}.` };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    console.error('[pushService] Error enviando push a', targetUid, err);
+    return { ok: false, error: 'No se pudo contactar el servidor de push.' };
+  }
 }

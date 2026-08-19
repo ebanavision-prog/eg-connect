@@ -12,4 +12,19 @@ return [
     'ALLOWED_ORIGINS' => [
         'https://connect.ebanavision.com',
     ],
+
+    // Firebase project ID (visible, not secret) — usado por server/fcm-send.php
+    // para validar el "aud"/"iss" del idToken del usuario y para construir la
+    // URL de FCM HTTP v1.
+    'FIREBASE_PROJECT_ID' => 'gen-lang-client-0951010679',
+
+    // Ruta al JSON de la cuenta de servicio de Firebase, usada por
+    // server/fcm-send.php para autenticarse contra FCM HTTP v1 y enviar
+    // pushes reales. ES UNA CREDENCIAL REAL — se genera en Firebase Console →
+    // Configuración del proyecto → Cuentas de servicio → "Generar nueva clave
+    // privada", y se sube a mano a esta misma carpeta del servidor (NUNCA al
+    // repo de git — ver la entrada en .gitignore). Mientras este archivo no
+    // exista en el servidor, fcm-send.php responde con un error claro en vez
+    // de fingir que el push se envió.
+    'FIREBASE_SERVICE_ACCOUNT_PATH' => __DIR__ . '/firebase-service-account.json',
 ];
