@@ -72,6 +72,7 @@ import { AppNotification } from './types';
 import { notificationService } from './services/notificationService';
 import { useAppNotifications } from './hooks/useAppNotifications';
 import { useUnreadMessages } from './hooks/useUnreadMessages';
+import { listenForForegroundPush } from './services/pushService';
 
 export default function App() {
   // La pantalla activa vive en la URL (React Router) en vez de en un useState —
@@ -195,6 +196,21 @@ export default function App() {
   }, [notifications]);
 
   const { unreadCount: unreadMessageCount } = useUnreadMessages(firebaseUser?.uid);
+
+  // Push real (FCM) mientras la app está abierta: FCM no muestra sola una
+  // notificación de sistema si la pestaña tiene foco, así que se crea a mano
+  // con el contenido real que llegó. Sin efecto si el dispositivo nunca
+  // activó push (isPushConfigured()===false o el usuario no dio permiso) —
+  // listenForForegroundPush() no hace nada en ese caso.
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    if (firebaseUser) {
+      listenForForegroundPush((title, body) => notificationService.sendNotification(title, body)).then((unsub) => {
+        unsubscribe = unsub;
+      });
+    }
+    return () => unsubscribe?.();
+  }, [firebaseUser]);
 
   if (loading) {
     return (

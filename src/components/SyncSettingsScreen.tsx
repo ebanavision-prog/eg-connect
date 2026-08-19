@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2, Loader2 } from 'lucide-react';
 import { notificationService, NotificationPreference } from '../services/notificationService';
 import { localDataService } from '../services/localDataService';
+import { auth } from '../services/firebaseService';
+import { enablePushNotifications, isPushConfigured } from '../services/pushService';
 
 export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreference>({
@@ -10,6 +12,9 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
   });
   const [permissionStatus, setPermissionStatus] = useState<string>('unknown');
   const [isOnline, setIsOnline] = useState(localDataService.getIsOnline());
+  const [isEnablingPush, setIsEnablingPush] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushError, setPushError] = useState('');
 
   useEffect(() => {
     setNotifPrefs(notificationService.getPreferences());
@@ -27,13 +32,36 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
     notificationService.savePreferences(newPrefs);
   };
 
+  // Antes esto solo pedía el permiso de notificaciones del navegador (y este
+  // mismo banner ya prometía "incluso cuando la app esté cerrada", algo que
+  // ese permiso por sí solo nunca garantiza). Ahora, cuando hay push real
+  // configurado (VITE_FCM_VAPID_KEY), también registra este dispositivo de
+  // verdad para recibir push en segundo plano; si no está configurado, cae
+  // de vuelta al comportamiento anterior sin fingir más de lo que hace.
   const handleRequestPermission = async () => {
+    const uid = auth.currentUser?.uid;
+    setPushError('');
+
+    if (isPushConfigured() && uid) {
+      setIsEnablingPush(true);
+      const result = await enablePushNotifications(uid);
+      setIsEnablingPush(false);
+      if ('Notification' in window) setPermissionStatus(Notification.permission);
+      if (result.ok) {
+        setPushEnabled(true);
+        notificationService.sendNotification('¡Notificaciones activadas!', 'Este dispositivo ya puede recibir alertas reales de EG CONNECT, incluso en segundo plano.');
+      } else {
+        setPushError(result.error || 'No se pudo activar el push.');
+      }
+      return;
+    }
+
     const granted = await notificationService.requestPermission();
     if ('Notification' in window) {
       setPermissionStatus(Notification.permission);
     }
     if (granted) {
-      notificationService.sendNotification('¡Notificaciones activadas!', 'Ahora recibirás alertas importantes de EG CONNECT.');
+      notificationService.sendNotification('¡Notificaciones activadas!', 'Ahora recibirás alertas importantes de EG CONNECT mientras la app esté abierta.');
     }
   };
 
@@ -65,20 +93,27 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
       </section>
 
       {/* Notification Permissions Banner */}
-      {permissionStatus !== 'granted' && (
+      {(permissionStatus !== 'granted' || (isPushConfigured() && !pushEnabled)) && (
         <div className="mx-1 p-6 bg-secondary/5 border border-secondary/20 rounded-[2rem] flex flex-col items-center text-center gap-4">
           <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
             <Bell className="w-6 h-6" />
           </div>
           <div className="space-y-1">
             <h3 className="font-bold text-primary">Activar Notificaciones de Sistema</h3>
-            <p className="text-xs text-on-surface-variant max-w-[240px]">Para recibir alertas instantáneas incluso cuando la app esté cerrada en segundo plano.</p>
+            <p className="text-xs text-on-surface-variant max-w-[240px]">
+              {isPushConfigured()
+                ? 'Para recibir alertas reales incluso cuando la app esté cerrada en segundo plano.'
+                : 'Para recibir alertas mientras la app esté abierta en este dispositivo.'}
+            </p>
           </div>
+          {pushError && <p className="text-[10px] font-bold text-error">{pushError}</p>}
           <button
             onClick={handleRequestPermission}
-            className="px-8 py-3 bg-secondary text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 active:scale-95 transition-all"
+            disabled={isEnablingPush}
+            className="px-8 py-3 bg-secondary text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2"
           >
-            Permitir Notificaciones
+            {isEnablingPush && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isEnablingPush ? 'Activando…' : 'Permitir Notificaciones'}
           </button>
         </div>
       )}

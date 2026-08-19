@@ -118,6 +118,15 @@ async function main() {
     if (snap.data()?.locationSharing !== false) throw new Error('locationSharing debería quedar en false');
   });
 
+  // --- users: token FCM del propio dispositivo (notificaciones push) ---
+  await check('El dueño SÍ puede añadir el token FCM de su propio dispositivo', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'users/user-a'), { fcmTokens: ['token-real-del-dispositivo'] }));
+  });
+
+  await check('Un usuario NO puede escribir el token FCM de otro usuario', async () => {
+    await assertFails(updateDoc(doc(userB, 'users/user-a'), { fcmTokens: ['token-falso'] }));
+  });
+
   // --- companies: verificación solo por admin ---
   await check('El dueño de una empresa NO puede auto-verificarla', async () => {
     await assertFails(updateDoc(doc(userA, 'companies/company-a'), { isVerified: true }));
