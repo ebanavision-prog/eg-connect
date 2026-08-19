@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { QrCode, Zap, Image, ArrowLeft, UserPlus, Sparkles, Edit3, Loader2 } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { QrCode, Image, ArrowLeft, UserPlus, Sparkles, Edit3, Loader2, X } from 'lucide-react';
 import { extractContactFromImage } from '../services/aiService';
 import { auth, addContact } from '../services/firebaseService';
+
+const EMPTY_MANUAL_CONTACT = { name: '', role: '', company: '', location: '', note: '' };
 
 export default function ScanScreen({ onBack }: { onBack: () => void }) {
   const [isScanning, setIsScanning] = useState(false);
@@ -9,6 +11,15 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [scanError, setScanError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Entrada manual, sin cámara ni IA — mismo addContact() real que usa el
+  // flujo de escaneo, solo que el usuario escribe los datos él mismo. Antes
+  // el botón "Manual" no tenía onClick; ahora abre este formulario de verdad.
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualContact, setManualContact] = useState(EMPTY_MANUAL_CONTACT);
+  const [isSavingManual, setIsSavingManual] = useState(false);
+  const [manualError, setManualError] = useState('');
 
   const handleSaveContact = async () => {
     const uid = auth.currentUser?.uid;
@@ -55,6 +66,32 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
       setIsScanning(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleSaveManualContact = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !manualContact.name.trim()) return;
+    setIsSavingManual(true);
+    setManualError('');
+    try {
+      await addContact(uid, {
+        name: manualContact.name.trim(),
+        role: manualContact.role.trim(),
+        company: manualContact.company.trim(),
+        location: manualContact.location.trim(),
+        note: manualContact.note.trim(),
+        tags: [],
+        avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop',
+        lastMet: 'Hoy'
+      });
+      setShowManualForm(false);
+      setManualContact(EMPTY_MANUAL_CONTACT);
+      onBack();
+    } catch (error) {
+      setManualError('No se pudo guardar el contacto. Inténtalo de nuevo.');
+    } finally {
+      setIsSavingManual(false);
+    }
   };
 
   return (
@@ -119,20 +156,31 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
           )}
         </div>
 
+        {/* Input real compartido: la app no abre una cámara en vivo dentro de la
+            pantalla (no hay <video>/getUserMedia aquí), así que "escanear" es
+            en realidad subir una foto — el propio selector del sistema deja
+            elegir la cámara del teléfono o la galería. Por eso no hay un botón
+            de flash aparte: no hay ninguna sesión de cámara propia que
+            controlar; el flash lo maneja la app de cámara nativa del teléfono
+            si el usuario la usa desde este mismo selector. */}
+        <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+
         {/* Floating Controls */}
         <div className="absolute -right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-20">
-          <button className="w-12 h-12 rounded-full glass-effect flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all outline-hidden">
-            <Zap className="w-5 h-5" />
-          </button>
-          <label className="w-12 h-12 rounded-full glass-effect flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all outline-hidden cursor-pointer">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-12 h-12 rounded-full glass-effect flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all outline-hidden"
+          >
             <Image className="w-5 h-5" />
-            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-          </label>
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-        <button className="bg-primary text-white p-6 rounded-[2rem] flex flex-col items-start gap-4 shadow-xl active:scale-95 transition-all outline-hidden">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="bg-primary text-white p-6 rounded-[2rem] flex flex-col items-start gap-4 shadow-xl active:scale-95 transition-all outline-hidden"
+        >
           <div className="bg-white/10 p-3 rounded-2xl">
             <Sparkles className="w-6 h-6 text-secondary-container" />
           </div>
@@ -141,8 +189,11 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <span className="font-display font-bold text-lg">Tarjeta Física</span>
           </div>
         </button>
-        
-        <button className="bg-surface-container-low p-6 rounded-[1.5rem] flex flex-col items-start gap-4 active:scale-95 transition-all outline-hidden hover:bg-surface-container-high transition-colors">
+
+        <button
+          onClick={() => setShowManualForm(true)}
+          className="bg-surface-container-low p-6 rounded-[1.5rem] flex flex-col items-start gap-4 active:scale-95 transition-all outline-hidden hover:bg-surface-container-high transition-colors"
+        >
           <div className="bg-primary/5 p-3 rounded-2xl text-primary">
             <Edit3 className="w-6 h-6" />
           </div>
@@ -152,6 +203,71 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
           </div>
         </button>
       </div>
+
+      {showManualForm && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-surface rounded-[2.5rem] shadow-2xl p-8 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-bold text-xl text-primary">Añadir Contacto Manual</h2>
+              <button
+                onClick={() => { setShowManualForm(false); setManualError(''); }}
+                className="p-2 rounded-full hover:bg-surface-container-high transition-all outline-hidden"
+              >
+                <X className="w-5 h-5 text-on-surface-variant" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Nombre completo"
+                value={manualContact.name}
+                onChange={(e) => setManualContact({ ...manualContact, name: e.target.value })}
+                className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="Cargo"
+                value={manualContact.role}
+                onChange={(e) => setManualContact({ ...manualContact, role: e.target.value })}
+                className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="Empresa"
+                value={manualContact.company}
+                onChange={(e) => setManualContact({ ...manualContact, company: e.target.value })}
+                className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
+              />
+              <input
+                type="text"
+                placeholder="Ciudad"
+                value={manualContact.location}
+                onChange={(e) => setManualContact({ ...manualContact, location: e.target.value })}
+                className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
+              />
+              <textarea
+                placeholder="Nota (opcional)"
+                rows={2}
+                value={manualContact.note}
+                onChange={(e) => setManualContact({ ...manualContact, note: e.target.value })}
+                className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
+              />
+            </div>
+
+            {manualError && <p className="text-[10px] font-bold text-error text-center">{manualError}</p>}
+
+            <button
+              onClick={handleSaveManualContact}
+              disabled={!manualContact.name.trim() || isSavingManual}
+              className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              {isSavingManual && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isSavingManual ? 'Guardando...' : 'Guardar Contacto'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-12 flex items-center gap-2 bg-secondary-container/20 px-4 py-2 rounded-full border border-secondary/10">
         <Sparkles className="w-3.5 h-3.5 text-secondary" />
