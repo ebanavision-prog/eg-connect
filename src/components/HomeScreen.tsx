@@ -184,6 +184,43 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
         </motion.button>
       </div>
 
+      {/* Cumpleaños Hoy — celebrations ya se calculaba de datos reales
+          (birthday real de cada usuario, mismo formato MM-DD que guarda
+          OnboardingScreen) pero nunca se renderizaba en ningún lado. Solo
+          aparece cuando hay alguien de verdad cumpliendo hoy — nada de
+          estado vacío decorativo. */}
+      {celebrations.length > 0 && (
+        <section className="px-1">
+          <div className="editorial-card p-5 bg-gradient-to-br from-amber-50 to-secondary/5 border-amber-200/50 space-y-3">
+            <div className="flex items-center gap-2">
+              <Cake className="w-5 h-5 text-amber-600" />
+              <h3 className="text-sm font-bold font-display text-amber-700">
+                {celebrations.length === 1 ? 'Hoy cumple años' : `Hoy cumplen años (${celebrations.length})`}
+              </h3>
+            </div>
+            <div className="flex flex-col gap-2">
+              {celebrations.map((person) => (
+                <div key={person.uid} className="flex items-center gap-3 bg-white/60 rounded-2xl p-2.5">
+                  <img
+                    src={person.avatar || DEFAULT_AVATAR}
+                    alt={person.name}
+                    className="w-9 h-9 rounded-full object-cover shrink-0"
+                  />
+                  <span className="flex-1 text-sm font-bold text-on-surface truncate">{person.name}</span>
+                  <button
+                    onClick={() => onContact?.({ id: person.uid, name: person.name, avatar: person.avatar || DEFAULT_AVATAR })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-full text-[10px] font-bold uppercase tracking-widest shrink-0"
+                  >
+                    <Gift className="w-3 h-3" />
+                    Felicitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Ecosistema en Movimiento */}
       <section className="space-y-4 px-1">
         <div className="flex items-center justify-between">
