@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ConnectionRequest } from '../types';
 import { auth, createConnectionRequest, respondToConnectionRequest } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
+import { sendPushToUser } from '../services/pushService';
 
 interface InvestorsScreenProps {
   users: any[];
@@ -56,6 +57,9 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
         fromAvatar: profileData?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop',
         pitch: pitchText.trim()
       });
+      // Push real, best-effort — nunca puede romper el envío de la solicitud
+      // en sí, que ya se guardó en Firestore en la línea de arriba.
+      sendPushToUser(pitchTarget.uid, 'Nueva solicitud de conexión', `${profileData?.name || 'Alguien'}: "${pitchText.trim()}"`).catch(() => {});
       setPitchTarget(null);
       setPitchText('');
     } finally {
@@ -67,6 +71,13 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
     setRespondingId(req.id);
     try {
       await respondToConnectionRequest(req.id, status);
+      sendPushToUser(
+        req.fromUid,
+        status === 'accepted' ? 'Solicitud aceptada' : 'Solicitud rechazada',
+        status === 'accepted'
+          ? `${profileData?.name || 'El inversionista'} aceptó tu solicitud de conexión.`
+          : `${profileData?.name || 'El inversionista'} no aceptó tu solicitud de conexión.`
+      ).catch(() => {});
       if (status === 'accepted') {
         onContact({ id: req.fromUid, name: req.fromName, avatar: req.fromAvatar });
       }

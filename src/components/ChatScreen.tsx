@@ -5,6 +5,7 @@ import { where, orderBy } from 'firebase/firestore';
 import { Conversation, Message } from '../types';
 import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
+import { sendPushToUser } from '../services/pushService';
 
 interface ChatScreenProps {
   initialParticipant?: { id: string; name: string; avatar: string };
@@ -82,6 +83,21 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
 
   const [sendError, setSendError] = useState('');
 
+  // Push real, best-effort: nunca bloquea ni puede romper el envío del
+  // mensaje real (ya se guardó en Firestore antes de llamar esto). Si
+  // VITE_FCM_SEND_URL no está configurado, o el destinatario no activó
+  // push, sendPushToUser resuelve con { ok:false } en silencio — no hay
+  // ningún catch que mostrar aquí porque no debe afectar la conversación.
+  const notifyOtherParticipants = (conv: Conversation | undefined, body: string) => {
+    if (!conv || !currentUid) return;
+    const senderName = users.find((u) => u.uid === currentUid)?.name || 'Alguien';
+    conv.participants
+      .filter((uid) => uid !== currentUid)
+      .forEach((uid) => {
+        sendPushToUser(uid, senderName, body).catch(() => {});
+      });
+  };
+
   const startRecording = () => {
     setIsRecording(true);
     setRecordingTime(0);
@@ -93,6 +109,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     setIsRecording(false);
     if (recordingTime > 0 && activeConversationId && currentUid) {
       sendMessage(activeConversationId, currentUid, { type: 'audio', audioUrl: '#', audioDuration: recordingTime })
+        .then(() => notifyOtherParticipants(activeConversation || undefined, '🎤 Mensaje de voz'))
         .catch(() => setSendError('No se pudo enviar el audio.'));
     }
   };
@@ -101,10 +118,12 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     if (!newMessage.trim() || !activeConversationId || !currentUid) return;
     const text = newMessage;
     setNewMessage('');
-    sendMessage(activeConversationId, currentUid, { type: 'text', text }).catch(() => {
-      setSendError('No se pudo enviar el mensaje. Revisa tu conexión.');
-      setNewMessage(text);
-    });
+    sendMessage(activeConversationId, currentUid, { type: 'text', text })
+      .then(() => notifyOtherParticipants(activeConversation || undefined, text))
+      .catch(() => {
+        setSendError('No se pudo enviar el mensaje. Revisa tu conexión.');
+        setNewMessage(text);
+      });
   };
 
   const handleCreateGroup = async () => {
