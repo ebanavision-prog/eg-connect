@@ -36,6 +36,15 @@ const PARTNER_SERVICES = [
   }
 ];
 
+// createMarketplacePost solo guarda createdAt (Firestore Timestamp), nunca un
+// campo "timestamp" — antes el card renderizaba post.timestamp directamente
+// y salía siempre en blanco para cualquier anuncio real. Formateo aquí igual
+// que el resto de la app (ver FeedItem.tsx).
+function formatPostTime(createdAt: ServicePost['createdAt']) {
+  if (!createdAt) return 'Ahora';
+  return createdAt.toDate().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
 export default function MarketplaceScreen({ activeProfile, onContact, initialSearchQuery = '', profileData }: {
   activeProfile: 'individual' | 'company',
   onContact?: (participant?: { id: string; name: string; avatar: string }) => void,
@@ -118,7 +127,10 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
     }).sort((a, b) => {
       if (sortBy === 'price-asc') return (a.priceValue || 0) - (b.priceValue || 0);
       if (sortBy === 'price-desc') return (b.priceValue || 0) - (a.priceValue || 0);
-      return b.id.localeCompare(a.id); // Default to newest (based on ID/mock)
+      // "Más recientes" ordenaba por el ID de Firestore como string — esos IDs
+      // son aleatorios, no cronológicos, así que el orden era efectivamente
+      // arbitrario. createdAt es la marca de tiempo real.
+      return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
     }), [posts, activeTab, searchQuery, filters, sortBy]
   );
 
@@ -446,7 +458,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       </span>
                       {post.authorType === 'company' && <Info className="w-3 h-3 text-primary" />}
                     </h4>
-                    <span className="text-[10px] text-on-surface-variant/60">{post.timestamp}</span>
+                    <span className="text-[10px] text-on-surface-variant/60">{formatPostTime(post.createdAt)}</span>
                   </div>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${

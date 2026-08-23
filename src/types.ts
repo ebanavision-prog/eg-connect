@@ -152,7 +152,7 @@ export interface ServicePost {
   location: string;
   price?: string;
   priceValue?: number;
-  timestamp: string;
+  createdAt: Timestamp | null;
   tags: string[];
   requirements?: string[];
 }
