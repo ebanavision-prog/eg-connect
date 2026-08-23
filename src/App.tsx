@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { WifiOff, RefreshCcw, Share2 } from 'lucide-react';
 import { localDataService } from './services/localDataService';
 import { auth, getUserData, getAllUsers } from './services/firebaseService';
@@ -78,6 +79,7 @@ export default function App() {
   // esto le da a cada pantalla su propia dirección: enlaces compartibles y el
   // botón "atrás" del navegador funcionan de verdad. El resto del componente
   // no cambia: sigue leyendo/comparando `activeScreen` igual que antes.
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const activeScreen = (location.pathname === '/' ? 'home' : location.pathname.slice(1)) as Screen;
@@ -149,9 +151,9 @@ export default function App() {
     if (onboarded) {
       const timer = setTimeout(() => {
         notificationService.simulatePush(
-          'alert', 
-          '¡Bienvenido a EG CONNECT!', 
-          'Explora las nuevas licitaciones locales disponibles hoy.'
+          'alert',
+          t('nav.welcomePushTitle'),
+          t('nav.welcomePushBody')
         );
       }, 5000);
       return () => clearTimeout(timer);
@@ -201,7 +203,7 @@ export default function App() {
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center">
         <NetworkBackground color="rgba(1, 102, 114, 0.1)" />
         <Logo size={80} className="animate-pulse" />
-        <p className="mt-4 text-xs font-bold text-primary uppercase tracking-[0.3em]">Cargando...</p>
+        <p className="mt-4 text-xs font-bold text-primary uppercase tracking-[0.3em]">{t('nav.loading')}</p>
       </div>
     );
   }
@@ -277,10 +279,10 @@ export default function App() {
   };
 
   const navItems = [
-    { id: 'home', icon: Home, label: 'Inicio' },
-    { id: 'timeline', icon: History, label: 'Reciente' },
-    { id: 'scan', icon: QrCode, label: 'Escanear' },
-    { id: 'groups', icon: LayoutDashboard, label: 'Descubrir' }
+    { id: 'home', icon: Home, label: t('nav.bottom.home') },
+    { id: 'timeline', icon: History, label: t('nav.bottom.recent') },
+    { id: 'scan', icon: QrCode, label: t('nav.bottom.scan') },
+    { id: 'groups', icon: LayoutDashboard, label: t('nav.bottom.discover') }
   ];
 
   const handleNavClick = (id: string) => {
@@ -317,7 +319,7 @@ export default function App() {
               className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-error text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs uppercase tracking-widest"
             >
               <WifiOff className="w-3 h-3" />
-              <span>Modo Sin Conexión</span>
+              <span>{t('nav.offlineBanner')}</span>
             </motion.div>
           )}
           {isOnline && syncStatus !== 'idle' && (
@@ -328,7 +330,7 @@ export default function App() {
               className={`${syncStatus === 'synced' ? 'bg-emerald-500' : 'bg-primary'} fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs uppercase tracking-widest transition-colors`}
             >
               {syncStatus === 'syncing' ? <RefreshCcw className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-              <span>{syncStatus === 'syncing' ? 'Sincronizando' : 'Sincronizado'}</span>
+              <span>{syncStatus === 'syncing' ? t('nav.syncing') : t('nav.synced')}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -357,153 +359,153 @@ export default function App() {
               </div>
 
               <div className="flex-1 space-y-2 overflow-y-auto pr-2">
-                <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">Utilidades</p>
-                <button 
+                <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">{t('nav.sidebar.utilitiesLabel')}</p>
+                <button
                   onClick={() => handleNavClick('map')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'map' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <MapIcon className="w-5 h-5" />
-                  <span className="font-bold">Mapa de Conexiones</span>
+                  <span className="font-bold">{t('nav.sidebar.map')}</span>
                   <div className="ml-auto flex items-center gap-1.5 bg-secondary-container px-2 py-0.5 rounded-full">
                     <Wifi className="w-2.5 h-2.5 text-on-secondary-container" />
-                    <span className="text-[8px] font-bold text-on-secondary-container tracking-tighter">OFFLINE</span>
+                    <span className="text-[8px] font-bold text-on-secondary-container tracking-tighter">{t('nav.sidebar.mapOfflineBadge')}</span>
                   </div>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('events')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'events' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Calendar className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Agenda de Eventos</span>
+                  <span className="font-bold">{t('nav.sidebar.events')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('tenders')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'tenders' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Briefcase className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Licitaciones y Proyectos</span>
+                  <span className="font-bold">{t('nav.sidebar.tenders')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('groups')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'groups' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <LayoutDashboard className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Descubrir Usuarios</span>
+                  <span className="font-bold">{t('nav.sidebar.discover')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('invite')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'invite' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Share2 className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Impulsar Red</span>
+                  <span className="font-bold">{t('nav.sidebar.invite')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('crm')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'crm' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Users className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Gestor de Relaciones (CRM)</span>
+                  <span className="font-bold">{t('nav.sidebar.crm')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('marketplace')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'marketplace' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <ShoppingBag className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Marketplace</span>
-                  <div className="ml-auto bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Nuevo</div>
+                  <span className="font-bold">{t('nav.sidebar.marketplace')}</span>
+                  <div className="ml-auto bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{t('nav.sidebar.marketplaceBadge')}</div>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('companies')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'companies' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Building2 className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Empresas (Ecosistema)</span>
+                  <span className="font-bold">{t('nav.sidebar.companies')}</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('investors')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'investors' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Handshake className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Inversionistas</span>
+                  <span className="font-bold">{t('nav.sidebar.investors')}</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('initiatives')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'initiatives' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Rocket className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Iniciativas y Proyectos</span>
+                  <span className="font-bold">{t('nav.sidebar.initiatives')}</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('chat')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'chat' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <MessageSquare className="w-5 h-5 text-secondary" />
-                  <span className="font-bold">Mensajería</span>
+                  <span className="font-bold">{t('nav.sidebar.chat')}</span>
                   {unreadMessageCount > 0 && (
                     <div className="ml-auto bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                       {unreadMessageCount}
                     </div>
                   )}
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('tasks')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'tasks' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-bold">Mis Tareas</span>
+                  <span className="font-bold">{t('nav.sidebar.tasks')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('sync-settings')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'sync-settings' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Settings className="w-5 h-5" />
-                  <span className="font-bold">Sincronización</span>
+                  <span className="font-bold">{t('nav.sidebar.syncSettings')}</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleNavClick('feedback')}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'feedback' ? 'bg-secondary/10 text-secondary' : 'hover:bg-surface-container-low text-on-surface'}`}
                 >
                   <Heart className="w-5 h-5" />
-                  <span className="font-bold">Feedback y Propuestas</span>
+                  <span className="font-bold">{t('nav.sidebar.feedback')}</span>
                 </button>
-                
+
                 <div className="pt-8 space-y-2">
-                  <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">Intercambiar Perfil</p>
+                  <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">{t('nav.sidebar.switchProfileLabel')}</p>
                   <div className="grid grid-cols-2 gap-2 px-2 mb-4">
-                    <button 
+                    <button
                       onClick={() => setActiveProfile('individual')}
                       className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all border ${
-                        activeProfile === 'individual' 
-                          ? 'bg-secondary/10 border-secondary text-secondary' 
+                        activeProfile === 'individual'
+                          ? 'bg-secondary/10 border-secondary text-secondary'
                           : 'bg-surface-container-low border-transparent text-on-surface-variant opacity-60'
                       }`}
                     >
                       <User className="w-5 h-5" />
-                      <span className="text-[9px] font-bold uppercase tracking-tighter">Personal</span>
+                      <span className="text-[9px] font-bold uppercase tracking-tighter">{t('common.profileTypePersonal')}</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveProfile('company')}
                       className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all border ${
-                        activeProfile === 'company' 
-                          ? 'bg-primary/10 border-primary text-primary' 
+                        activeProfile === 'company'
+                          ? 'bg-primary/10 border-primary text-primary'
                           : 'bg-surface-container-low border-transparent text-on-surface-variant opacity-60'
                       }`}
                     >
                       <Building2 className="w-5 h-5" />
-                      <span className="text-[9px] font-bold uppercase tracking-tighter">Empresa</span>
+                      <span className="text-[9px] font-bold uppercase tracking-tighter">{t('common.profileTypeCompany')}</span>
                     </button>
                   </div>
 
-                  <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">Cuenta</p>
-                  <button 
+                  <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">{t('nav.sidebar.accountLabel')}</p>
+                  <button
                     onClick={() => handleNavClick('profile')}
                     className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'profile' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
                   >
                     <User className="w-5 h-5" />
                     <div className="text-left">
-                      <p className="font-bold">{activeProfile === 'individual' ? 'Mi Perfil' : 'Perfil de Empresa'}</p>
+                      <p className="font-bold">{activeProfile === 'individual' ? t('nav.sidebar.myProfile') : t('nav.sidebar.companyProfile')}</p>
                       <p className="text-[10px] text-on-surface-variant">
-                        {profileData?.name || 'Usuario'}
+                        {profileData?.name || t('nav.sidebar.defaultUserName')}
                       </p>
                     </div>
                     <ChevronRight className="ml-auto w-4 h-4 opacity-40" />
@@ -512,16 +514,16 @@ export default function App() {
               </div>
 
               <div className="mt-auto border-t border-outline/10 pt-6">
-                <button 
+                <button
                   onClick={() => auth.signOut()}
                   className="w-full flex items-center gap-4 px-4 py-4 text-error font-bold rounded-2xl hover:bg-error-container/10 transition-all outline-hidden"
                 >
                   <LogOut className="w-5 h-5" />
-                  Salir de la sesión
+                  {t('nav.sidebar.signOut')}
                 </button>
                 <div className="mt-6 text-center space-y-1">
                   <p className="text-[10px] text-on-surface-variant font-bold opacity-40 uppercase tracking-widest">
-                    V1.0 • Guinea Ecuatorial
+                    {t('nav.sidebar.versionFooter')}
                   </p>
                 </div>
               </div>
@@ -548,7 +550,7 @@ export default function App() {
               <Logo size={40} className="sm:hidden" />
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-primary/5 rounded-full border border-primary/10">
                 <div className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Sincronizado</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{t('nav.header.syncedBadge')}</span>
               </div>
             </div>
           </div>
@@ -562,18 +564,18 @@ export default function App() {
                     ? 'bg-white text-secondary shadow-sm' 
                     : 'text-on-surface-variant opacity-40 hover:opacity-100'
                 }`}
-                title="Perfil Personal"
+                title={t('nav.header.personalProfileTitle')}
               >
                 <User className="w-3.5 h-3.5" />
               </button>
-              <button 
+              <button
                 onClick={() => setActiveProfile('company')}
                 className={`p-1.5 rounded-full transition-all ${
-                  activeProfile === 'company' 
-                    ? 'bg-white text-primary shadow-sm' 
+                  activeProfile === 'company'
+                    ? 'bg-white text-primary shadow-sm'
                     : 'text-on-surface-variant opacity-40 hover:opacity-100'
                 }`}
-                title="Perfil de Empresa"
+                title={t('nav.header.companyProfileTitle')}
               >
                 <Building2 className="w-3.5 h-3.5" />
               </button>
@@ -596,8 +598,8 @@ export default function App() {
                 src={profileData?.avatar || (activeProfile === 'individual' 
                   ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150"
                   : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=150&h=150")
-                } 
-                alt="Perfil" 
+                }
+                alt={t('nav.header.avatarAlt')}
                 className="w-full h-full object-cover transition-all duration-500"
               />
             </button>
@@ -633,14 +635,14 @@ export default function App() {
               </div>
               <div className="flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
-                  {lastNotification.type === 'tender' ? 'Nueva Licitación' : 'Notificación'}
+                  {lastNotification.type === 'tender' ? t('nav.toast.newTender') : t('nav.toast.notification')}
                 </p>
                 <p className="text-sm font-bold leading-tight">{lastNotification.title}</p>
               </div>
-              <button 
-                onClick={() => setShowToast(false)} 
+              <button
+                onClick={() => setShowToast(false)}
                 className="p-1 hover:bg-white/10 rounded-full outline-hidden transition-colors"
-                aria-label="Cerrar notificación"
+                aria-label={t('nav.toast.closeAria')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -678,7 +680,7 @@ export default function App() {
                 exit={{ opacity: 0, scale: 0.5, y: 20 }}
                 onClick={() => setActiveScreen('scan')}
                 className="w-12 h-12 bg-white text-primary rounded-full shadow-lg border border-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all active:scale-90 outline-hidden group"
-                title="Escanear Tarjeta"
+                title={t('nav.fab.scanCard')}
               >
                 <QrCode className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </motion.button>
@@ -690,7 +692,7 @@ export default function App() {
                 transition={{ delay: 0.1 }}
                 onClick={() => setActiveScreen('chat')}
                 className="w-12 h-12 bg-white text-secondary rounded-full shadow-lg border border-secondary/10 flex items-center justify-center hover:bg-secondary hover:text-white transition-all active:scale-90 outline-hidden group"
-                title="Nuevo Mensaje"
+                title={t('nav.fab.newMessage')}
               >
                 <MessageSquare className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </motion.button>
