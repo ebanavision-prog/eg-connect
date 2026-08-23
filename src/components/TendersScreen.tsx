@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Briefcase, Search, Filter, Calendar, MapPin,
-  ChevronRight, Building2, ShieldCheck, Download,
-  ExternalLink, FileText, Zap, Globe, Plus, X, Loader2, Trash2
+  Briefcase, Search, Calendar, MapPin,
+  Building2, ShieldCheck,
+  FileText, Zap, Globe, Plus, X, Loader2, Trash2
 } from 'lucide-react';
 import { LocalContentOpportunity } from '../types';
 import { auth, createTender, deleteTender } from '../services/firebaseService';
@@ -18,6 +18,7 @@ export default function TendersScreen({ profileData }: { profileData?: any }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedTender, setSelectedTender] = useState<LocalContentOpportunity | null>(null);
 
   const isAdmin = !!profileData?.isAdmin;
   const currentUid = auth.currentUser?.uid;
@@ -182,12 +183,12 @@ export default function TendersScreen({ profileData }: { profileData?: any }) {
             </div>
 
             <div className="flex gap-3">
-              <button className="flex-1 bg-primary text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+              <button
+                onClick={() => setSelectedTender(tender)}
+                className="flex-1 bg-primary text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
                 <FileText className="w-3.5 h-3.5" />
                 Más Detalles
-              </button>
-              <button className="w-12 h-12 bg-surface-container text-on-surface rounded-2xl flex items-center justify-center active:scale-95 transition-all text-secondary">
-                <Download className="w-4 h-4" />
               </button>
               {isAdmin && (
                 <button
@@ -223,6 +224,83 @@ export default function TendersScreen({ profileData }: { profileData?: any }) {
           Las licitaciones marcadas con el sello de **Contenido Local** requieren una cuota mínima del 35% de participación de empresas nacionales según la normativa vigente en Guinea Ecuatorial.
         </p>
       </div>
+
+      {/* Modal de detalle — antes "Más Detalles" no tenía onClick y la descripción
+          quedaba siempre truncada a 2 líneas sin forma de leerla completa. */}
+      <AnimatePresence>
+        {selectedTender && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTender(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-8 space-y-5">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center p-2 border border-outline/5 shrink-0">
+                      <img src={selectedTender.companyLogo} alt={selectedTender.companyName} className="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-extrabold font-display text-on-surface leading-tight">{selectedTender.title}</h2>
+                      <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{selectedTender.companyName}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedTender(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all shrink-0">
+                    <X className="w-6 h-6 text-on-surface-variant" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <MapPin className="w-3.5 h-3.5 text-secondary" />
+                    <span className="text-xs font-bold">{selectedTender.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <Calendar className="w-3.5 h-3.5 text-secondary" />
+                    <span className="text-xs font-bold">Cierre: {selectedTender.deadline}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <Building2 className="w-3.5 h-3.5 text-secondary" />
+                    <span className="text-xs font-bold">{selectedTender.category}</span>
+                  </div>
+                  {selectedTender.budget && (
+                    <div className="flex items-center gap-2 text-on-surface-variant">
+                      <ShieldCheck className="w-3.5 h-3.5 text-secondary" />
+                      <span className="text-xs font-bold">{selectedTender.budget}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">Descripción</p>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{selectedTender.description}</p>
+                </div>
+
+                {selectedTender.requirements.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">Requisitos Clave</p>
+                    {selectedTender.requirements.map((req, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs font-bold text-primary">
+                        <div className="w-1 h-1 rounded-full bg-secondary mt-1.5 shrink-0" />
+                        <span>{req}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {isAdmin && (
         <AnimatePresence>
