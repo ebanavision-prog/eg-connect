@@ -14,6 +14,9 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterLocation, setFilterLocation] = useState('');
+  const [filterVerifiedOnly, setFilterVerifiedOnly] = useState(false);
 
   const isAdmin = !!profileData?.isAdmin;
   const currentUid = auth.currentUser?.uid;
@@ -50,10 +53,18 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
     }
   });
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    company.industry.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const locationOptions = Array.from(new Set(companies.map((c) => c.location).filter(Boolean))).sort();
+
+  const filteredCompanies = companies.filter((company) => {
+    const matchesSearch =
+      company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      company.industry.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLocation = !filterLocation || company.location === filterLocation;
+    const matchesVerified = !filterVerifiedOnly || company.isVerified;
+    return matchesSearch && matchesLocation && matchesVerified;
+  });
+
+  const activeFilterCount = (filterLocation ? 1 : 0) + (filterVerifiedOnly ? 1 : 0);
 
   const handleAddDepartment = () => {
     setFormData({ ...formData, departments: [...formData.departments, ''] });
@@ -148,9 +159,66 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
               <LayoutList className="w-5 h-5" />
             </button>
           </div>
-          <button className="p-4 bg-surface-container-low border border-outline/10 rounded-[1.5rem] text-on-surface-variant hover:bg-surface-container-high transition-colors outline-hidden">
-            <Filter className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowFilters((prev) => !prev)}
+              className={`relative p-4 border rounded-[1.5rem] transition-colors outline-hidden ${
+                activeFilterCount > 0 ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-surface-container-low border-outline/10 text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              <Filter className="w-5 h-5" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-secondary text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            <AnimatePresence>
+              {showFilters && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowFilters(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-outline/10 p-4 space-y-4 z-40"
+                  >
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Ubicación</label>
+                      <select
+                        className="select-field-custom"
+                        value={filterLocation}
+                        onChange={(e) => setFilterLocation(e.target.value)}
+                      >
+                        <option value="">Todas</option>
+                        {locationOptions.map((loc) => (
+                          <option key={loc} value={loc}>{loc}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filterVerifiedOnly}
+                        onChange={(e) => setFilterVerifiedOnly(e.target.checked)}
+                        className="w-4 h-4 accent-primary"
+                      />
+                      <span className="text-xs font-bold text-on-surface">Solo empresas verificadas</span>
+                    </label>
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => { setFilterLocation(''); setFilterVerifiedOnly(false); }}
+                        className="w-full text-center text-[10px] font-black uppercase tracking-widest text-error py-2 rounded-xl hover:bg-error/5 transition-colors"
+                      >
+                        Limpiar filtros
+                      </button>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
