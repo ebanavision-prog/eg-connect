@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, UserCircle, Bell, MessageCircle, AlertTriangle, Wifi, WifiOff, CheckCircle2, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { notificationService, NotificationPreference } from '../services/notificationService';
 import { localDataService } from '../services/localDataService';
 
 export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
+  const { t, i18n } = useTranslation();
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreference>({
     messages: true,
     alerts: true,
@@ -33,8 +35,12 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
       setPermissionStatus(Notification.permission);
     }
     if (granted) {
-      notificationService.sendNotification('¡Notificaciones activadas!', 'Ahora recibirás alertas importantes de EG CONNECT.');
+      notificationService.sendNotification(t('syncSettings.notificationsEnabledTitle'), t('syncSettings.notificationsEnabledBody'));
     }
+  };
+
+  const handleLanguageChange = (lng: 'es' | 'en') => {
+    i18n.changeLanguage(lng);
   };
 
   return (
@@ -43,25 +49,63 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
         <button onClick={onBack} className="p-3 rounded-full hover:bg-surface-container-high transition-all outline-hidden">
           <ArrowLeft className="w-6 h-6 text-primary" />
         </button>
-        <h1 className="font-display font-extrabold text-3xl text-primary tracking-tight">Sincronización y Alertas</h1>
+        <h1 className="font-display font-extrabold text-3xl text-primary tracking-tight">{t('syncSettings.title')}</h1>
       </div>
 
       <section className="space-y-4">
         <div className="flex items-baseline justify-between px-1">
-          <h2 className="text-4xl font-extrabold text-on-surface tracking-tight font-display">Estado</h2>
+          <h2 className="text-4xl font-extrabold text-on-surface tracking-tight font-display">{t('syncSettings.statusTitle')}</h2>
           {isOnline ? (
             <span className="text-success font-bold text-xs bg-success/10 px-4 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-2">
-              <Wifi className="w-3 h-3" /> Online
+              <Wifi className="w-3 h-3" /> {t('syncSettings.online')}
             </span>
           ) : (
             <span className="text-error font-bold text-xs bg-error/10 px-4 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-2 animate-pulse">
-              <WifiOff className="w-3 h-3" /> Offline
+              <WifiOff className="w-3 h-3" /> {t('syncSettings.offline')}
             </span>
           )}
         </div>
         <p className="text-on-surface-variant leading-relaxed max-w-sm font-medium px-1">
-          Tus datos se guardan de forma real en tu dispositivo y se sincronizan solos en cuanto recuperas conexión — no hace falta ningún paso manual.
+          {t('syncSettings.statusDescription')}
         </p>
+      </section>
+
+      {/* Language Switcher */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b border-outline/10 pb-4 px-1">
+          <span className="text-primary font-bold tracking-[0.2em] text-[10px] uppercase">{t('syncSettings.languageLabel')}</span>
+        </div>
+        <div className="editorial-card p-6 flex items-center gap-6 border-none shadow-md mx-1">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <Languages className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-on-surface">{t('syncSettings.languageLabel')}</h3>
+            <p className="text-on-surface-variant text-xs font-medium">{t('syncSettings.languageDesc')}</p>
+          </div>
+          <div className="flex p-1 bg-surface-container-high rounded-full shrink-0">
+            <button
+              onClick={() => handleLanguageChange('es')}
+              aria-pressed={i18n.resolvedLanguage === 'es'}
+              title={t('syncSettings.languageSpanish')}
+              className={`px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all ${
+                i18n.resolvedLanguage === 'es' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant opacity-60 hover:opacity-100'
+              }`}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => handleLanguageChange('en')}
+              aria-pressed={i18n.resolvedLanguage === 'en'}
+              title={t('syncSettings.languageEnglish')}
+              className={`px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all ${
+                i18n.resolvedLanguage === 'en' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant opacity-60 hover:opacity-100'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* Notification Permissions Banner */}
@@ -71,14 +115,14 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
             <Bell className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-bold text-primary">Activar Notificaciones de Sistema</h3>
-            <p className="text-xs text-on-surface-variant max-w-[240px]">Para recibir alertas instantáneas incluso cuando la app esté cerrada en segundo plano.</p>
+            <h3 className="font-bold text-primary">{t('syncSettings.enableNotificationsTitle')}</h3>
+            <p className="text-xs text-on-surface-variant max-w-[240px]">{t('syncSettings.enableNotificationsDesc')}</p>
           </div>
           <button
             onClick={handleRequestPermission}
             className="px-8 py-3 bg-secondary text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg shadow-secondary/20 active:scale-95 transition-all"
           >
-            Permitir Notificaciones
+            {t('syncSettings.enableNotificationsButton')}
           </button>
         </div>
       )}
@@ -86,21 +130,21 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
       {/* Preference Toggles */}
       <section className="space-y-8 pt-6">
         <div className="flex items-center justify-between border-b border-outline/10 pb-4 px-1">
-          <span className="text-primary font-bold tracking-[0.2em] text-[10px] uppercase">Preferencias de Comunicación</span>
+          <span className="text-primary font-bold tracking-[0.2em] text-[10px] uppercase">{t('syncSettings.preferencesTitle')}</span>
         </div>
 
         <div className="space-y-6 px-1">
           {[
             {
               key: 'messages' as const,
-              label: 'Nuevos Mensajes',
-              desc: 'Notificar cuando recibas un mensaje de un contacto',
+              label: t('syncSettings.messagesLabel'),
+              desc: t('syncSettings.messagesDesc'),
               icon: MessageCircle
             },
             {
               key: 'alerts' as const,
-              label: 'Alertas y Licitaciones',
-              desc: 'Alertas de nuevas oportunidades locales o sistema',
+              label: t('syncSettings.alertsLabel'),
+              desc: t('syncSettings.alertsDesc'),
               icon: AlertTriangle
             }
           ].map((tier) => (
@@ -132,12 +176,10 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
         </div>
         <div>
           <h3 className="text-xl font-bold text-on-surface font-display">
-            {isOnline ? 'Datos al día' : 'Trabajando sin conexión'}
+            {isOnline ? t('syncSettings.upToDateTitle') : t('syncSettings.offlineWorkingTitle')}
           </h3>
           <p className="text-on-surface-variant text-sm font-medium">
-            {isOnline
-              ? 'Todo lo que ves está guardado y actualizado en tiempo real.'
-              : 'Sigues pudiendo ver y crear datos — se enviarán solos al reconectar.'}
+            {isOnline ? t('syncSettings.upToDateDesc') : t('syncSettings.offlineWorkingDesc')}
           </p>
         </div>
       </div>
