@@ -618,6 +618,18 @@ export const createGroupConversation = async (
   }
 };
 
+// Añadir un integrante real a un grupo existente — el botón UserPlus en
+// ChatScreen no tenía onClick antes de esto. Solo suma (arrayUnion), nunca
+// quita a nadie; ver la regla de update de conversations en firestore.rules.
+export const addParticipantToGroup = async (conversationId: string, newUid: string) => {
+  const path = `conversations/${conversationId}`;
+  try {
+    await updateDoc(doc(db, path), { participants: arrayUnion(newUid) });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
 export const sendMessage = async (
   conversationId: string,
   senderId: string,

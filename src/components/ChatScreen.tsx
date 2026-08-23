@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Mic, StopCircle, Play, Users, UserPlus, X } from 'lucide-react';
+import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Mic, StopCircle, Play, Users, UserPlus, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
 import { Conversation, Message } from '../types';
-import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead } from '../services/firebaseService';
+import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead, addParticipantToGroup } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { sendPushToUser } from '../services/pushService';
 
@@ -26,6 +26,9 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [isAddingParticipant, setIsAddingParticipant] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -136,6 +139,18 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     setSelectedContacts([]);
   };
 
+  // El botón UserPlus del header de un grupo no tenía onClick antes de esto.
+  const handleAddParticipant = async (uid: string) => {
+    if (!activeConversationId) return;
+    setIsAddingParticipant(uid);
+    try {
+      await addParticipantToGroup(activeConversationId, uid);
+      setShowAddParticipant(false);
+    } finally {
+      setIsAddingParticipant(null);
+    }
+  };
+
   const filteredConversations = conversations.filter((conv) => {
     const name = conv.isGroup ? conv.groupName : resolveParticipant(conv).name;
     return (name || '').toLowerCase().includes(searchQuery.toLowerCase()) || conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
@@ -144,6 +159,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   if (activeConversation) {
     const other = activeConversation.isGroup ? null : resolveParticipant(activeConversation);
     return (
+      <>
       <div className="flex flex-col h-[calc(100vh-200px)] bg-white rounded-[2.5rem] shadow-xl border border-outline/5 overflow-hidden">
         <div className="p-4 border-b border-outline/10 flex justify-between items-center bg-surface-container-high/50 backdrop-blur">
           <div className="flex items-center gap-3">
@@ -166,11 +182,17 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
           </div>
           <div className="flex items-center gap-1">
             {activeConversation.isGroup && (
-              <button className="p-2 rounded-full hover:bg-surface-container transition-colors">
+              <button
+                onClick={() => setShowAddParticipant(true)}
+                className="p-2 rounded-full hover:bg-surface-container transition-colors"
+              >
                 <UserPlus className="w-5 h-5 text-on-surface-variant" />
               </button>
             )}
-            <button className="p-2 rounded-full hover:bg-surface-container transition-colors">
+            <button
+              onClick={() => setShowGroupInfo(true)}
+              className="p-2 rounded-full hover:bg-surface-container transition-colors"
+            >
               <MoreVertical className="w-5 h-5 text-on-surface-variant" />
             </button>
           </div>
@@ -268,6 +290,80 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
           </div>
         </div>
       </div>
+
+      {/* Añadir integrante — el botón UserPlus del header antes no tenía onClick */}
+      <AnimatePresence>
+        {showAddParticipant && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddParticipant(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-black font-display text-on-surface">Añadir Integrante</h2>
+                <button onClick={() => setShowAddParticipant(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto p-1">
+                {users
+                  .filter((u) => u.uid !== currentUid && !activeConversation.participants.includes(u.uid))
+                  .map((contact) => (
+                    <button
+                      key={contact.uid}
+                      onClick={() => handleAddParticipant(contact.uid)}
+                      disabled={isAddingParticipant === contact.uid}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-outline/10 bg-surface-container-low hover:border-primary/30 transition-all disabled:opacity-50"
+                    >
+                      <img src={contact.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=50'} className="w-8 h-8 rounded-full object-cover" />
+                      <span className="text-xs font-bold truncate flex-1 text-left">{contact.name}</span>
+                      {isAddingParticipant === contact.uid && <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
+                    </button>
+                  ))}
+                {users.filter((u) => u.uid !== currentUid && !activeConversation.participants.includes(u.uid)).length === 0 && (
+                  <p className="col-span-2 text-xs text-on-surface-variant/60 italic px-2">Todos los miembros de la red ya están en este grupo.</p>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Info del grupo — el botón MoreVertical antes no tenía onClick */}
+      <AnimatePresence>
+        {showGroupInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowGroupInfo(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-black font-display text-on-surface">
+                  {activeConversation.isGroup ? 'Info del Grupo' : 'Info de la Conversación'}
+                </h2>
+                <button onClick={() => setShowGroupInfo(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
+              </div>
+              {activeConversation.isGroup && (
+                <div className="flex items-center gap-3">
+                  <img src={activeConversation.groupAvatar} className="w-12 h-12 rounded-2xl object-cover" />
+                  <span className="font-bold text-on-surface">{activeConversation.groupName}</span>
+                </div>
+              )}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                  {activeConversation.participants.length} Participantes
+                </label>
+                <div className="max-h-[240px] overflow-y-auto space-y-2 p-1">
+                  {activeConversation.participants.map((uid) => {
+                    const person = users.find((u) => u.uid === uid);
+                    return (
+                      <div key={uid} className="flex items-center gap-3 p-2 rounded-xl bg-surface-container-low">
+                        <img src={person?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=50'} className="w-8 h-8 rounded-full object-cover" />
+                        <span className="text-xs font-bold truncate">{uid === currentUid ? 'Tú' : (person?.name || 'Usuario de EG CONNECT')}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      </>
     );
   }
 

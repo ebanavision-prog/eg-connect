@@ -89,6 +89,16 @@ service cloud.firestore {
                         request.resource.data.readReceipts[request.auth.uid] is timestamp &&
                         request.resource.data.readReceipts.diff(resource.data.get('readReceipts', {})).affectedKeys().hasOnly([request.auth.uid])
                       )
+                      ||
+                      // Añadir integrantes a un grupo: cualquier participante actual puede
+                      // ampliar la lista (nunca reducirla ni quitar a nadie por este camino —
+                      // hasAll obliga a que todos los que ya estaban sigan estando).
+                      (
+                        resource.data.isGroup == true &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants']) &&
+                        request.resource.data.participants.hasAll(resource.data.participants) &&
+                        request.resource.data.participants.size() > resource.data.participants.size()
+                      )
                     );
 
       match /messages/{messageId} {

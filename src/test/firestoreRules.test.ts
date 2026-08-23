@@ -262,6 +262,33 @@ async function main() {
     await assertFails(addDoc(collection(userB, 'conversations/conv-ab/messages'), { senderId: 'user-a', text: 'Suplantado', type: 'text' }));
   });
 
+  // --- conversations: añadir integrantes a un grupo ---
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'conversations/conv-group'), {
+      isGroup: true, groupName: 'Grupo Test', participants: ['user-a', 'user-b'], lastMessage: '', lastMessageAt: new Date()
+    });
+  });
+
+  await check('Un participante SÍ puede añadir a alguien nuevo a un grupo', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'conversations/conv-group'), { participants: ['user-a', 'user-b', 'admin-a'] }));
+  });
+
+  await check('Un participante NO puede quitar a otro integrante al "añadir" (la lista debe seguir incluyendo a todos)', async () => {
+    await assertFails(updateDoc(doc(userA, 'conversations/conv-group'), { participants: ['user-a', 'admin-a'] }));
+  });
+
+  await check('Alguien que no es participante del grupo NO puede añadirse a sí mismo', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/user-outsider'), { uid: 'user-outsider', name: 'Externo', profileType: 'individual' });
+    });
+    const userOutsider = testEnv.authenticatedContext('user-outsider').firestore();
+    await assertFails(updateDoc(doc(userOutsider, 'conversations/conv-group'), { participants: ['user-a', 'user-b', 'user-outsider'] }));
+  });
+
+  await check('No se puede colar otro campo junto con la ampliación de participants', async () => {
+    await assertFails(updateDoc(doc(userA, 'conversations/conv-group'), { participants: ['user-a', 'user-b', 'admin-a'], groupName: 'Nombre Colado' }));
+  });
+
   // --- readReceipts: cada participante solo puede tocar su propia entrada ---
   await check('Un participante SÍ puede marcar su propia entrada de lectura', async () => {
     await assertSucceeds(updateDoc(doc(userB, 'conversations/conv-ab'), { 'readReceipts.user-b': new Date() }));
