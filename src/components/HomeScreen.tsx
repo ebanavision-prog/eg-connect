@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Home, Users, Briefcase, MessageSquare, MapPin, 
-  TrendingUp, Sparkles, ChevronRight, MessageCircle, 
+import {
+  Home, Users, Briefcase, MessageSquare, MapPin,
+  TrendingUp, Sparkles, ChevronRight, MessageCircle,
   Shield, User, Gift, Cake, Calendar, Zap, Lightbulb, ShoppingBag, UserPlus, QrCode, Share2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Logo from './Logo';
 
 
@@ -24,6 +25,7 @@ interface HomeScreenProps {
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop';
 
 export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, realUsers = [], onContact }: HomeScreenProps) {
+  const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState('');
   
   // Profile completeness calculation
@@ -59,23 +61,23 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a EG Connect',
-          text: 'Estoy conectando con profesionales en Guinea Ecuatorial. ¡Únete tú también!',
+          title: t('home.shareTitle'),
+          text: t('home.shareText'),
           url: window.location.origin,
         });
       } catch (err) {
         console.error('Error sharing:', err);
       }
     } else {
-      alert('Enlace copiado: ' + window.location.origin);
+      alert(t('home.shareCopiedFallback', { url: window.location.origin }));
     }
   };
 
   const categories = [
-    { id: 'timeline', label: 'Conexiones', icon: Users, color: 'bg-blue-500', desc: 'Tu red profesional' },
-    { id: 'crm', label: 'Gestor (CRM)', icon: TrendingUp, color: 'bg-emerald-500', desc: 'Relaciones estratégicas' },
-    { id: 'tenders', label: 'Licitaciones', icon: Briefcase, color: 'bg-secondary', desc: 'Nuevos Proyectos' },
-    { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag, color: 'bg-indigo-500', desc: 'Mercado local' },
+    { id: 'timeline', label: t('home.categories.timeline.label'), icon: Users, color: 'bg-blue-500', desc: t('home.categories.timeline.desc') },
+    { id: 'crm', label: t('home.categories.crm.label'), icon: TrendingUp, color: 'bg-emerald-500', desc: t('home.categories.crm.desc') },
+    { id: 'tenders', label: t('home.categories.tenders.label'), icon: Briefcase, color: 'bg-secondary', desc: t('home.categories.tenders.desc') },
+    { id: 'marketplace', label: t('home.categories.marketplace.label'), icon: ShoppingBag, color: 'bg-indigo-500', desc: t('home.categories.marketplace.desc') },
   ];
 
   return (
@@ -85,14 +87,14 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
           <div className="flex items-center gap-3 mb-2">
             <Logo size={24} />
             <div className="w-px h-4 bg-outline/20" />
-            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">Panel</h2>
+            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">{t('home.panelLabel')}</h2>
           </div>
           <h1 className="text-3xl font-extrabold font-display text-on-surface leading-tight">
-            Hola, <br />
-            <span className="text-primary">{userProfile?.name?.split(' ')[0] || 'Emprendedor'}</span>
+            {t('home.greeting')} <br />
+            <span className="text-primary">{userProfile?.name?.split(' ')[0] || t('home.defaultName')}</span>
           </h1>
           <p className="text-on-surface-variant mt-2 font-sans text-sm max-w-[250px]">
-            {userProfile?.role || 'Listo para conectar con el ecosistema nacional.'}
+            {userProfile?.role || t('home.defaultRoleTagline')}
           </p>
         </div>
         
@@ -122,7 +124,7 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
             </div>
           </div>
           <div className="bg-secondary/10 px-2 py-0.5 rounded-full border border-secondary/20">
-            <span className="text-[7px] font-black text-secondary uppercase tracking-tight">{completeness}% Completo</span>
+            <span className="text-[7px] font-black text-secondary uppercase tracking-tight">{t('home.profileCompleteness', { percent: completeness })}</span>
           </div>
         </button>
       </header>
@@ -139,9 +141,9 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
           <div className="absolute inset-y-0 left-5 flex items-center pr-3 pointer-events-none">
             <Home className="w-5 h-5 text-outline group-focus-within:text-primary transition-colors" />
           </div>
-          <input 
-            type="text" 
-            placeholder="Buscar profesionales, socios o licitaciones..."
+          <input
+            type="text"
+            placeholder={t('home.searchPlaceholder')}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             className="w-full bg-white border-2 border-outline/10 rounded-[1.8rem] py-4.5 pl-14 pr-6 text-sm font-medium focus:border-primary/30 focus:outline-hidden transition-all shadow-sm"
@@ -162,12 +164,12 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
             <QrCode className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-black text-[11px] uppercase tracking-widest">Escanear</h4>
-            <p className="text-[9px] font-bold opacity-50 uppercase mt-1 tracking-tighter">Conectar en Persona</p>
+            <h4 className="font-black text-[11px] uppercase tracking-widest">{t('home.scanTitle')}</h4>
+            <p className="text-[9px] font-bold opacity-50 uppercase mt-1 tracking-tighter">{t('home.scanDesc')}</p>
           </div>
         </motion.button>
 
-        <motion.button 
+        <motion.button
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleShare}
@@ -178,8 +180,8 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
             <Share2 className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-black text-[11px] uppercase tracking-widest">Invitar</h4>
-            <p className="text-[9px] font-bold opacity-50 uppercase mt-1 tracking-tighter">Hacer Crecer la Red</p>
+            <h4 className="font-black text-[11px] uppercase tracking-widest">{t('home.inviteTitle')}</h4>
+            <p className="text-[9px] font-bold opacity-50 uppercase mt-1 tracking-tighter">{t('home.inviteDesc')}</p>
           </div>
         </motion.button>
       </div>
@@ -189,27 +191,27 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
-            <h3 className="text-lg font-bold font-display text-primary">Ecosistema en Movimiento</h3>
+            <h3 className="text-lg font-bold font-display text-primary">{t('home.ecosystemMoving')}</h3>
           </div>
-          <button 
+          <button
             onClick={() => onNavigate('groups')}
             className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 uppercase tracking-tighter hover:bg-amber-100 transition-colors"
           >
-            Ver Directorio
+            {t('home.viewDirectory')}
           </button>
         </div>
         <p className="text-[11px] font-medium text-on-surface-variant/60 -mt-2 ml-1">
-          "Gente como nosotros, haciendo cosas como estas" — Seth Godin.
+          {t('home.ecosystemQuote')}
         </p>
-        
+
         {newcomers.length === 0 ? (
-          <div 
+          <div
             onClick={handleShare}
             className="editorial-card p-6 border-dashed border-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container-low transition-all"
           >
             <Users className="w-8 h-8 text-outline/40 mb-2" />
-            <p className="text-xs font-bold text-on-surface-variant">¡Sé el primero en invitar a tus colegas!</p>
-            <p className="text-[10px] text-primary font-black uppercase mt-2 tracking-widest">Invitar Ahora</p>
+            <p className="text-xs font-bold text-on-surface-variant">{t('home.emptyNewcomersTitle')}</p>
+            <p className="text-[10px] text-primary font-black uppercase mt-2 tracking-widest">{t('home.emptyNewcomersCta')}</p>
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
@@ -236,14 +238,14 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
                   
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-primary text-sm leading-tight truncate">{person.name}</h4>
-                    <p className="text-[10px] text-on-surface-variant font-medium mt-0.5 truncate">{person.profession || 'Miembro de CONNECT'}</p>
+                    <p className="text-[10px] text-on-surface-variant font-medium mt-0.5 truncate">{person.profession || t('home.defaultMemberProfession')}</p>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
                     <MapPin className="w-2.5 h-2.5" />
-                    {person.city || 'G.E.'}
+                    {person.city || t('home.defaultCity')}
                   </div>
                   <button
                     onClick={() => onContact
@@ -251,13 +253,13 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
                       : onNavigate('groups')}
                     className="bg-primary text-white p-2.5 rounded-xl shadow-lg shadow-primary/20 hover:scale-110 active:scale-90 transition-all font-black text-[9px] uppercase tracking-widest px-4"
                   >
-                    Conectar
+                    {t('home.connectButton')}
                   </button>
                 </div>
               </motion.div>
             ))}
             {/* Invite More card */}
-            <motion.div 
+            <motion.div
               whileHover={{ y: -5 }}
               onClick={handleShare}
               className="min-w-[180px] bg-primary/5 p-5 rounded-[2.5rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center text-center cursor-pointer group"
@@ -265,7 +267,7 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-3 group-hover:scale-110 transition-transform">
                 <UserPlus className="w-6 h-6 text-primary" />
               </div>
-              <h4 className="font-bold text-primary text-xs uppercase tracking-widest">Invitar <br/> Colega</h4>
+              <h4 className="font-bold text-primary text-xs uppercase tracking-widest">{t('home.inviteColleagueLine1')} <br /> {t('home.inviteColleagueLine2')}</h4>
             </motion.div>
           </div>
         )}
@@ -276,21 +278,21 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-emerald-500" />
-            <h3 className="text-lg font-bold font-display text-primary uppercase tracking-tight">Agenda Malabo & Bata</h3>
+            <h3 className="text-lg font-bold font-display text-primary uppercase tracking-tight">{t('home.agendaTitle')}</h3>
           </div>
         </div>
-        
+
         <div className="editorial-card p-8 border-dashed border-2 flex flex-col items-center justify-center text-center">
           <Calendar className="w-10 h-10 text-outline/20 mb-3" />
-          <p className="text-xs font-bold text-on-surface-variant">No hay eventos próximos registrados.</p>
-          <p className="text-[10px] text-outline/60 mt-1 uppercase tracking-widest">Vuelve pronto para ver la agenda oficial.</p>
+          <p className="text-xs font-bold text-on-surface-variant">{t('home.agendaEmptyTitle')}</p>
+          <p className="text-[10px] text-outline/60 mt-1 uppercase tracking-widest">{t('home.agendaEmptySubtitle')}</p>
         </div>
       </section>
 
       {/* Explore Grid (Modified) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-lg font-bold font-display text-primary">Servicios de Ecosistema</h3>
+          <h3 className="text-lg font-bold font-display text-primary">{t('home.servicesTitle')}</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           {categories.map((cat) => (
@@ -316,26 +318,26 @@ export default function HomeScreen({ onNavigate, onSearch, stats, userProfile, r
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-4 h-4 text-secondary-container" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-container">Estrategia Nacional</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-container">{t('home.strategyLabel')}</span>
           </div>
           <p className="text-sm font-medium leading-relaxed italic mb-6">
-            "El éxito de un emprendimiento en Malabo depende de su capacidad de escalar hacia Bata y el resto del país. Piensa en nacional desde el día uno."
+            {t('home.strategyQuote')}
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-tighter">EG CONNECT V1.1</span>
+              <span className="text-[10px] font-bold uppercase tracking-tighter">{t('home.versionBadge')}</span>
             </div>
-            <span className="text-[8px] font-black text-white/50 uppercase">EG Connect Insight</span>
+            <span className="text-[8px] font-black text-white/50 uppercase">{t('home.insightBadge')}</span>
           </div>
         </div>
       </div>
 
       <footer className="pt-8 text-center">
         <p className="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-[0.3em]">
-          Desarrollado para el Ecosistema de G.E.
+          {t('home.footer')}
         </p>
       </footer>
     </div>
