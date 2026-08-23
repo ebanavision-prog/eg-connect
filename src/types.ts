@@ -90,6 +90,7 @@ export interface Contact {
   isVerified?: boolean;
   birthday?: string; // ISO format or MM-DD
   kudos?: number;
+  crmStatus?: 'Prospecto' | 'Socio' | 'Aliado' | 'Cliente';
 }
 
 export interface ContactComment {
