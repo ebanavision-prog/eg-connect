@@ -11,6 +11,14 @@ interface ChatScreenProps {
   users: any[];
 }
 
+// Grid de emojis fijo, sin dependencia externa ni llamada a ninguna API.
+const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  { label: 'Caras', emojis: ['😀', '😂', '😅', '😉', '😊', '😍', '🤔', '😎', '😢', '😭', '😡', '🥳', '😴', '🤯', '🙄', '😇'] },
+  { label: 'Gestos', emojis: ['👍', '👎', '👏', '🙌', '🙏', '💪', '✌️', '🤝', '👋', '✍️', '🤞', '👌'] },
+  { label: 'Trabajo', emojis: ['💼', '📈', '📉', '📄', '📌', '📎', '💡', '⏰', '📅', '💰', '💻', '📞'] },
+  { label: 'Símbolos', emojis: ['❤️', '🔥', '✅', '❌', '⭐', '🎉', '⚠️', '❓', '❗', '💯', '🚀', '🎯'] }
+];
+
 function formatTime(ts: { toDate: () => Date } | null | undefined) {
   if (!ts) return 'Ahora';
   return ts.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -28,6 +36,9 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const conversationsQuery = useMemo(
     () => (currentUid ? [where('participants', 'array-contains', currentUid), orderBy('lastMessageAt', 'desc')] : []),
@@ -81,6 +92,38 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   };
 
   const [sendError, setSendError] = useState('');
+
+  // Cierra el selector de emojis al hacer click fuera de él.
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiPicker]);
+
+  // Inserta el emoji en la posición del cursor del textarea (no solo al final).
+  const insertEmoji = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setNewMessage((prev) => prev + emoji);
+      setShowEmojiPicker(false);
+      return;
+    }
+    const start = textarea.selectionStart ?? newMessage.length;
+    const end = textarea.selectionEnd ?? newMessage.length;
+    const next = newMessage.slice(0, start) + emoji + newMessage.slice(end);
+    setNewMessage(next);
+    setShowEmojiPicker(false);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + emoji.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  };
 
   const startRecording = () => {
     setIsRecording(true);
@@ -209,6 +252,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
               ) : (
                 <>
                   <textarea
+                    ref={textareaRef}
                     rows={1}
                     placeholder="Escribe un mensaje..."
                     className="w-full bg-transparent p-3 pl-4 pr-10 text-sm focus:outline-hidden resize-none transition-all overflow-hidden"
@@ -225,9 +269,43 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                       }
                     }}
                   />
-                  <button className="absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    className={`absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors ${showEmojiPicker ? 'text-primary bg-surface-container' : 'text-on-surface-variant'}`}
+                  >
                     <Smile className="w-5 h-5" />
                   </button>
+                  <AnimatePresence>
+                    {showEmojiPicker && (
+                      <motion.div
+                        ref={emojiPickerRef}
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-outline/10 p-3 space-y-3 z-20"
+                      >
+                        {EMOJI_GROUPS.map((group) => (
+                          <div key={group.label}>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 px-0.5">{group.label}</p>
+                            <div className="grid grid-cols-8 gap-1">
+                              {group.emojis.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => insertEmoji(emoji)}
+                                  className="text-lg leading-none p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
             </div>
