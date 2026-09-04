@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Node version note: the repo has no .nvmrc and no `engines` field in
+# package.json to pin a version, so this pins Node 20 (current LTS) as a
+# reasonable default. If the project later adds .nvmrc/engines, update this.
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  typecheck:
+    name: Typecheck (tsc --noEmit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run lint
+
+  build:
+    name: Build (vite build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  rules-tests:
+    name: Firestore rules tests (emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Firestore/Auth/Storage emulators
+        run: npx firebase-tools emulators:start --only firestore,auth,storage > emulator.log 2>&1 &
+
+      - name: Wait for Firestore emulator (port 8181) to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8181 -o /dev/null; then
+              echo "Firestore emulator is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Firestore emulator did not become ready in time"
+          cat emulator.log
+          exit 1
+
+      - name: Run Firestore rules tests
+        run: npm run test:rules
+
+      - name: Show emulator log on failure
+        if: failure()
+        run: cat emulator.log || true
