@@ -225,5 +225,27 @@
       "scan": "Escanear",
       "discover": "Descubrir"
     }
+  },
+  "scan": {
+    "title": "Escaneo Inteligente",
+    "subtitle": "Extrae datos automáticamente de cualquier tarjeta",
+    "processingTitle": "Procesando Tarjeta...",
+    "processingDesc": "El sistema está analizando los datos",
+    "saveContact": "Guardar Contacto",
+    "saving": "Guardando...",
+    "scanErrorGeneric": "No se pudo leer la tarjeta. Inténtalo de nuevo o usa \"Manual\".",
+    "saveErrorGeneric": "No se pudo guardar el contacto. Inténtalo de nuevo.",
+    "viewfinderHint": "Apunta a una tarjeta de visita o sube una foto para que el sistema la guarde automáticamente.",
+    "autoScanLabel": "Escaneo Automático",
+    "autoScanCard": "Tarjeta Física",
+    "noCameraLabel": "Sin Cámara",
+    "manualCard": "Manual",
+    "manualFormTitle": "Añadir Contacto Manual",
+    "namePlaceholder": "Nombre completo",
+    "rolePlaceholder": "Cargo",
+    "companyPlaceholder": "Empresa",
+    "cityPlaceholder": "Ciudad",
+    "notePlaceholder": "Nota (opcional)",
+    "footerBadge": "Optimizado para Guinea Ecuatorial"
   }
 }

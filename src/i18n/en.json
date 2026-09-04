@@ -225,5 +225,27 @@
       "scan": "Scan",
       "discover": "Discover"
     }
+  },
+  "scan": {
+    "title": "Smart Scan",
+    "subtitle": "Automatically extract data from any business card",
+    "processingTitle": "Processing Card...",
+    "processingDesc": "The system is analyzing the data",
+    "saveContact": "Save Contact",
+    "saving": "Saving...",
+    "scanErrorGeneric": "Couldn't read the card. Try again or use \"Manual\".",
+    "saveErrorGeneric": "Couldn't save the contact. Please try again.",
+    "viewfinderHint": "Point at a business card or upload a photo so the system can save it automatically.",
+    "autoScanLabel": "Auto Scan",
+    "autoScanCard": "Physical Card",
+    "noCameraLabel": "No Camera",
+    "manualCard": "Manual",
+    "manualFormTitle": "Add Manual Contact",
+    "namePlaceholder": "Full name",
+    "rolePlaceholder": "Role",
+    "companyPlaceholder": "Company",
+    "cityPlaceholder": "City",
+    "notePlaceholder": "Note (optional)",
+    "footerBadge": "Optimized for Equatorial Guinea"
   }
 }
