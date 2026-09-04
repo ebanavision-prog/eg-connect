@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ShoppingBag, Search, Filter, Plus, MessageSquare, MapPin, Tag, ArrowUpRight, ArrowDownRight, Users, Building2, User, X, CheckCircle2, Loader2, DollarSign, Trash2, Share2, Info, GraduationCap, Camera, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { ServicePost, Company, UserProfile } from '../types';
 import { auth, createMarketplacePost } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -11,37 +12,43 @@ import CompanyProfileModal from './CompanyProfileModal';
 // integraciones dentro de la app. Cada una queda claramente marcada como
 // "fuera de EG CONNECT" para no dar la impresión de que el pago, la reserva
 // o el trámite ocurre dentro de esta app cuando en realidad pasa en el sitio
-// del socio. Añadir un socio nuevo es solo agregar una entrada aquí.
+// del socio. Añadir un socio nuevo es solo agregar una entrada aquí. Los
+// nombres son marcas propias y no se traducen; la descripción sí (clave i18n).
 const PARTNER_SERVICES = [
   {
     id: 'soyca',
     name: 'SOYCA Group',
-    description: 'Becas universitarias en China, compras internacionales y energía solar.',
+    descriptionKey: 'marketplace.partnerSoycaDesc',
     url: 'https://www.soycagroup.com',
     icon: GraduationCap
   },
   {
     id: 'oltinde',
     name: 'Oltinde',
-    description: 'Directorio de empresas de Guinea Ecuatorial.',
+    descriptionKey: 'marketplace.partnerOltindeDesc',
     url: 'https://oltinde.com',
     icon: Building2
   },
   {
     id: 'ebanavision',
     name: 'Ebana Visión',
-    description: 'Producción audiovisual, diseño y marketing.',
+    descriptionKey: 'marketplace.partnerEbanavisionDesc',
     url: 'https://ebanavision.com',
     icon: Camera
   }
 ];
 
+// Los valores de ubicación/categoría de estos <select> se guardan tal cual en
+// Firestore (post.location, post.category) y se comparan por igualdad exacta
+// contra los anuncios ya guardados (ver filteredPosts) -- se dejan en español
+// sin traducir, igual que TENDER_CATEGORIES en TendersScreen.tsx.
+
 // createMarketplacePost solo guarda createdAt (Firestore Timestamp), nunca un
 // campo "timestamp" — antes el card renderizaba post.timestamp directamente
 // y salía siempre en blanco para cualquier anuncio real. Formateo aquí igual
 // que el resto de la app (ver FeedItem.tsx).
-function formatPostTime(createdAt: ServicePost['createdAt']) {
-  if (!createdAt) return 'Ahora';
+function formatPostTime(createdAt: ServicePost['createdAt'], nowLabel: string) {
+  if (!createdAt) return nowLabel;
   return createdAt.toDate().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -51,6 +58,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
   initialSearchQuery?: string,
   profileData?: UserProfile | null
 }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'offer' | 'request'>('offer');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,7 +151,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
         ...newPost,
         price: newPost.price ? `${newPost.price} XAF` : undefined,
         priceValue: newPost.price ? parseInt(newPost.price) : 0,
-        authorName: profileData?.name || 'Miembro de EG CONNECT',
+        authorName: profileData?.name || t('marketplace.defaultAuthorName'),
         authorAvatar: profileData?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?auto=format&fit=crop&w=150&h=150',
         authorType: activeProfile,
         tags: [newPost.category, activeProfile === 'company' ? 'Licitación' : 'Servicio']
@@ -151,7 +159,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       setIsModalOpen(false);
       setNewPost({ title: '', description: '', category: 'Consultoría', type: 'offer', location: 'Malabo', price: '' });
     } catch (error) {
-      setPublishError('No se pudo publicar el anuncio. Inténtalo de nuevo.');
+      setPublishError(t('marketplace.publishErrorGeneric'));
     } finally {
       setIsPublishing(false);
     }
@@ -162,16 +170,16 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       <header className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">Marketplace</h2>
+            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">{t('marketplace.sectionLabel')}</h2>
             <div className="h-1 w-1 bg-outline-variant rounded-full" />
             <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/5 rounded-lg border border-primary/10">
               {activeProfile === 'individual' ? <User className="w-3 h-3 text-secondary" /> : <Building2 className="w-3 h-3 text-primary" />}
               <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">
-                Efectuando como: {profileData?.name || 'tú'}
+                {t('marketplace.actingAsPrefix', { name: profileData?.name || t('marketplace.youFallback') })}
               </span>
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold font-display text-on-surface">Servicios Locales</h1>
+          <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('marketplace.title')}</h1>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -185,8 +193,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       {/* Hub de Servicios Aliados */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Servicios Aliados</h3>
-          <span className="text-[9px] font-bold text-outline-variant uppercase tracking-widest">Fuera de EG CONNECT</span>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t('marketplace.partnerServicesLabel')}</h3>
+          <span className="text-[9px] font-bold text-outline-variant uppercase tracking-widest">{t('marketplace.outsideAppLabel')}</span>
         </div>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
           {PARTNER_SERVICES.map((service) => (
@@ -205,7 +213,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
               </div>
               <div>
                 <h4 className="font-bold text-sm text-on-surface leading-tight">{service.name}</h4>
-                <p className="text-[10px] text-on-surface-variant leading-relaxed mt-1 line-clamp-2">{service.description}</p>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed mt-1 line-clamp-2">{t(service.descriptionKey)}</p>
               </div>
             </a>
           ))}
@@ -223,7 +231,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
           }`}
         >
           <ArrowUpRight className={`w-4 h-4 ${activeTab === 'offer' ? 'text-secondary' : ''}`} />
-          Ofrezco
+          {t('marketplace.tabOffer')}
         </button>
         <button 
           onClick={() => setActiveTab('request')}
@@ -234,7 +242,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
           }`}
         >
           <ArrowDownRight className={`w-4 h-4 ${activeTab === 'request' ? 'text-error' : ''}`} />
-          Busco
+          {t('marketplace.tabRequest')}
         </button>
       </div>
 
@@ -246,7 +254,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline transition-colors group-focus-within:text-primary" />
               <input 
                 type="text" 
-                placeholder="Buscar por cargo o servicio..."
+                placeholder={t('marketplace.searchPlaceholder')}
                 className="w-full bg-surface-container-low border border-outline/10 pl-12 pr-12 py-4 rounded-[1.5rem] text-sm focus:outline-hidden focus:border-primary transition-all focus:bg-white focus:ring-4 focus:ring-primary/5"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -269,7 +277,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
               }`}
             >
               <Filter className={`w-5 h-5 transition-transform duration-300 ${isFilterPanelOpen ? 'rotate-180' : ''}`} />
-              <span className="text-xs font-bold hidden md:inline">Personalizar Búsqueda</span>
+              <span className="text-xs font-bold hidden md:inline">{t('marketplace.customizeSearchButton')}</span>
             </button>
           </div>
         </div>
@@ -286,9 +294,9 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                 <div className="flex items-center justify-between pb-4 border-b border-outline/5">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-primary" />
-                    <h3 className="text-[10px] font-bold text-on-surface uppercase tracking-[0.2em]">Filtros Avanzados</h3>
+                    <h3 className="text-[10px] font-bold text-on-surface uppercase tracking-[0.2em]">{t('marketplace.advancedFiltersTitle')}</h3>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setFilters({ location: 'Todos', minPrice: '', maxPrice: '', category: 'Todas', authorType: 'Todos' });
                       setSortBy('newest');
@@ -297,14 +305,14 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     className="text-[9px] font-bold text-error uppercase tracking-widest hover:bg-error/5 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 group/clear"
                   >
                     <Trash2 className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-                    Limpiar todo
+                    {t('marketplace.clearAllButton')}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Ubicación</label>
-                    <select 
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('marketplace.locationLabel')}</label>
+                    <select
                       className="select-field-custom bg-white"
                       value={filters.location}
                       onChange={(e) => setFilters({ ...filters, location: e.target.value })}
@@ -318,8 +326,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Categoría de Servicio</label>
-                    <select 
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('marketplace.categoryLabel')}</label>
+                    <select
                       className="select-field-custom bg-white"
                       value={filters.category}
                       onChange={(e) => setFilters({ ...filters, category: e.target.value })}
@@ -336,22 +344,22 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Tipo de Anunciante</label>
-                    <select 
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('marketplace.advertiserTypeLabel')}</label>
+                    <select
                       className="select-field-custom bg-white"
                       value={filters.authorType}
                       onChange={(e) => setFilters({ ...filters, authorType: e.target.value })}
                     >
                       <option value="Todos">Todos</option>
-                      <option value="individual">Profesional / Individual</option>
-                      <option value="company">Empresa / Corporativo</option>
+                      <option value="individual">{t('marketplace.advertiserTypeIndividual')}</option>
+                      <option value="company">{t('marketplace.advertiserTypeCompany')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                    <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Rango de Precio (XAF)</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('marketplace.priceRangeLabel')}</label>
                     <div className="flex gap-2 items-center">
                       <input 
                         type="number" 
@@ -371,19 +379,19 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Ordenar por</label>
-                    <select 
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('marketplace.sortByLabel')}</label>
+                    <select
                       className="select-field-custom bg-white"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
                     >
-                      <option value="newest">Más recientes</option>
-                      <option value="price-asc">Precio: Menor a Mayor</option>
-                      <option value="price-desc">Precio: Mayor a Menor</option>
+                      <option value="newest">{t('marketplace.sortNewest')}</option>
+                      <option value="price-asc">{t('marketplace.sortPriceAsc')}</option>
+                      <option value="price-desc">{t('marketplace.sortPriceDesc')}</option>
                     </select>
                   </div>
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={() => {
                         setFilters({ location: 'Todos', minPrice: '', maxPrice: '', category: 'Todas', authorType: 'Todos' });
                         setSortBy('newest');
@@ -392,13 +400,13 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       className="flex-1 py-3.5 bg-surface-container-high text-on-surface-variant font-bold text-xs rounded-xl hover:bg-outline/10 transition-all flex items-center justify-center gap-2"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Restablecer
+                      {t('marketplace.resetButton')}
                     </button>
-                    <button 
+                    <button
                       onClick={() => setIsFilterPanelOpen(false)}
                       className="px-6 py-3.5 bg-primary text-white font-bold text-xs rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                     >
-                      Aplicar
+                      {t('marketplace.applyButton')}
                     </button>
                   </div>
                 </div>
@@ -454,11 +462,11 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     >
                       {post.authorName}
                       <span className="text-[8px] px-1.5 py-0.5 bg-surface-container-high rounded text-on-surface-variant uppercase tracking-tighter">
-                        {post.authorType === 'individual' ? 'Pro' : 'Empresa'}
+                        {post.authorType === 'individual' ? t('marketplace.tagPro') : t('marketplace.tagCompany')}
                       </span>
                       {post.authorType === 'company' && <Info className="w-3 h-3 text-primary" />}
                     </h4>
-                    <span className="text-[10px] text-on-surface-variant/60">{formatPostTime(post.createdAt)}</span>
+                    <span className="text-[10px] text-on-surface-variant/60">{formatPostTime(post.createdAt, t('marketplace.now'))}</span>
                   </div>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -474,7 +482,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                   animate={{ rotate: expandedPostId === post.id ? 180 : 0 }}
                   className="p-1 px-2.5 text-outline-variant bg-surface-container-high rounded-lg flex items-center gap-2 group-hover:text-primary transition-colors"
                 >
-                  <span className="text-[8px] font-bold uppercase tracking-[0.2em]">{expandedPostId === post.id ? 'Cerrar' : 'Detalles'}</span>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.2em]">{expandedPostId === post.id ? t('marketplace.closeLabel') : t('marketplace.detailsLabel')}</span>
                   <ArrowUpRight className="w-3 h-3 rotate-45" />
                 </motion.div>
               </div>
@@ -505,7 +513,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       <div className="pt-4 border-t border-outline/5 space-y-4">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-secondary" />
-                          <h4 className="text-[10px] font-bold text-on-surface uppercase tracking-[0.2em]">Requisitos del Anuncio</h4>
+                          <h4 className="text-[10px] font-bold text-on-surface uppercase tracking-[0.2em]">{t('marketplace.requirementsTitle')}</h4>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                           {post.requirements.map((req, i) => (
@@ -519,8 +527,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                           <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-center gap-4">
                             <Plus className="w-6 h-6 text-primary shrink-0" />
                             <p className="text-[10px] text-primary/80 font-medium leading-tight">
-                              Esta es una oportunidad oficial garantizada bajo el marco de Contenido Local. 
-                              Asegúrate de adjuntar tu certificación de empresa nacional al contactar.
+                              {t('marketplace.tenderNotice')}
                             </p>
                           </div>
                         )}
@@ -563,7 +570,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                           exit={{ opacity: 0 }}
                           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-on-surface text-surface text-[10px] rounded-lg whitespace-nowrap z-10"
                         >
-                          Enlace copiado
+                          {t('marketplace.linkCopied')}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -576,7 +583,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                     className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full text-xs font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform outline-hidden"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Contactar
+                    {t('marketplace.contactButton')}
                   </button>
                 </div>
               </div>
@@ -585,8 +592,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
         ) : (
           <div className="text-center py-20 px-8 opacity-40">
             <ShoppingBag className="w-12 h-12 mx-auto mb-4" />
-            <p className="font-bold">No se han encontrado servicios</p>
-            <p className="text-xs">Prueba con otra búsqueda o cambia de categoría.</p>
+            <p className="font-bold">{t('marketplace.emptyTitle')}</p>
+            <p className="text-xs">{t('marketplace.emptySubtitle')}</p>
           </div>
         )}
       </div>
@@ -611,9 +618,9 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-2xl font-extrabold font-display text-on-surface">Crear Anuncio</h2>
+                    <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('marketplace.createPostTitle')}</h2>
                     <p className="text-xs text-on-surface-variant mt-1">
-                      Publicando como <span className="font-bold text-primary">{profileData?.name || 'tú'}</span>
+                      {t('marketplace.postingAsPrefix')} <span className="font-bold text-primary">{profileData?.name || t('marketplace.youFallback')}</span>
                     </p>
                   </div>
                   <button 
@@ -626,28 +633,28 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 mb-2 block">¿Qué quieres hacer?</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 mb-2 block">{t('marketplace.postTypeLabel')}</label>
                     <div className="flex gap-2 p-1 bg-surface-container-high rounded-2xl">
-                      <button 
+                      <button
                         onClick={() => setNewPost({ ...newPost, type: 'offer' })}
                         className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${newPost.type === 'offer' ? 'bg-white text-secondary shadow-sm' : 'text-on-surface-variant'}`}
                       >
-                        Ofrecer Servicio
+                        {t('marketplace.postTypeOffer')}
                       </button>
-                      <button 
+                      <button
                         onClick={() => setNewPost({ ...newPost, type: 'request' })}
                         className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${newPost.type === 'request' ? 'bg-white text-error shadow-sm' : 'text-on-surface-variant'}`}
                       >
-                        Buscar Servicio
+                        {t('marketplace.postTypeRequest')}
                       </button>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Título del Anuncio</label>
-                    <input 
-                      type="text" 
-                      placeholder={newPost.type === 'offer' ? 'Ej: Servicios de Auditoría' : 'Ej: Busco Desarrollador'}
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('marketplace.postTitleLabel')}</label>
+                    <input
+                      type="text"
+                      placeholder={newPost.type === 'offer' ? t('marketplace.postTitlePlaceholderOffer') : t('marketplace.postTitlePlaceholderRequest')}
                       className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                       value={newPost.title}
                       onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
@@ -655,9 +662,9 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Descripción Detallada</label>
-                    <textarea 
-                      placeholder="Describe los puntos clave del servicio o la necesidad..."
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('marketplace.descriptionLabel')}</label>
+                    <textarea
+                      placeholder={t('marketplace.descriptionPlaceholder')}
                       rows={4}
                       className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                       value={newPost.description}
@@ -667,8 +674,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Categoría</label>
-                      <select 
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('marketplace.categoryFieldLabel')}</label>
+                      <select
                         className="select-field-custom"
                         value={newPost.category}
                         onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
@@ -682,8 +689,8 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Ubicación</label>
-                      <select 
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('marketplace.locationLabel')}</label>
+                      <select
                         className="select-field-custom"
                         value={newPost.location}
                         onChange={(e) => setNewPost({ ...newPost, location: e.target.value })}
@@ -696,10 +703,10 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Precio (XAF)</label>
-                      <input 
-                        type="number" 
-                        placeholder="Ej: 50.000"
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('marketplace.priceFieldLabel')}</label>
+                      <input
+                        type="number"
+                        placeholder={t('marketplace.pricePlaceholder')}
                         className="input-field-custom"
                         value={newPost.price}
                         onChange={(e) => setNewPost({ ...newPost, price: e.target.value })}
@@ -718,12 +725,12 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                   {isPublishing ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Publicando en EG CONNECT...
+                      {t('marketplace.publishingLabel')}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-5 h-5" />
-                      Publicar Anuncio {activeProfile === 'company' ? 'Corporativo' : 'Personal'}
+                      {activeProfile === 'company' ? t('marketplace.publishButtonCompany') : t('marketplace.publishButtonPersonal')}
                     </>
                   )}
                 </button>
@@ -745,13 +752,13 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
       {/* Info Card */}
       <div className="p-8 bg-secondary/5 rounded-[2.5rem] border border-secondary/10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -translate-y-8 translate-x-8" />
-        <h3 className="font-bold text-secondary mb-2">Comercio Profesional Local</h3>
+        <h3 className="font-bold text-secondary mb-2">{t('marketplace.infoCardTitle')}</h3>
         <p className="text-xs text-on-surface-variant leading-relaxed mb-6">
-          El marketplace de EG CONNECT está diseñado para fomentar la colaboración entre profesionales verificado en el ecosistema nacional.
+          {t('marketplace.infoCardDesc')}
         </p>
         <div className="flex items-center gap-2 p-3 bg-white/60 backdrop-blur rounded-2xl border border-secondary/10 w-fit">
           <ShoppingBag className="w-4 h-4 text-secondary" />
-          <span className="text-[10px] font-bold text-secondary uppercase tracking-widest leading-none">Marketplace Verificado</span>
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-widest leading-none">{t('marketplace.verifiedBadge')}</span>
         </div>
       </div>
     </div>

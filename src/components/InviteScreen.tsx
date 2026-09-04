@@ -5,6 +5,7 @@ import {
   MessageCircle as MessageStyle, Image as ImageIcon, Download, Facebook, Instagram, Loader2, QrCode
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { generateShareCard } from '../services/shareCardService';
@@ -21,6 +22,7 @@ const REFERRAL_GOAL = 5;
 const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID as string | undefined;
 
 export default function InviteScreen({ profileData }: { profileData?: UserProfile | null }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const uid = auth.currentUser?.uid;
 
@@ -43,20 +45,20 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
   const messages = [
     {
       id: 'curiosity',
-      title: 'Generar Curiosidad',
-      text: '¿Ya estás en EG Connect? He visto que los mejores profesionales de G.E. se están conectando ahí para nuevos proyectos. Te dejo mi link de acceso:',
+      title: t('invite.messageCuriosityTitle'),
+      text: t('invite.messageCuriosityText'),
       icon: Sparkles
     },
     {
       id: 'professional',
-      title: 'Enfoque Profesional',
-      text: 'Hola, estoy expandiendo mi red profesional en la nueva plataforma EG Connect. Es el sitio ideal para networking en Guinea Ecuatorial. Únete aquí:',
+      title: t('invite.messageProfessionalTitle'),
+      text: t('invite.messageProfessionalText'),
       icon: Linkedin
     },
     {
       id: 'collaborative',
-      title: 'Colaboración',
-      text: 'Gente como nosotros, haciendo cosas como estas. Me gustaría tenerte en mi red de EG Connect para futuras sinergias:',
+      title: t('invite.messageCollaborativeTitle'),
+      text: t('invite.messageCollaborativeText'),
       icon: Users
     }
   ];
@@ -80,7 +82,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a EG Connect',
+          title: t('invite.shareTitleGeneric'),
           text: fullText,
           url: inviteLink,
         });
@@ -99,9 +101,9 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
           <Share2 className="w-8 h-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black text-primary">Impulsa tu Red</h2>
+          <h2 className="text-3xl font-black text-primary">{t('invite.title')}</h2>
           <p className="text-sm font-medium text-on-surface-variant opacity-60 px-8">
-            El marketing más potente es el boca a boca. Invita a "gente como nosotros".
+            {t('invite.subtitle')}
           </p>
         </div>
       </header>
@@ -117,7 +119,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
           }`}
         >
           <MessageStyle className="w-4 h-4" />
-          Mensaje
+          {t('invite.tabMessage')}
         </button>
         <button
           onClick={() => setActiveTab('tarjeta')}
@@ -128,7 +130,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          Tarjeta Visual
+          {t('invite.tabCard')}
         </button>
       </div>
 
@@ -136,7 +138,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
         <>
           {/* Message Selector */}
           <section className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-outline-variant px-1">Elige tu estilo de invitación</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-outline-variant px-1">{t('invite.chooseStyleLabel')}</h3>
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
               {messages.map((msg) => (
                 <button
@@ -158,7 +160,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
           {/* Preview Area */}
           <section className="bg-surface-container-low rounded-[3rem] p-8 border border-outline/5 space-y-6">
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Vista Previa</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">{t('invite.previewLabel')}</h3>
               <div className="bg-white p-6 rounded-2xl border border-outline/10 shadow-sm italic text-sm text-on-surface-variant leading-relaxed">
                 "{selectedMessage.text}"
                 <div className="mt-2 text-primary font-bold not-italic">{inviteLink}</div>
@@ -183,7 +185,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
                   {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                 </div>
-                <span className="font-black text-[10px] uppercase tracking-widest">{copied ? 'Copiado' : 'Copiar Link'}</span>
+                <span className="font-black text-[10px] uppercase tracking-widest">{copied ? t('invite.copiedLabel') : t('invite.copyLinkLabel')}</span>
               </button>
             </div>
           </section>
@@ -198,16 +200,16 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
         <div className="relative z-10 space-y-4">
           <div className="flex items-center gap-3">
             <Send className="w-5 h-5 text-amber-300" />
-            <h4 className="font-black text-xs uppercase tracking-widest">Recompensa Viral</h4>
+            <h4 className="font-black text-xs uppercase tracking-widest">{t('invite.viralRewardTitle')}</h4>
           </div>
           {isAmbassador ? (
             <p className="text-sm font-medium leading-relaxed opacity-90">
-              Ya eres <span className="text-amber-300 font-black">"Embajador de Red"</span> — trajiste a {referralCount} {referralCount === 1 ? 'nuevo miembro' : 'nuevos miembros'} con tu link.
+              {t('invite.ambassadorPrefix')} <span className="text-amber-300 font-black">{t('invite.ambassadorBadge')}</span> {t('invite.ambassadorSuffix', { count: referralCount })}
             </p>
           ) : (
             <>
               <p className="text-sm font-medium leading-relaxed opacity-90">
-                Trae a {REFERRAL_GOAL} nuevos miembros con tu link y obtén la insignia de <span className="text-amber-300 font-black">"Embajador de Red"</span>.
+                {t('invite.notYetPrefix', { count: REFERRAL_GOAL })} <span className="text-amber-300 font-black">{t('invite.ambassadorBadge')}</span>.
               </p>
               <div className="space-y-2">
                 <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -216,7 +218,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
                     style={{ width: `${Math.min(100, (referralCount / REFERRAL_GOAL) * 100)}%` }}
                   />
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{referralCount} / {REFERRAL_GOAL} invitados reales</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{t('invite.progressLabel', { count: referralCount, goal: REFERRAL_GOAL })}</p>
               </div>
             </>
           )}
@@ -235,6 +237,7 @@ export default function InviteScreen({ profileData }: { profileData?: UserProfil
 type CardState = 'idle' | 'loading' | 'ready' | 'error';
 
 function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfile | null; inviteLink: string }) {
+  const { t } = useTranslation();
   const [cardState, setCardState] = useState<CardState>('idle');
   const [cardDataUrl, setCardDataUrl] = useState<string | null>(null);
   const [cardBlob, setCardBlob] = useState<Blob | null>(null);
@@ -242,7 +245,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
   const [canShareFiles, setCanShareFiles] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const displayName = profileData?.name || 'Miembro de EG Connect';
+  const displayName = profileData?.name || t('invite.defaultMemberName');
   const displayProfession = profileData?.profession || profileData?.role || undefined;
 
   const generate = () => {
@@ -295,8 +298,8 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
       if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'Únete a EG Connect',
-          text: `${displayName} te invita a EG Connect`,
+          title: t('invite.shareTitleGeneric'),
+          text: t('invite.inviteShareText', { name: displayName }),
           url: inviteLink,
         });
         return;
@@ -304,7 +307,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
       if (navigator.share) {
         // El navegador soporta compartir texto/link pero no archivos —
         // se comparte el link igual, sin la imagen.
-        await navigator.share({ title: 'Únete a EG Connect', text: `${displayName} te invita a EG Connect`, url: inviteLink });
+        await navigator.share({ title: t('invite.shareTitleGeneric'), text: t('invite.inviteShareText', { name: displayName }), url: inviteLink });
       }
     } catch (err) {
       if ((err as Error)?.name !== 'AbortError') console.error('Error compartiendo la tarjeta:', err);
@@ -378,10 +381,10 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
       <div className="space-y-1">
         <h3 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
           <QrCode className="w-3.5 h-3.5" />
-          Tu Tarjeta para Compartir
+          {t('invite.shareCardTitle')}
         </h3>
         <p className="text-xs text-on-surface-variant opacity-60">
-          Una imagen con tu foto, tu nombre y un código QR real hacia tu link de invitación — lista para tus Stories.
+          {t('invite.shareCardDescription')}
         </p>
       </div>
 
@@ -389,24 +392,24 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
         {cardState === 'loading' && (
           <div className="py-16 flex flex-col items-center gap-3 text-primary">
             <Loader2 className="w-8 h-8 animate-spin" />
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Generando tarjeta…</span>
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('invite.generatingLabel')}</span>
           </div>
         )}
         {cardState === 'error' && (
           <div className="py-16 flex flex-col items-center gap-3 text-center px-6">
-            <span className="text-sm font-bold text-red-600">No se pudo generar la tarjeta</span>
+            <span className="text-sm font-bold text-red-600">{t('invite.generateErrorLabel')}</span>
             <button
               onClick={generate}
               className="text-[10px] font-black uppercase tracking-widest text-primary underline"
             >
-              Reintentar
+              {t('invite.retryButton')}
             </button>
           </div>
         )}
         {cardState === 'ready' && cardDataUrl && (
           <img
             src={cardDataUrl}
-            alt="Tarjeta de invitación EG CONNECT"
+            alt={t('invite.cardAlt')}
             className="w-full max-w-[280px] mx-auto"
           />
         )}
@@ -414,7 +417,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
 
       {cardState === 'ready' && !avatarIncluded && profileData?.avatar && (
         <p className="text-[10px] text-center text-on-surface-variant opacity-50 -mt-2">
-          No se pudo incluir tu foto de perfil en la tarjeta; se usó tu inicial en su lugar.
+          {t('invite.avatarFallbackNote')}
         </p>
       )}
 
@@ -427,7 +430,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
           <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
             <Download className="w-6 h-6" />
           </div>
-          <span className="font-black text-[10px] uppercase tracking-widest">Descargar Imagen</span>
+          <span className="font-black text-[10px] uppercase tracking-widest">{t('invite.downloadImageButton')}</span>
         </button>
 
         <button
@@ -437,7 +440,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
           <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
             {linkCopied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
           </div>
-          <span className="font-black text-[10px] uppercase tracking-widest">{linkCopied ? 'Copiado' : 'Copiar Enlace'}</span>
+          <span className="font-black text-[10px] uppercase tracking-widest">{linkCopied ? t('invite.copiedLabel') : t('invite.copyLinkButtonCard')}</span>
         </button>
 
         {canShareFiles && (
@@ -447,7 +450,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
             className="col-span-2 flex items-center justify-center gap-3 p-5 bg-secondary text-white rounded-[2rem] shadow-lg shadow-secondary/20 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
           >
             <Share2 className="w-5 h-5" />
-            <span className="font-black text-[10px] uppercase tracking-widest">Compartir Imagen (WhatsApp, TikTok, Mensajes…)</span>
+            <span className="font-black text-[10px] uppercase tracking-widest">{t('invite.shareImageButton')}</span>
           </button>
         )}
 
@@ -464,7 +467,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
         <button
           onClick={handleInstagramShare}
           disabled={cardState !== 'ready'}
-          title="Best-effort: abre Instagram Stories con la tarjeta ya cargada si tienes la app instalada — no se puede garantizar en todos los dispositivos"
+          title={t('invite.instagramButtonTitle')}
           className="flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-[#833AB4]/10 via-[#E1306C]/10 to-[#F77737]/10 text-[#E1306C] rounded-[2rem] border border-[#E1306C]/20 active:scale-95 transition-all group disabled:opacity-40 disabled:pointer-events-none"
         >
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737] flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
@@ -481,7 +484,7 @@ function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfi
             <Facebook className="w-6 h-6" />
           </div>
           <span className="font-black text-[10px] uppercase tracking-widest">Facebook</span>
-          <span className="text-[9px] text-center opacity-60 -mt-1">Comparte el link; la vista previa de imagen no está garantizada</span>
+          <span className="text-[9px] text-center opacity-60 -mt-1">{t('invite.facebookCaption')}</span>
         </button>
       </div>
     </section>

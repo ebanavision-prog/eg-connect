@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Globe, MapPin, Building2, Users, CheckCircle2, Award, ExternalLink, Linkedin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Company } from '../types';
 
 interface CompanyProfileModalProps {
@@ -10,6 +11,7 @@ interface CompanyProfileModalProps {
 }
 
 export default function CompanyProfileModal({ company, isOpen, onClose }: CompanyProfileModalProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -73,17 +75,17 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
               <div className="p-4 bg-surface-container-low rounded-2xl border border-outline/5">
                 <MapPin className="w-4 h-4 text-primary mb-2" />
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Ubicación</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">{t('companyProfileModal.locationLabel')}</span>
                 <span className="text-xs font-bold text-on-surface">{company.location}</span>
               </div>
               <div className="p-4 bg-surface-container-low rounded-2xl border border-outline/5">
                 <Users className="w-4 h-4 text-primary mb-2" />
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Empleados</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">{t('companyProfileModal.employeesLabel')}</span>
                 <span className="text-xs font-bold text-on-surface">{company.employees}</span>
               </div>
               <div className="p-4 bg-surface-container-low rounded-2xl border border-outline/5 col-span-2 md:col-span-1">
                 <Building2 className="w-4 h-4 text-primary mb-2" />
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Sector</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">{t('companyProfileModal.sectorLabel')}</span>
                 <span className="text-xs font-bold text-on-surface">{company.industry}</span>
               </div>
             </div>
@@ -92,7 +94,7 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
             <div className="space-y-4 mb-8">
               <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                 <div className="h-1 w-4 bg-primary rounded-full"></div>
-                Sobre la Empresa
+                {t('companyProfileModal.aboutTitle')}
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed font-medium">
                 {company.description}
@@ -113,7 +115,7 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
               <div className="space-y-4 mb-8">
                 <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                   <div className="h-1 w-4 bg-primary rounded-full"></div>
-                  Certificaciones
+                  {t('companyProfileModal.certificationsTitle')}
                 </h3>
                 <div className="grid grid-cols-1 gap-3">
                   {company.certifications.map((cert, i) => (
@@ -138,7 +140,7 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                   <div className="h-1 w-4 bg-primary rounded-full"></div>
-                  Liderazgo
+                  {t('companyProfileModal.leadershipTitle')}
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {company.leadership.map((leader, i) => (
@@ -159,12 +161,12 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
                   rel="noreferrer"
                   className="w-full h-14 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-all"
                 >
-                  Visitar Sitio Web
+                  {t('companyProfileModal.visitWebsiteButton')}
                   <ExternalLink className="w-5 h-5" />
                 </a>
               ) : (
                 <div className="w-full h-14 bg-surface-container-low text-on-surface-variant/60 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 border border-outline/10">
-                  Esta empresa no añadió un sitio web
+                  {t('companyProfileModal.noWebsite')}
                 </div>
               )}
             </div>
