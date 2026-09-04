@@ -127,6 +127,22 @@ async function main() {
     await assertFails(updateDoc(doc(userB, 'users/user-a'), { fcmTokens: ['token-falso'] }));
   });
 
+  // --- users: borrado de cuenta (derecho al olvido) ---
+  await check('El dueño SÍ puede borrar su propio documento de usuario', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/user-delete-me'), { uid: 'user-delete-me', name: 'Se Borra Solo', profileType: 'individual' });
+    });
+    const userToDelete = testEnv.authenticatedContext('user-delete-me').firestore();
+    await assertSucceeds(deleteDoc(doc(userToDelete, 'users/user-delete-me')));
+  });
+
+  await check('Otro usuario NO puede borrar el documento de usuario de otro', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users/user-victim'), { uid: 'user-victim', name: 'Víctima', profileType: 'individual' });
+    });
+    await assertFails(deleteDoc(doc(userB, 'users/user-victim')));
+  });
+
   // --- companies: verificación solo por admin ---
   await check('El dueño de una empresa NO puede auto-verificarla', async () => {
     await assertFails(updateDoc(doc(userA, 'companies/company-a'), { isVerified: true }));

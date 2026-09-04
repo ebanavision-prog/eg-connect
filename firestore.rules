@@ -56,6 +56,10 @@ service cloud.firestore {
                       // Un admin puede promover/degradar a otro usuario — y solo ese campo,
                       // nunca el resto del perfil de esa persona.
                       || (isCallerAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin']));
+      // Borrado real de cuenta (derecho al olvido): solo el propio dueño
+      // puede borrar su documento de perfil. Las subcolecciones (contacts,
+      // tasks) ya son borrables por su dueño vía sus propias reglas de abajo.
+      allow delete: if isOwner(userId);
     }
 
     // Contacts

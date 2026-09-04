@@ -4,12 +4,13 @@ import {
   QrCode, Share, Globe, Link2, MessageCircle, Settings, 
   ChevronRight, Building2, User, CheckCircle2, Radio, 
   ChevronDown, Mail, Phone, MapPin, Sparkles, Users, Zap, Cake,
-  ChevronLeft, Camera, Edit2, Save, X, RefreshCcw, Lock, ShieldCheck, Edit3
+  ChevronLeft, Camera, Edit2, Save, X, RefreshCcw, Lock, ShieldCheck, Edit3,
+  Download, Trash2, AlertTriangle
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { Contact, Task, ServicePost, UserProfile } from '../types';
-import { auth, saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
+import { auth, saveUserData, uploadAvatarIfNeeded, exportAllUserData, deleteAccount } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import NetworkBackground from './NetworkBackground';
 
@@ -43,6 +44,16 @@ export default function ProfileScreen({
   
   const [privacyMode, setPrivacyMode] = useState(profileData?.privacyMode || 'public');
   const [shareFeedback, setShareFeedback] = useState('');
+
+  // Exportación completa de datos y borrado de cuenta (privacidad real: hoy
+  // la app guarda cumpleaños, teléfono y ubicación GPS opt-in de una persona
+  // sin ninguna vía de que esa persona los descargue todos o borre su cuenta).
+  const [exportingAllData, setExportingAllData] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteConfirmWord = t('profile.deleteConfirmWord');
 
   // Estadísticas reales — antes esta sección mostraba números y nombres de
   // dominio inventados ("1.2k Conexiones", "adriant.design") para cualquier
@@ -152,6 +163,58 @@ export default function ProfileScreen({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Exporta TODOS los datos del usuario (perfil + contactos + tareas) a un
+  // único archivo JSON descargable — a diferencia del CSV de contactos de
+  // arriba, que es una exportación más específica y complementaria.
+  const handleExportAllData = async () => {
+    if (!currentUid) return;
+    try {
+      setExportingAllData(true);
+      const data = await exportAllUserData(currentUid);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `eg-connect-mis-datos-${currentUid}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exportando todos los datos:', error);
+    } finally {
+      setExportingAllData(false);
+    }
+  };
+
+  // Borrado real de cuenta, con confirmación explícita (escribir la palabra
+  // de confirmación). Tras un borrado exitoso no navegamos a mano a ningún
+  // lado: deleteAccount() ya cierra la sesión de Firebase Auth, y el
+  // onAuthStateChanged existente en App.tsx detecta user == null y hace la
+  // transición a Onboarding por su cuenta — duplicar esa lógica aquí solo
+  // daría pie a que se desincronicen.
+  const handleDeleteAccount = async () => {
+    if (!currentUid || deleteConfirmText !== deleteConfirmWord) return;
+    try {
+      setDeletingAccount(true);
+      setDeleteError(null);
+      await deleteAccount(currentUid);
+      // Respaldo: si por algún camino la sesión local no se hubiera cerrado
+      // ya sola tras deleteUser(), esto la fuerza. Inofensivo si ya no hay
+      // sesión activa.
+      await auth.signOut().catch(() => {});
+    } catch (error: any) {
+      console.error('Error borrando cuenta:', error);
+      setDeleteError(
+        error?.code === 'auth/requires-recent-login'
+          ? t('profile.deleteErrorRequiresRecentLogin')
+          : t('profile.deleteErrorGeneric')
+      );
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   // Profile completeness calculation
@@ -857,8 +920,121 @@ export default function ProfileScreen({
               {t('profile.companyDashboardComingSoon')}
             </button>
           )}
+
+          <button
+            onClick={handleExportAllData}
+            disabled={exportingAllData || !currentUid}
+            className="w-full flex items-center justify-center gap-2 py-4 text-primary font-bold hover:bg-white/80 rounded-2xl transition-colors uppercase tracking-widest text-[10px] outline-hidden disabled:opacity-50"
+          >
+            {exportingAllData ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {t('profile.exportAllDataButton')}
+          </button>
         </div>
       </section>
+
+      {/* Danger Zone: borrado real de cuenta */}
+      <section className="pb-10">
+        <div className="bg-red-500/5 rounded-[2rem] p-6 space-y-3 shadow-sm border border-red-500/20">
+          <div className="flex items-center gap-2 px-1">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <h3 className="text-xs font-black uppercase tracking-widest text-red-500">{t('profile.dangerZoneTitle')}</h3>
+          </div>
+          <p className="text-xs text-on-surface-variant px-1">
+            {t('profile.dangerZoneDescription')}
+          </p>
+          <button
+            onClick={() => {
+              setDeleteError(null);
+              setDeleteConfirmText('');
+              setShowDeleteModal(true);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-600 font-black rounded-2xl transition-colors uppercase tracking-widest text-[10px] outline-hidden hover:bg-red-500/20 active:scale-95"
+          >
+            <Trash2 className="w-4 h-4" />
+            {t('profile.deleteAccountButton')}
+          </button>
+        </div>
+      </section>
+
+      {/* Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => !deletingAccount && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-surface rounded-[2rem] p-6 space-y-4 shadow-2xl border border-red-500/20"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-red-500/10 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <h3 className="font-black text-on-surface">{t('profile.deleteModalTitle')}</h3>
+                </div>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deletingAccount}
+                  className="p-1.5 rounded-full hover:bg-surface-container-low transition-colors disabled:opacity-40"
+                >
+                  <X className="w-4 h-4 text-on-surface-variant" />
+                </button>
+              </div>
+
+              <p className="text-sm text-on-surface-variant">
+                {t('profile.deleteModalDescription')}
+              </p>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant ml-1">
+                  {t('profile.deleteConfirmLabel', { word: deleteConfirmWord })}
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={deleteConfirmWord}
+                  disabled={deletingAccount}
+                  className="w-full bg-surface-container-low border border-outline/10 rounded-xl py-3 px-4 text-on-surface font-bold outline-hidden focus:border-red-500/40"
+                />
+              </div>
+
+              {deleteError && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+                  <p className="text-xs text-amber-700">{deleteError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deletingAccount}
+                  className="flex-1 bg-surface-container-low text-on-surface py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {t('profile.cancelButton')}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== deleteConfirmWord || deletingAccount}
+                  className="flex-1 bg-red-600 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
+                >
+                  {deletingAccount ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t('profile.deleteConfirmButton')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

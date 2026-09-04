@@ -9,7 +9,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  deleteUser
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -283,6 +284,103 @@ export const getAllUsers = async (limitCount: number = 50) => {
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];
+  }
+};
+
+// Convierte recursivamente cualquier Timestamp de Firestore a ISO string
+// legible — sin esto, un export a JSON de un documento con Timestamp deja
+// objetos crudos tipo {seconds, nanoseconds} en vez de una fecha que un
+// humano (o cualquier otra herramienta) pueda leer.
+function serializeTimestamps(value: unknown): unknown {
+  if (value instanceof Timestamp) return value.toDate().toISOString();
+  if (Array.isArray(value)) return value.map(serializeTimestamps);
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = serializeTimestamps(val);
+    }
+    return out;
+  }
+  return value;
+}
+
+// Exportación completa de los datos del usuario (derecho de acceso/portabilidad):
+// el documento de perfil + todos sus contactos (con las notas propias de cada
+// uno) + todas sus tareas, en un único objeto JSON serializable. A diferencia
+// del export CSV de contactos (más específico, pensado para reimportar en otra
+// herramienta de contactos), este es "todo lo que la app sabe de mí".
+export const exportAllUserData = async (uid: string) => {
+  const path = `users/${uid}`;
+  try {
+    const profileSnap = await getDoc(doc(db, path));
+    const profile = profileSnap.exists() ? serializeTimestamps(profileSnap.data()) : null;
+
+    const contactsSnap = await getDocs(collection(db, `${path}/contacts`));
+    const contacts = await Promise.all(contactsSnap.docs.map(async (contactDoc) => {
+      const commentsSnap = await getDocs(collection(contactDoc.ref, 'comments'));
+      return {
+        id: contactDoc.id,
+        ...(serializeTimestamps(contactDoc.data()) as Record<string, unknown>),
+        comments: commentsSnap.docs.map((c) => ({ id: c.id, ...(serializeTimestamps(c.data()) as Record<string, unknown>) }))
+      };
+    }));
+
+    const tasksSnap = await getDocs(collection(db, `${path}/tasks`));
+    const tasks = tasksSnap.docs.map((d) => ({ id: d.id, ...(serializeTimestamps(d.data()) as Record<string, unknown>) }));
+
+    return {
+      exportedAt: new Date().toISOString(),
+      uid,
+      profile,
+      contacts,
+      tasks
+    };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+};
+
+// Borrado real de cuenta. Orden deliberado: primero todos los datos de
+// Firestore (contactos + sus notas, tareas, el documento de perfil) y solo al
+// final la cuenta de Firebase Auth — así, si el paso de Auth falla, los datos
+// personales ya quedaron borrados de todas formas (lo más sensible desde el
+// punto de vista de privacidad) y lo único pendiente es el registro de acceso.
+//
+// HONESTIDAD sobre "auth/requires-recent-login": Firebase exige que la sesión
+// sea reciente para dejar borrar la cuenta de Auth (evita que una sesión
+// robada/vieja borre la cuenta de otra persona). Si `deleteUser` falla con ese
+// código, los pasos de Firestore de esta función YA se ejecutaron con éxito —
+// el perfil, los contactos y las tareas ya no existen, pero la cuenta de Auth
+// sigue viva. La UI debe explicarle esto al usuario y pedirle que cierre
+// sesión, vuelva a iniciarla de inmediato, y repita el borrado de cuenta. Por
+// eso todos los deletes de Firestore de aquí son idempotentes (borrar un
+// documento que ya no existe no falla en Firestore) — un segundo intento
+// sobre datos ya borrados no debe reventar.
+export const deleteAccount = async (uid: string): Promise<void> => {
+  const path = `users/${uid}`;
+  try {
+    const contactsSnap = await getDocs(collection(db, `${path}/contacts`));
+    for (const contactDoc of contactsSnap.docs) {
+      const commentsSnap = await getDocs(collection(contactDoc.ref, 'comments'));
+      await Promise.all(commentsSnap.docs.map((c) => deleteDoc(c.ref)));
+      await deleteDoc(contactDoc.ref);
+    }
+
+    const tasksSnap = await getDocs(collection(db, `${path}/tasks`));
+    await Promise.all(tasksSnap.docs.map((t) => deleteDoc(t.ref)));
+
+    await deleteDoc(doc(db, path));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+
+  // Deliberadamente fuera del try/catch de arriba: si esto lanza
+  // auth/requires-recent-login, queremos que el error original (con su
+  // `.code` intacto) llegue tal cual a quien llamó a deleteAccount, en vez de
+  // quedar envuelto por handleFirestoreError (que es para errores de
+  // Firestore, no de Auth).
+  if (auth.currentUser) {
+    await deleteUser(auth.currentUser);
   }
 };
 
