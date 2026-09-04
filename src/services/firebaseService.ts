@@ -335,6 +335,18 @@ export const addContact = async (ownerId: string, contact: Record<string, unknow
   }
 };
 
+// Cambia el estado del embudo CRM (Prospecto/Socio/Aliado/Cliente) de un
+// contacto guardado — antes ese estado se inventaba en el cliente a partir
+// del índice del contacto en el array, y no se podía cambiar ni persistía.
+export const updateContactStatus = async (ownerId: string, contactId: string, crmStatus: string) => {
+  const path = `users/${ownerId}/contacts/${contactId}`;
+  try {
+    await updateDoc(doc(db, path), { crmStatus });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
 // Tareas personales: subcolección privada del propio usuario.
 export const createTask = async (ownerId: string, data: Record<string, unknown>) => {
   const path = `users/${ownerId}/tasks`;

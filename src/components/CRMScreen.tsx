@@ -8,8 +8,10 @@ import {
   StickyNote, Mail, Loader2, X, Check
 } from 'lucide-react';
 import { Contact } from '../types';
-import { auth, addContact, importGoogleContacts, GoogleImportedContact } from '../services/firebaseService';
+import { auth, addContact, importGoogleContacts, GoogleImportedContact, updateContactStatus } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
+
+const CRM_STATUSES = ['Prospecto', 'Socio', 'Aliado', 'Cliente'] as const;
 
 export default function CRMScreen() {
   const [search, setSearch] = useState('');
@@ -20,6 +22,7 @@ export default function CRMScreen() {
   const [googleContacts, setGoogleContacts] = useState<GoogleImportedContact[] | null>(null);
   const [selectedGoogle, setSelectedGoogle] = useState<Set<number>>(new Set());
   const [isSavingImport, setIsSavingImport] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const currentUid = auth.currentUser?.uid;
   const { data: contacts, loading } = useFirestoreCollection<Contact>(currentUid ? `users/${currentUid}/contacts` : null);
@@ -62,19 +65,30 @@ export default function CRMScreen() {
     }
   };
 
-  // El estado de relación (Prospecto/Socio/...) todavía no se guarda por contacto —
-  // se deriva del orden mientras se construye esa función de verdad.
+  // El estado de relación (Prospecto/Socio/...) se guarda de verdad por contacto
+  // ahora (crmStatus en Firestore, ver updateContactStatus); antes se inventaba
+  // aquí mismo a partir del índice del contacto en el array, así que cambiaba
+  // solo con reordenar la lista y nunca se podía editar de verdad.
   const contactsWithCRM = useMemo(() => {
-    return contacts.map((c, i) => ({
+    return contacts.map((c) => ({
       ...c,
-      crmStatus: ['Prospecto', 'Socio', 'Aliado', 'Cliente'][i % 4] as any,
-      lastInteraction: ['Hoy', 'Ayer', 'Hace 3 días', 'Hace 1 semana'][i % 4],
-      engagement: 20 + (i * 15) % 80
+      crmStatus: c.crmStatus || 'Prospecto'
     }));
   }, [contacts]);
 
+  const handleChangeStatus = async (contact: Contact, status: string) => {
+    if (!currentUid) return;
+    setIsUpdatingStatus(true);
+    try {
+      await updateContactStatus(currentUid, contact.id, status);
+      setSelectedContact({ ...contact, crmStatus: status as Contact['crmStatus'] });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   const filtered = contactsWithCRM.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
                          c.company.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterStatus === 'all' || c.crmStatus === filterStatus;
     return matchesSearch && matchesFilter;
@@ -126,8 +140,10 @@ export default function CRMScreen() {
           <div className="text-2xl font-black text-primary">{contactsWithCRM.length}</div>
         </div>
         <div className="bg-white p-4 rounded-[1.8rem] shadow-sm border border-outline/5">
-          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Nuevas Sinergias</p>
-          <div className="text-2xl font-black text-emerald-500">+4</div>
+          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Socios y Aliados</p>
+          <div className="text-2xl font-black text-emerald-500">
+            {contactsWithCRM.filter((c) => c.crmStatus === 'Socio' || c.crmStatus === 'Aliado').length}
+          </div>
         </div>
       </div>
 
@@ -203,7 +219,7 @@ export default function CRMScreen() {
                   </span>
                   <div className="flex items-center gap-1 text-[8px] font-bold text-outline uppercase tracking-tighter">
                     <Clock className="w-2.5 h-2.5" />
-                    Interactuó {contact.lastInteraction}
+                    Contacto: {contact.lastMet}
                   </div>
                 </div>
               </div>
@@ -253,6 +269,26 @@ export default function CRMScreen() {
                 <p className="text-sm font-medium text-on-surface-variant mb-6">{selectedContact.role} en {selectedContact.company}</p>
 
                 <div className="space-y-4 text-left">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Estado en el embudo</p>
+                    <div className="flex flex-wrap gap-2">
+                      {CRM_STATUSES.map((status) => (
+                        <button
+                          key={status}
+                          disabled={isUpdatingStatus}
+                          onClick={() => handleChangeStatus(selectedContact, status)}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all disabled:opacity-50 ${
+                            (selectedContact.crmStatus || 'Prospecto') === status
+                              ? getStatusColor(status)
+                              : 'bg-white border-outline/10 text-on-surface-variant'
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="p-4 bg-surface-container rounded-2xl border border-outline/5">
                     <div className="flex items-center gap-2 mb-2 text-primary">
                       <StickyNote className="w-4 h-4" />

@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
 import { Contact, Task, ServicePost } from '../types';
-import { localDataService } from '../services/localDataService';
 import { auth, saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import NetworkBackground from './NetworkBackground';
@@ -37,6 +36,7 @@ export default function ProfileScreen({
   const [birthDay, setBirthDay] = useState(initialBirthday[1]);
   
   const [privacyMode, setPrivacyMode] = useState(profileData?.privacyMode || 'public');
+  const [shareFeedback, setShareFeedback] = useState('');
 
   // Estadísticas reales — antes esta sección mostraba números y nombres de
   // dominio inventados ("1.2k Conexiones", "adriant.design") para cualquier
@@ -55,7 +55,10 @@ export default function ProfileScreen({
     digital: true
   });
 
-  const formattedBirthday = profileData?.birthday 
+  // Antes, sin cumpleaños guardado, esta tarjeta mostraba "28 de Abril" como si
+  // fuera el dato real del usuario — una fecha inventada haciéndose pasar por
+  // un hecho sobre su propio perfil. Ahora es un estado vacío honesto.
+  const formattedBirthday = profileData?.birthday
     ? (() => {
         const [month, day] = profileData.birthday.split('-');
         const monthNames = [
@@ -64,7 +67,7 @@ export default function ProfileScreen({
         ];
         return `${parseInt(day)} de ${monthNames[parseInt(month) - 1]}`;
       })()
-    : '28 de Abril';
+    : 'Sin definir';
 
   const handleSave = async () => {
     try {
@@ -108,6 +111,44 @@ export default function ProfileScreen({
 
   const toggleSection = (section: 'contact' | 'digital') => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // "Compartir Red" y el botón de Share no tenían onClick — no hacían nada.
+  const handleShareProfile = () => {
+    const shareData = {
+      title: profileData?.name || 'Mi perfil en EG CONNECT',
+      text: `Conéctate conmigo en EG CONNECT: ${profileData?.name || 'mi perfil'}${profileData?.profession ? ` — ${profileData.profession}` : ''}`,
+      url: window.location.origin
+    };
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`).then(() => {
+        setShareFeedback('Enlace copiado');
+        setTimeout(() => setShareFeedback(''), 2500);
+      });
+    }
+  };
+
+  // "Descargar Mis Datos CSV" no tenía onClick. Exporta los contactos reales
+  // ya cargados (myContacts) — nada inventado, es la misma data del CRM.
+  const handleExportContactsCsv = () => {
+    const headers = ['Nombre', 'Cargo', 'Empresa', 'Ubicación', 'Estado CRM', 'Último contacto', 'Notas'];
+    const rows = myContacts.map((c) => [
+      c.name, c.role, c.company, c.location, c.crmStatus || 'Prospecto', c.lastMet, (c.note || '').replace(/\s+/g, ' ')
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `eg-connect-contactos-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Profile completeness calculation
@@ -508,8 +549,12 @@ export default function ProfileScreen({
               <>
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center gap-2 mb-1.5 px-4">
+                    {/* Antes usaba "Bernardino Edu"/"GE Petrol" como respaldo — nombres
+                        inventados que se mostraban como si fueran el nombre real del
+                        usuario en su propia tarjeta de perfil (el mismo "Bernardino Edu"
+                        que ya se había señalado como autor inventado en FeedItem.tsx). */}
                     <h2 className="text-3xl font-black font-display tracking-tight leading-tight text-white">
-                      {isIndividual ? (profileData?.name || 'Bernardino Edu') : (profileData?.name || 'GE Petrol')}
+                      {profileData?.name || (isIndividual ? 'Completa tu nombre' : 'Nombre de tu empresa')}
                     </h2>
                     {!isIndividual && <CheckCircle2 className="w-5 h-5 text-secondary" />}
                   </div>
@@ -532,14 +577,26 @@ export default function ProfileScreen({
                   </div>
                 </div>
 
-                <div className="flex gap-4 w-full px-4">
-                  <button className="flex-1 bg-white text-primary py-4 rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-black/10 uppercase tracking-widest">
+                <div className="flex gap-4 w-full px-4 relative">
+                  <button onClick={handleShareProfile} className="flex-1 bg-white text-primary py-4 rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-black/10 uppercase tracking-widest">
                     <Radio className="w-4 h-4 animate-pulse text-secondary" />
                     Compartir Red
                   </button>
-                  <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-4 rounded-2xl active:scale-95 transition-all outline-hidden border border-white/20 text-white">
+                  <button onClick={handleShareProfile} className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-4 rounded-2xl active:scale-95 transition-all outline-hidden border border-white/20 text-white">
                     <Share className="w-5 h-5" />
                   </button>
+                  <AnimatePresence>
+                    {shareFeedback && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white text-primary text-[10px] font-bold rounded-lg whitespace-nowrap shadow-lg"
+                      >
+                        {shareFeedback}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </>
             )}
@@ -641,24 +698,28 @@ export default function ProfileScreen({
               className="overflow-hidden"
             >
               <div className="editorial-card p-2 border-none shadow-sm h-full">
+                {/* El teléfono/ubicación de empresa antes ignoraban profileData por completo
+                    y mostraban siempre el mismo número/dirección de muestra como si fueran
+                    reales, aunque el usuario ya hubiera guardado los suyos en "Editar".
+                    "Trayectoria" también inventaba "10+ años" de experiencia por defecto. */}
                 {[
-                  { 
-                    icon: Phone, 
-                    label: 'Teléfono', 
-                    value: isIndividual ? (profileData?.phone || '+240 222 123 456') : '+240 333 456 789', 
-                    color: 'bg-secondary/5 text-secondary' 
+                  {
+                    icon: Phone,
+                    label: 'Teléfono',
+                    value: isIndividual ? (profileData?.phone || '+240 222 123 456') : (profileData?.phone || 'Sin definir'),
+                    color: 'bg-secondary/5 text-secondary'
                   },
-                  { 
-                    icon: MapPin, 
-                    label: 'Ciudad / Ubicación', 
-                    value: isIndividual ? (profileData?.city || 'Malabo II, Torre K') : 'Carretera del Aeropuerto, Malabo', 
-                    color: 'bg-secondary/5 text-secondary' 
+                  {
+                    icon: MapPin,
+                    label: 'Ciudad / Ubicación',
+                    value: isIndividual ? (profileData?.city || 'Malabo II, Torre K') : (profileData?.city || 'Sin definir'),
+                    color: 'bg-secondary/5 text-secondary'
                   },
-                  { 
-                    icon: isIndividual ? Cake : Sparkles, 
-                    label: isIndividual ? 'Cumpleaños' : 'Trayectoria', 
-                    value: isIndividual ? formattedBirthday : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : '10+ años'), 
-                    color: isIndividual ? 'bg-secondary/5 text-secondary' : 'bg-primary/5 text-primary' 
+                  {
+                    icon: isIndividual ? Cake : Sparkles,
+                    label: isIndividual ? 'Cumpleaños' : 'Trayectoria',
+                    value: isIndividual ? formattedBirthday : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : 'No especificado'),
+                    color: isIndividual ? 'bg-secondary/5 text-secondary' : 'bg-primary/5 text-primary'
                   }
                 ].map((item, i) => (
                   <motion.div 
@@ -767,9 +828,25 @@ export default function ProfileScreen({
             <Settings className="w-5 h-5 text-primary" />
           </button>
           
-          <button className="w-full text-center py-4 text-primary font-bold hover:bg-white/80 rounded-2xl transition-colors uppercase tracking-widest text-[10px] outline-hidden">
-            {isIndividual ? 'Descargar Mi Datos CSV' : 'Panel de Control de Empresa'}
-          </button>
+          {/* Antes este botón no tenía onClick en ningún caso. Para el perfil personal
+              exporta ahora un CSV real de los contactos ya cargados (myContacts). Para
+              el corporativo no existe todavía una pantalla de panel de empresa a la que
+              enlazar (necesitaría una ruta nueva en App.tsx), así que se marca como
+              deshabilitado/"Próximamente" en vez de simular un enlace que no lleva a
+              ningún sitio. */}
+          {isIndividual ? (
+            <button
+              onClick={handleExportContactsCsv}
+              disabled={myContacts.length === 0}
+              className="w-full text-center py-4 text-primary font-bold hover:bg-white/80 rounded-2xl transition-colors uppercase tracking-widest text-[10px] outline-hidden disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              Descargar Mis Datos CSV
+            </button>
+          ) : (
+            <button disabled className="w-full text-center py-4 text-on-surface-variant/50 font-bold rounded-2xl uppercase tracking-widest text-[10px] cursor-not-allowed">
+              Panel de Control de Empresa · Próximamente
+            </button>
+          )}
         </div>
       </section>
     </div>

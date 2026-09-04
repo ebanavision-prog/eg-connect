@@ -135,7 +135,10 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">{contact.timestamp}</span>
+          {/* contact.timestamp es un Firestore Timestamp crudo (lo pone addContact
+              con serverTimestamp()), no un string — renderizarlo directo mostraba
+              "[object Object]". lastMet es el campo pensado para mostrar aquí. */}
+          <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">{contact.lastMet}</span>
           <button 
             onClick={() => onChat?.({ id: contact.id, name: contact.name, avatar: contact.avatar })}
             className="p-2 rounded-full bg-primary/5 text-primary hover:bg-primary/10 transition-colors outline-hidden"
