@@ -2,6 +2,8 @@
 // bundle público (por eso el hallazgo de seguridad). En su lugar, este servicio
 // llama a un proxy PHP alojado en el hosting existente (server/gemini-proxy.php)
 // que guarda la llave del lado del servidor.
+import { auth } from './firebaseService';
+
 const PROXY_URL = import.meta.env.VITE_GEMINI_PROXY_URL as string | undefined;
 
 async function callProxy(action: string, payload: unknown) {
@@ -10,11 +12,26 @@ async function callProxy(action: string, payload: unknown) {
     return null;
   }
 
+  // El proxy ahora exige un idToken real de Firebase Auth (mismo hallazgo de
+  // seguridad que ya se había cerrado en server/fcm-send.php: antes solo
+  // comprobaba el header Origin, que cualquiera fuera de un navegador real
+  // puede falsificar trivialmente y quemar la cuota gratis de Gemini). Sin
+  // sesión activa no hay idToken que mandar, así que se devuelve null con
+  // honestidad en vez de intentar una llamada que el servidor va a rechazar
+  // con 401 de todos modos — mismo patrón que sendPushToUser en
+  // pushService.ts.
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    console.warn(`No hay sesión activa; no se puede llamar a la IA (${action}).`);
+    return null;
+  }
+
   try {
+    const idToken = await currentUser.getIdToken();
     const response = await fetch(PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, payload }),
+      body: JSON.stringify({ action, payload, idToken }),
     });
     if (!response.ok) return null;
     return await response.json();
