@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react';
 import { CheckCircle2, Circle, Trash2, Plus, X, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Task } from '../types';
 import { auth, createTask, toggleTaskCompletion, deleteTask } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
-const PRIORITIES: { value: Task['priority']; label: string; color: string }[] = [
-  { value: 'high', label: 'Alta', color: 'text-error' },
-  { value: 'medium', label: 'Media', color: 'text-secondary' },
-  { value: 'low', label: 'Baja', color: 'text-on-surface-variant' }
+const PRIORITIES: { value: Task['priority']; labelKey: string; color: string }[] = [
+  { value: 'high', labelKey: 'tasks.priorityHigh', color: 'text-error' },
+  { value: 'medium', labelKey: 'tasks.priorityMedium', color: 'text-secondary' },
+  { value: 'low', labelKey: 'tasks.priorityLow', color: 'text-on-surface-variant' }
 ];
 
 export default function TasksScreen() {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -71,7 +73,7 @@ export default function TasksScreen() {
           <span className={`text-[10px] font-bold font-display tracking-widest uppercase ${
             task.priority === 'high' ? 'text-error' : task.priority === 'medium' ? 'text-secondary' : 'text-on-surface-variant opacity-60'
           }`}>
-            Prioridad {PRIORITIES.find((p) => p.value === task.priority)?.label}
+            {t('tasks.priorityLine', { priority: t(PRIORITIES.find((p) => p.value === task.priority)?.labelKey || 'tasks.priorityMedium') })}
           </span>
         </div>
         <p className={`font-display font-bold text-xl mb-1 ${task.completed ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>
@@ -93,8 +95,8 @@ export default function TasksScreen() {
     <div className="py-6 space-y-10">
       <div className="flex items-center justify-between px-1">
         <div>
-          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">Productividad</h2>
-          <h3 className="font-display font-bold text-3xl text-primary tracking-tight">Mis Tareas</h3>
+          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">{t('tasks.sectionLabel')}</h2>
+          <h3 className="font-display font-bold text-3xl text-primary tracking-tight">{t('tasks.title')}</h3>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -108,8 +110,8 @@ export default function TasksScreen() {
         {!loading && tasks.length === 0 && (
           <div className="editorial-card p-10 text-center border-dashed border-2 shadow-none">
             <CheckCircle2 className="w-8 h-8 text-outline/40 mx-auto mb-3" />
-            <p className="text-sm font-bold text-on-surface-variant">Todavía no tienes tareas.</p>
-            <p className="text-xs text-on-surface-variant/60 mt-1">Añade la primera con el botón +.</p>
+            <p className="text-sm font-bold text-on-surface-variant">{t('tasks.emptyTitle')}</p>
+            <p className="text-xs text-on-surface-variant/60 mt-1">{t('tasks.emptySubtitle')}</p>
           </div>
         )}
         {pending.map(renderTask)}
@@ -117,7 +119,7 @@ export default function TasksScreen() {
 
       {done.length > 0 && (
         <div className="space-y-4">
-          <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Completadas ({done.length})</h4>
+          <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">{t('tasks.completedCount', { count: done.length })}</h4>
           <div className="space-y-4 opacity-70">
             {done.map(renderTask)}
           </div>
@@ -130,7 +132,7 @@ export default function TasksScreen() {
           <div className="relative w-full max-w-lg bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden">
             <div className="p-8 space-y-6">
               <div className="flex justify-between items-start">
-                <h2 className="text-2xl font-extrabold font-display text-on-surface">Nueva Tarea</h2>
+                <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('tasks.newTaskTitle')}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
                   <X className="w-6 h-6 text-on-surface-variant" />
                 </button>
@@ -138,10 +140,10 @@ export default function TasksScreen() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Título</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tasks.titleLabel')}</label>
                   <input
                     type="text"
-                    placeholder="Ej: Llamar a proveedor de Bata"
+                    placeholder={t('tasks.titlePlaceholder')}
                     className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -149,7 +151,7 @@ export default function TasksScreen() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Prioridad</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tasks.priorityLabel')}</label>
                   <div className="flex gap-2">
                     {PRIORITIES.map((p) => (
                       <button
@@ -160,16 +162,16 @@ export default function TasksScreen() {
                           newPriority === p.value ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface-variant'
                         }`}
                       >
-                        {p.label}
+                        {t(p.labelKey)}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Nota (opcional)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tasks.noteLabel')}</label>
                   <textarea
-                    placeholder="Detalles adicionales..."
+                    placeholder={t('tasks.notePlaceholder')}
                     rows={2}
                     className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                     value={newNote}
@@ -183,7 +185,7 @@ export default function TasksScreen() {
                 onClick={handleAdd}
                 className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
               >
-                {saving ? <><Loader2 className="w-5 h-5 animate-spin" />Guardando...</> : 'Añadir Tarea'}
+                {saving ? <><Loader2 className="w-5 h-5 animate-spin" />{t('tasks.saving')}</> : t('tasks.addTask')}
               </button>
             </div>
           </div>
