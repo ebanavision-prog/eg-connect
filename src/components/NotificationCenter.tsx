@@ -1,5 +1,6 @@
 import { Bell, X, Briefcase, MessageSquare, Info, CheckCircle, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { AppNotification, Screen } from '../types';
 
 interface NotificationCenterProps {
@@ -11,6 +12,7 @@ interface NotificationCenterProps {
 }
 
 export default function NotificationCenter({ notifications, onClose, onMarkAsRead, onClearAll, onNavigate }: NotificationCenterProps) {
+  const { t } = useTranslation();
   const handleOpenRelated = (notif: AppNotification) => {
     onMarkAsRead(notif.id);
     if (notif.type === 'tender') {
@@ -44,8 +46,8 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
               <Bell className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-on-surface">Notificaciones</h2>
-              <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest">Centro de Actividad</p>
+              <h2 className="text-xl font-bold text-on-surface">{t('notificationCenter.title')}</h2>
+              <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest">{t('notificationCenter.subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-container-low transition-colors">
@@ -92,7 +94,7 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
                           onClick={(e) => { e.stopPropagation(); handleOpenRelated(notif); }}
                           className="flex items-center gap-1 text-[10px] font-bold text-secondary uppercase tracking-widest hover:underline"
                         >
-                          Ver Licitación <ExternalLink className="w-3 h-3" />
+                          {t('notificationCenter.viewTender')} <ExternalLink className="w-3 h-3" />
                         </button>
                       )}
                     </div>
@@ -103,8 +105,8 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
               <Bell className="w-12 h-12 mb-4" />
-              <p className="font-bold">Todo al día</p>
-              <p className="text-xs">No tienes notificaciones pendientes</p>
+              <p className="font-bold">{t('notificationCenter.emptyTitle')}</p>
+              <p className="text-xs">{t('notificationCenter.emptySubtitle')}</p>
             </div>
           )}
         </div>
@@ -116,7 +118,7 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
               className="w-full py-4 border border-outline/20 rounded-2xl text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center justify-center gap-2"
             >
               <CheckCircle className="w-4 h-4" />
-              Marcar todo como leído
+              {t('notificationCenter.markAllRead')}
             </button>
           </div>
         )}

@@ -247,5 +247,24 @@
     "cityPlaceholder": "City",
     "notePlaceholder": "Note (optional)",
     "footerBadge": "Optimized for Equatorial Guinea"
+  },
+  "summary": {
+    "yourNetwork": "Your Network",
+    "contactsCount": "{{count}} Contacts",
+    "eventsConfirmed": "Confirmed events",
+    "initiativesActive": "Active initiatives",
+    "upcomingEventsTitle": "Upcoming Events",
+    "viewAll": "View all",
+    "noUpcomingEvents": "You have no confirmed upcoming events.",
+    "yourInitiativesTitle": "Your Initiatives",
+    "collaboratorsCount": "{{count}} collaborators"
+  },
+  "notificationCenter": {
+    "title": "Notifications",
+    "subtitle": "Activity Center",
+    "viewTender": "View Tender",
+    "emptyTitle": "All caught up",
+    "emptySubtitle": "You have no pending notifications",
+    "markAllRead": "Mark all as read"
   }
 }

@@ -247,5 +247,24 @@
     "cityPlaceholder": "Ciudad",
     "notePlaceholder": "Nota (opcional)",
     "footerBadge": "Optimizado para Guinea Ecuatorial"
+  },
+  "summary": {
+    "yourNetwork": "Tu Red",
+    "contactsCount": "{{count}} Contactos",
+    "eventsConfirmed": "Eventos confirmados",
+    "initiativesActive": "Iniciativas activas",
+    "upcomingEventsTitle": "Próximos Eventos",
+    "viewAll": "Ver todos",
+    "noUpcomingEvents": "No tienes eventos próximos confirmados.",
+    "yourInitiativesTitle": "Tus Iniciativas",
+    "collaboratorsCount": "{{count}} colaboradores"
+  },
+  "notificationCenter": {
+    "title": "Notificaciones",
+    "subtitle": "Centro de Actividad",
+    "viewTender": "Ver Licitación",
+    "emptyTitle": "Todo al día",
+    "emptySubtitle": "No tienes notificaciones pendientes",
+    "markAllRead": "Marcar todo como leído"
   }
 }
