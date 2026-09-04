@@ -379,5 +379,25 @@
     "initiativesSection": "Initiatives",
     "tendersSection": "Tenders",
     "collaboratorsCount": "{{count}} collaborators"
+  },
+  "events": {
+    "sectionLabel": "Agenda",
+    "title": "Local Events",
+    "monthsShort": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    "ctaTitle": "Organizing an event?",
+    "ctaDesc": "No events have been registered yet. Be the first to publish one.",
+    "publishButton": "Publish Event",
+    "attendeesCount": "{{count}} attending · {{author}}",
+    "notAttendingButton": "Not Attending",
+    "attendingButton": "Attending",
+    "modalTitle": "Publish Event",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Monthly EG Connect Networking",
+    "dateLabel": "Date",
+    "categoryLabel": "Category",
+    "locationLabel": "Location",
+    "locationPlaceholder": "e.g. Hotel Sofitel, Malabo",
+    "publishing": "Publishing...",
+    "errorGeneric": "Couldn't publish the event. Please try again."
   }
 }
