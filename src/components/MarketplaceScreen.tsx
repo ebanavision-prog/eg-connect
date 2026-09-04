@@ -2,10 +2,13 @@ import { useState, useMemo } from 'react';
 import { ShoppingBag, Search, Filter, Plus, MessageSquare, MapPin, Tag, ArrowUpRight, ArrowDownRight, Users, Building2, User, X, CheckCircle2, Loader2, DollarSign, Trash2, Share2, Info, GraduationCap, Camera, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { limit, orderBy } from 'firebase/firestore';
 import { ServicePost, Company, UserProfile } from '../types';
 import { auth, createMarketplacePost } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import CompanyProfileModal from './CompanyProfileModal';
+
+const PAGE_SIZE_INCREMENT = 20;
 
 // Hub de servicios aliados, al estilo "mini-programas" de WeChat — enlaces
 // reales a webs de terceros verificadas a mano (no inventadas), no
@@ -68,10 +71,23 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
   const [showShareSuccess, setShowShareSuccess] = useState<string | null>(null);
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_INCREMENT);
 
   const currentUid = auth.currentUser?.uid;
-  const { data: posts } = useFirestoreCollection<ServicePost>(currentUid ? 'marketplace_posts' : null);
+  // Límite creciente en vez de traer la colección entera (ver docs/PLAN_MEJORA_360.md
+  // sección 3/7 Fase 2): orderBy('createdAt', 'desc') es obligatorio junto a
+  // limit() para un orden determinista -- marketplace_posts se crean con
+  // serverTimestamp() en createMarketplacePost (firebaseService.ts). La
+  // colección `companies` de aquí abajo es solo para resolver el perfil de
+  // empresa al hacer click en un anuncio (handleOpenCompanyProfile), no es la
+  // lista principal de esta pantalla, así que se deja sin paginar a propósito.
+  const { data: posts, loading } = useFirestoreCollection<ServicePost>(
+    currentUid ? 'marketplace_posts' : null,
+    [orderBy('createdAt', 'desc'), limit(pageSize)]
+  );
   const { data: companies } = useFirestoreCollection<Company & { ownerId?: string }>(currentUid ? 'companies' : null);
+  const hasMoreToLoad = posts.length === pageSize;
+  const isSearchActive = searchQuery.trim().length > 0;
 
   const handleOpenCompanyProfile = (authorId: string) => {
     const company = companies.find(c => c.ownerId === authorId || c.id === authorId);
@@ -416,6 +432,12 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
         </AnimatePresence>
       </div>
 
+      {isSearchActive && hasMoreToLoad && (
+        <div className="px-4 py-3 bg-secondary/5 border border-secondary/10 rounded-2xl text-xs font-semibold text-secondary">
+          {t('marketplace.searchLimitedNotice', { count: posts.length })}
+        </div>
+      )}
+
       {/* Posts List */}
       <div className="space-y-6">
         {filteredPosts.length > 0 ? (
@@ -597,6 +619,23 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
           </div>
         )}
       </div>
+
+      {loading && posts.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-4 text-on-surface-variant">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-bold">{t('common.loadingMoreLabel')}</span>
+        </div>
+      )}
+      {!loading && hasMoreToLoad && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={() => setPageSize((prev) => prev + PAGE_SIZE_INCREMENT)}
+            className="px-8 py-3.5 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest font-bold text-xs uppercase tracking-widest rounded-full transition-all active:scale-95"
+          >
+            {t('common.loadMoreButton')}
+          </button>
+        </div>
+      )}
 
       {/* Post Creation Modal */}
       <AnimatePresence>
