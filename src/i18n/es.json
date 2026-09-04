@@ -1,7 +1,9 @@
 {
   "common": {
     "profileTypePersonal": "Personal",
-    "profileTypeCompany": "Empresa"
+    "profileTypeCompany": "Empresa",
+    "loadMoreButton": "Cargar más",
+    "loadingMoreLabel": "Cargando más..."
   },
   "onboarding": {
     "welcome": {
@@ -593,6 +595,7 @@
     "subtitle": "Accede a contratos prioritarios del sector público y privado en Guinea Ecuatorial.",
     "publishTooltip": "Publicar licitación (admin)",
     "searchPlaceholder": "Buscar por proyecto o entidad...",
+    "searchLimitedNotice": "Mostrando los primeros {{count}} resultados — usa \"Cargar más\" para ampliar la búsqueda.",
     "filterAll": "Todos",
     "filterTech": "Tecnología",
     "filterInfra": "Infraestructura",
@@ -673,6 +676,7 @@
   },
   "marketplace": {
     "sectionLabel": "Marketplace",
+    "searchLimitedNotice": "Mostrando los primeros {{count}} resultados — usa \"Cargar más\" para ampliar la búsqueda.",
     "actingAsPrefix": "Efectuando como: {{name}}",
     "title": "Servicios Locales",
     "partnerServicesLabel": "Servicios Aliados",
@@ -744,6 +748,7 @@
     "clearFiltersButton": "Limpiar filtros",
     "emptyTitle": "Todavía no hay empresas registradas.",
     "emptySubtitle": "Sé la primera con el botón de abajo.",
+    "searchLimitedNotice": "Mostrando los primeros {{count}} resultados — usa \"Cargar más\" para ampliar la búsqueda.",
     "employeesUnit": "Empleados",
     "viewProfileButton": "Ver Perfil",
     "contactButton": "Contactar",

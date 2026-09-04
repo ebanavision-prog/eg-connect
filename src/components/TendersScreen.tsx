@@ -6,6 +6,7 @@ import {
   FileText, Zap, Globe, Plus, X, Loader2, Trash2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { limit, orderBy } from 'firebase/firestore';
 import { LocalContentOpportunity, UserProfile } from '../types';
 import { auth, createTender, deleteTender } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -13,6 +14,7 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 // Valores persistidos tal cual en Firestore (tender.category) -- se dejan en
 // español para no desincronizar licitaciones ya guardadas.
 const TENDER_CATEGORIES = ['IT', 'Construcción', 'Energía', 'Servicios', 'Logística'];
+const PAGE_SIZE_INCREMENT = 20;
 
 export default function TendersScreen({ profileData }: { profileData?: UserProfile | null }) {
   const { t } = useTranslation();
@@ -23,10 +25,20 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
   const [publishError, setPublishError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedTender, setSelectedTender] = useState<LocalContentOpportunity | null>(null);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_INCREMENT);
 
   const isAdmin = !!profileData?.isAdmin;
   const currentUid = auth.currentUser?.uid;
-  const { data: tenders, loading } = useFirestoreCollection<LocalContentOpportunity>(currentUid ? 'tenders' : null);
+  // Límite creciente en vez de traer la colección entera (ver docs/PLAN_MEJORA_360.md
+  // sección 3/7 Fase 2): orderBy('createdAt', 'desc') es obligatorio junto a
+  // limit() para un orden determinista -- tenders se crean con
+  // serverTimestamp() en createTender (firebaseService.ts).
+  const { data: tenders, loading } = useFirestoreCollection<LocalContentOpportunity>(
+    currentUid ? 'tenders' : null,
+    [orderBy('createdAt', 'desc'), limit(pageSize)]
+  );
+  const hasMoreToLoad = tenders.length === pageSize;
+  const isSearchActive = search.trim().length > 0;
 
   const [newTender, setNewTender] = useState({
     title: '',
@@ -135,6 +147,12 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
         </div>
       </div>
 
+      {isSearchActive && hasMoreToLoad && (
+        <div className="mx-1 px-4 py-3 bg-secondary/5 border border-secondary/10 rounded-2xl text-xs font-semibold text-secondary">
+          {t('tenders.searchLimitedNotice', { count: tenders.length })}
+        </div>
+      )}
+
       {/* Tenders List */}
       <div className="space-y-4">
         {filtered.map((tender) => (
@@ -218,6 +236,23 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
           </div>
         )}
       </div>
+
+      {loading && tenders.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-4 text-on-surface-variant">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-bold">{t('common.loadingMoreLabel')}</span>
+        </div>
+      )}
+      {!loading && hasMoreToLoad && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={() => setPageSize((prev) => prev + PAGE_SIZE_INCREMENT)}
+            className="px-8 py-3.5 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest font-bold text-xs uppercase tracking-widest rounded-full transition-all active:scale-95"
+          >
+            {t('common.loadMoreButton')}
+          </button>
+        </div>
+      )}
 
       <div className="p-6 bg-secondary/5 rounded-3xl border-2 border-secondary/10 mx-1">
         <h4 className="font-bold text-secondary text-sm mb-2 flex items-center gap-2">

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Rocket, Plus, X, Loader2, CheckCircle2, Users, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { limit, orderBy } from 'firebase/firestore';
 import { Initiative, UserProfile } from '../types';
 import { auth, createInitiative, toggleInitiativeMembership } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -9,6 +10,7 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 // Valores persistidos tal cual en Firestore (initiative.category) -- se dejan
 // en español para no desincronizar categorías ya guardadas por usuarios existentes.
 const CATEGORIES = ['Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo', 'Otro'];
+const PAGE_SIZE_INCREMENT = 20;
 
 export default function InitiativesScreen({ profileData }: { profileData?: UserProfile | null }) {
   const { t } = useTranslation();
@@ -17,9 +19,19 @@ export default function InitiativesScreen({ profileData }: { profileData?: UserP
   const [publishError, setPublishError] = useState('');
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('Todas');
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_INCREMENT);
 
   const currentUid = auth.currentUser?.uid;
-  const { data: initiatives, loading } = useFirestoreCollection<Initiative>(currentUid ? 'initiatives' : null);
+  // Límite creciente en vez de traer la colección entera (ver docs/PLAN_MEJORA_360.md
+  // sección 3/7 Fase 2): orderBy('createdAt', 'desc') es obligatorio junto a
+  // limit() para un orden determinista -- initiatives se crean con
+  // serverTimestamp() en createInitiative (firebaseService.ts). El re-orden
+  // por número de miembros sigue aplicándose en el cliente sobre lo ya cargado.
+  const { data: initiatives, loading } = useFirestoreCollection<Initiative>(
+    currentUid ? 'initiatives' : null,
+    [orderBy('createdAt', 'desc'), limit(pageSize)]
+  );
+  const hasMoreToLoad = initiatives.length === pageSize;
 
   const [newInitiative, setNewInitiative] = useState({
     title: '',
@@ -156,6 +168,23 @@ export default function InitiativesScreen({ profileData }: { profileData?: UserP
           );
         })}
       </div>
+
+      {loading && initiatives.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-4 text-on-surface-variant">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-bold">{t('common.loadingMoreLabel')}</span>
+        </div>
+      )}
+      {!loading && hasMoreToLoad && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={() => setPageSize((prev) => prev + PAGE_SIZE_INCREMENT)}
+            className="px-8 py-3.5 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest font-bold text-xs uppercase tracking-widest rounded-full transition-all active:scale-95"
+          >
+            {t('common.loadMoreButton')}
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {isModalOpen && (
