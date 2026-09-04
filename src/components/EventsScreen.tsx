@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Calendar, MapPin, Users, ChevronRight, Plus, X, Loader2, CheckCircle2, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Event } from '../types';
+import { Event, UserProfile } from '../types';
 import { auth, createEvent, toggleEventAttendance } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
@@ -14,7 +14,7 @@ const formatDay = (isoDate: string) => {
   return { day: String(d.getDate()), month: MONTHS[d.getMonth()] };
 };
 
-export default function EventsScreen({ profileData }: { profileData?: any }) {
+export default function EventsScreen({ profileData }: { profileData?: UserProfile | null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');

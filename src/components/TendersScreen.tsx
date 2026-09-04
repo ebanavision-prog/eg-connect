@@ -5,13 +5,13 @@ import {
   ChevronRight, Building2, ShieldCheck, Download,
   ExternalLink, FileText, Zap, Globe, Plus, X, Loader2, Trash2
 } from 'lucide-react';
-import { LocalContentOpportunity } from '../types';
+import { LocalContentOpportunity, UserProfile } from '../types';
 import { auth, createTender, deleteTender } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 const TENDER_CATEGORIES = ['IT', 'Construcción', 'Energía', 'Servicios', 'Logística'];
 
-export default function TendersScreen({ profileData }: { profileData?: any }) {
+export default function TendersScreen({ profileData }: { profileData?: UserProfile | null }) {
   const [filter, setFilter] = useState<'all' | 'it' | 'const' | 'energy'>('all');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

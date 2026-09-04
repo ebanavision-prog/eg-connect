@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Building2, Search, Filter, Globe, MapPin, Users, CheckCircle2, ChevronRight, X, ShieldCheck, Plus, Trash2, Linkedin, Instagram, Twitter, Facebook, Award, Network, Loader2, MessageSquare, UserCircle, Grid, LayoutList, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Company } from '../types';
+import { Company, UserProfile } from '../types';
 import { auth, createCompany, setCompanyVerified } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
-export default function CompaniesScreen({ onChat, profileData }: { onChat?: (participant?: { id: string; name: string; avatar: string }) => void, profileData?: any }) {
+export default function CompaniesScreen({ onChat, profileData }: { onChat?: (participant?: { id: string; name: string; avatar: string }) => void, profileData?: UserProfile | null }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isModalOpen, setIsModalOpen] = useState(false);

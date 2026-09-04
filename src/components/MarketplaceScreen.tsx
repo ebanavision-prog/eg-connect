@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ShoppingBag, Search, Filter, Plus, MessageSquare, MapPin, Tag, ArrowUpRight, ArrowDownRight, Users, Building2, User, X, CheckCircle2, Loader2, DollarSign, Trash2, Share2, Info, GraduationCap, Camera, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ServicePost, Company } from '../types';
+import { ServicePost, Company, UserProfile } from '../types';
 import { auth, createMarketplacePost } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import CompanyProfileModal from './CompanyProfileModal';
@@ -40,7 +40,7 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
   activeProfile: 'individual' | 'company',
   onContact?: (participant?: { id: string; name: string; avatar: string }) => void,
   initialSearchQuery?: string,
-  profileData?: any
+  profileData?: UserProfile | null
 }) {
   const [activeTab, setActiveTab] = useState<'offer' | 'request'>('offer');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);

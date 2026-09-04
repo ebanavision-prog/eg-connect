@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Rocket, Plus, X, Loader2, CheckCircle2, Users, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Initiative } from '../types';
+import { Initiative, UserProfile } from '../types';
 import { auth, createInitiative, toggleInitiativeMembership } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 const CATEGORIES = ['Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo', 'Otro'];
 
-export default function InitiativesScreen({ profileData }: { profileData?: any }) {
+export default function InitiativesScreen({ profileData }: { profileData?: UserProfile | null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');

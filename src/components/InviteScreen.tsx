@@ -8,6 +8,7 @@ import { where } from 'firebase/firestore';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { generateShareCard } from '../services/shareCardService';
+import { UserProfile } from '../types';
 
 const REFERRAL_GOAL = 5;
 
@@ -19,7 +20,7 @@ const REFERRAL_GOAL = 5;
 // atribución. Sin él, el deep link se manda igual, sin ese parámetro.
 const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID as string | undefined;
 
-export default function InviteScreen({ profileData }: { profileData?: any }) {
+export default function InviteScreen({ profileData }: { profileData?: UserProfile | null }) {
   const [copied, setCopied] = useState(false);
   const uid = auth.currentUser?.uid;
 
@@ -233,7 +234,7 @@ export default function InviteScreen({ profileData }: { profileData?: any }) {
 
 type CardState = 'idle' | 'loading' | 'ready' | 'error';
 
-function ShareCardSection({ profileData, inviteLink }: { profileData?: any; inviteLink: string }) {
+function ShareCardSection({ profileData, inviteLink }: { profileData?: UserProfile | null; inviteLink: string }) {
   const [cardState, setCardState] = useState<CardState>('idle');
   const [cardDataUrl, setCardDataUrl] = useState<string | null>(null);
   const [cardBlob, setCardBlob] = useState<Blob | null>(null);
