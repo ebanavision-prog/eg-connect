@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Shield, Zap, Globe, User, Calendar, Check, Phone, Camera, LogIn, RefreshCcw, Lock, UserPlus, ChevronLeft, Sparkles, Handshake, Rocket } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import NetworkBackground from './NetworkBackground';
 import Logo from './Logo';
 import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, registerWithUsername, resetPassword, uploadAvatarIfNeeded } from '../services/firebaseService';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export default function OnboardingScreen({ onComplete }: { onComplete: (data: { uid: string; name: string; phone: string; birthday: string; profession: string; city: string; role: string; avatar: string; profileType: string }) => void }) {
+  const { t } = useTranslation();
   // Si llegó por un link de invitación (InviteScreen le añade ?ref=<uid>), se
   // guarda una sola vez al crear la cuenta — es lo que hace real el conteo
   // de "Embajador de Red" en InviteScreen (antes era una promesa sin ningún
@@ -74,12 +76,12 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
         else setStep('register');
       } else {
         if (password.length < 8) {
-          setError('La contraseña debe tener al menos 8 caracteres.');
+          setError(t('onboarding.auth.errorPasswordLength'));
           setLoading(false);
           return;
         }
         if (password !== confirmPassword) {
-          setError('Las contraseñas no coinciden.');
+          setError(t('onboarding.auth.errorPasswordMismatch'));
           setLoading(false);
           return;
         }
@@ -87,7 +89,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
       }
     } catch (err: any) {
       console.error(err);
-      setError('Credenciales incorrectas o usuario ya existe.');
+      setError(t('onboarding.auth.errorInvalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -101,10 +103,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
     setSuccess('');
     try {
       await resetPassword(recoveryEmail);
-      setSuccess('Solicitud enviada. Si no recibes nada en unos minutos, es porque este correo no está vinculado a una cuenta activa — contacta a un administrador.');
+      setSuccess(t('onboarding.forgotPassword.successMessage'));
     } catch (err: any) {
       console.error(err);
-      setError('Error al procesar la solicitud.');
+      setError(t('onboarding.forgotPassword.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -133,10 +135,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
     }
   };
 
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
+  const months = t('onboarding.months', { returnObjects: true }) as string[];
 
   const handleFinish = async (e: any) => {
     e.preventDefault();
@@ -164,7 +163,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
           const data = await getUserData(auth.currentUser?.uid || '');
           if (data) onComplete(data as any);
         } catch (err) {
-          setError('Error al crear la cuenta. Intenta con otro usuario.');
+          setError(t('onboarding.register.errorCreateAccount'));
         } finally {
           setLoading(false);
         }
@@ -225,16 +224,16 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 className="space-y-4 max-w-sm"
               >
                 <p className="text-on-surface-variant text-base leading-relaxed opacity-80">
-                  La plataforma definitiva para el networking y emprendimiento en Guinea Ecuatorial.
+                  {t('onboarding.welcome.tagline')}
                 </p>
               </motion.div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10 w-full max-w-3xl px-4">
                 {[
-                  { icon: Shield, title: 'Ofertas', desc: 'Oportunidades GE', color: 'text-primary', bg: 'bg-primary/10' },
-                  { icon: Globe, title: 'Networking', desc: 'Canal Directo', color: 'text-secondary', bg: 'bg-secondary/10' },
-                  { icon: Handshake, title: 'Inversionistas', desc: 'Conecta con Capital', color: 'text-amber-500', bg: 'bg-amber-50' },
-                  { icon: Rocket, title: 'Iniciativas', desc: 'Crea o Únete a Proyectos', color: 'text-emerald-600', bg: 'bg-emerald-50' }
+                  { icon: Shield, title: t('onboarding.welcome.features.offers.title'), desc: t('onboarding.welcome.features.offers.desc'), color: 'text-primary', bg: 'bg-primary/10' },
+                  { icon: Globe, title: t('onboarding.welcome.features.networking.title'), desc: t('onboarding.welcome.features.networking.desc'), color: 'text-secondary', bg: 'bg-secondary/10' },
+                  { icon: Handshake, title: t('onboarding.welcome.features.investors.title'), desc: t('onboarding.welcome.features.investors.desc'), color: 'text-amber-500', bg: 'bg-amber-50' },
+                  { icon: Rocket, title: t('onboarding.welcome.features.initiatives.title'), desc: t('onboarding.welcome.features.initiatives.desc'), color: 'text-emerald-600', bg: 'bg-emerald-50' }
                 ].map((item, idx) => (
                   <motion.div 
                     key={item.title}
@@ -263,7 +262,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 onClick={() => setStep('auth')}
                 className="w-full py-5 bg-primary text-white rounded-[2rem] font-bold shadow-2xl shadow-primary/30 flex items-center justify-center gap-2 group active:scale-95 transition-all text-lg"
               >
-                Comenzar Experiencia
+                {t('onboarding.welcome.cta')}
                 <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </motion.button>
             </div>
@@ -286,35 +285,35 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
 
               <div className="text-center space-y-2">
                 <Logo size={60} className="mx-auto mb-4" />
-                <h2 className="text-2xl font-black text-primary">Bienvenido</h2>
+                <h2 className="text-2xl font-black text-primary">{t('onboarding.auth.title')}</h2>
                 <p className="text-sm font-medium text-on-surface-variant opacity-60">
-                  Accede a tu cuenta empresarial
+                  {t('onboarding.auth.subtitle')}
                 </p>
               </div>
 
               <div className="flex p-1 bg-on-surface/5 rounded-2xl">
-                <button 
+                <button
                   onClick={() => setAuthMode('login')}
                   className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${authMode === 'login' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/60'}`}
                 >
-                  Ya tengo cuenta
+                  {t('onboarding.auth.tabLogin')}
                 </button>
-                <button 
+                <button
                   onClick={() => setAuthMode('register')}
                   className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${authMode === 'register' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/60'}`}
                 >
-                  Soy nuevo
+                  {t('onboarding.auth.tabRegister')}
                 </button>
               </div>
 
               <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Nombre de Usuario</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.auth.usernameLabel')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
-                    <input 
-                      type="text" 
-                      placeholder="Ej: bernardino_edu"
+                    <input
+                      type="text"
+                      placeholder={t('onboarding.auth.usernamePlaceholder')}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
@@ -323,12 +322,12 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Contraseña</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.auth.passwordLabel')}</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
                     <input
                       type="password"
-                      placeholder="Mínimo 8 caracteres"
+                      placeholder={t('onboarding.auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
@@ -339,12 +338,12 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 {authMode === 'register' && (
                   <>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Confirmar Contraseña</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.auth.confirmPasswordLabel')}</label>
                       <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
                         <input
                           type="password"
-                          placeholder="Repite tu contraseña"
+                          placeholder={t('onboarding.auth.confirmPasswordPlaceholder')}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
@@ -353,19 +352,19 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Correo de Respaldo (opcional)</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.auth.backupEmailLabel')}</label>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
                         <input
                           type="email"
-                          placeholder="tucorreo@ejemplo.com"
+                          placeholder={t('onboarding.auth.emailPlaceholder')}
                           value={backupEmail}
                           onChange={(e) => setBackupEmail(e.target.value)}
                           className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
                         />
                       </div>
                       <p className="text-[9px] text-on-surface-variant/60 font-medium ml-1 pt-1">
-                        Sin esto, si olvidas tu contraseña solo un administrador podrá recuperar tu cuenta.
+                        {t('onboarding.auth.backupEmailHint')}
                       </p>
                     </div>
                   </>
@@ -374,12 +373,12 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 {error && <p className="text-[10px] font-bold text-error text-center px-4">{error}</p>}
 
                 <div className="flex justify-center">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setStep('forgot-password')}
                     className="text-[10px] font-bold text-primary/60 hover:text-primary transition-all uppercase tracking-widest"
                   >
-                    ¿Olvidaste tu contraseña?
+                    {t('onboarding.auth.forgotPassword')}
                   </button>
                 </div>
 
@@ -390,7 +389,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 >
                   {loading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : (
                     <>
-                      {authMode === 'login' ? 'Iniciar Sesión' : 'Continuar al Perfil'}
+                      {authMode === 'login' ? t('onboarding.auth.submitLogin') : t('onboarding.auth.submitRegister')}
                       {authMode === 'login' ? <LogIn className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                     </>
                   )}
@@ -399,16 +398,16 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
 
               <div className="relative flex items-center justify-center py-4">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-on-surface/10"></div></div>
-                <span className="relative bg-surface px-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">O también</span>
+                <span className="relative bg-surface px-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">{t('onboarding.auth.orDivider')}</span>
               </div>
 
-              <button 
+              <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
                 className="w-full py-4 bg-white border-2 border-primary/5 text-primary rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all text-sm disabled:opacity-50 shadow-sm"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
-                Usar Google
+                {t('onboarding.auth.googleButton')}
               </button>
             </div>
           </motion.div>
@@ -430,20 +429,20 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
 
               <div className="text-center space-y-2">
                 <Logo size={60} className="mx-auto mb-4" />
-                <h2 className="text-2xl font-black text-primary">Recuperar Acceso</h2>
+                <h2 className="text-2xl font-black text-primary">{t('onboarding.forgotPassword.title')}</h2>
                 <p className="text-sm font-medium text-on-surface-variant opacity-60 px-4">
-                  La recuperación automática solo funciona si registraste un correo de respaldo. Si no lo hiciste, contacta a un administrador — no hay otra vía todavía.
+                  {t('onboarding.forgotPassword.subtitle')}
                 </p>
               </div>
 
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Correo de Respaldo Registrado</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.forgotPassword.emailLabel')}</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
                     <input
                       type="text"
-                      placeholder="tucorreo@ejemplo.com"
+                      placeholder={t('onboarding.auth.emailPlaceholder')}
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 focus:border-primary/20 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm transition-all shadow-xs"
@@ -461,14 +460,14 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 >
                   {loading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : (
                     <>
-                      Enviar Instrucciones
+                      {t('onboarding.forgotPassword.submit')}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
 
                 <p className="text-[10px] text-on-surface-variant/60 text-center px-4 leading-relaxed">
-                  ¿No registraste un correo de respaldo? Un administrador puede recrear tu acceso desde la consola de Firebase.
+                  {t('onboarding.forgotPassword.footnote')}
                 </p>
               </form>
             </div>
@@ -483,8 +482,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
           >
             <div className="p-8 space-y-8 relative z-10 max-w-md mx-auto w-full">
               <div className="space-y-2">
-                <h2 className="text-3xl font-black font-display text-primary tracking-tight">Crea tu Perfil</h2>
-                <p className="text-on-surface-variant font-medium">Ayúdanos a crear el ecosistema empresarial de Guinea Ecuatorial.</p>
+                <h2 className="text-3xl font-black font-display text-primary tracking-tight">{t('onboarding.register.title')}</h2>
+                <p className="text-on-surface-variant font-medium">{t('onboarding.register.subtitle')}</p>
               </div>
 
               <form onSubmit={handleFinish} className="space-y-5 pb-10">
@@ -499,39 +498,39 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     </label>
                   </div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Sube tu mejor foto</p>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">{t('onboarding.register.uploadPhoto')}</p>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Tipo de Perfil</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.profileTypeLabel')}</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setProfileType('individual')}
                       className={`py-3 rounded-xl border-2 font-bold text-xs transition-all ${profileType === 'individual' ? 'bg-primary/10 border-primary text-primary' : 'bg-white border-outline/10 text-on-surface-variant'}`}
                     >
-                      Personal
+                      {t('common.profileTypePersonal')}
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setProfileType('company')}
                       className={`py-3 rounded-xl border-2 font-bold text-xs transition-all ${profileType === 'company' ? 'bg-primary/10 border-primary text-primary' : 'bg-white border-outline/10 text-on-surface-variant'}`}
                     >
-                      Empresa
+                      {t('common.profileTypeCompany')}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
-                    {profileType === 'company' ? 'Nombre de la Empresa' : 'Nombre Completo'}
+                    {profileType === 'company' ? t('onboarding.register.companyNameLabel') : t('onboarding.register.fullNameLabel')}
                   </label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
-                    <input 
+                    <input
                       required
                       type="text"
-                      placeholder={profileType === 'company' ? "Ej. EG Tecnología" : "Ej. Teodoro Obiang"}
+                      placeholder={profileType === 'company' ? t('onboarding.register.companyNamePlaceholder') : t('onboarding.register.fullNamePlaceholder')}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 pl-12 pr-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden transition-all shadow-xs"
@@ -540,13 +539,13 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Número de Teléfono</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.phoneLabel')}</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
-                    <input 
+                    <input
                       required
                       type="tel"
-                      placeholder="+240 222..."
+                      placeholder={t('onboarding.register.phonePlaceholder')}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 pl-12 pr-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden transition-all shadow-xs"
@@ -557,29 +556,29 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                 {profileType === 'company' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Empleados</label>
-                      <select 
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.employeesLabel')}</label>
+                      <select
                         value={employees}
                         onChange={(e) => setEmployees(e.target.value)}
                         className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                       >
-                        <option value="1-10">1-10 empleados</option>
-                        <option value="10-50">10-50 empleados</option>
-                        <option value="50-200">50-200 empleados</option>
-                        <option value="200+">Más de 200</option>
+                        <option value="1-10">{t('onboarding.register.employeesOptions.1-10')}</option>
+                        <option value="10-50">{t('onboarding.register.employeesOptions.10-50')}</option>
+                        <option value="50-200">{t('onboarding.register.employeesOptions.50-200')}</option>
+                        <option value="200+">{t('onboarding.register.employeesOptions.200+')}</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Antigüedad</label>
-                      <select 
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.yearsLabel')}</label>
+                      <select
                         value={yearsInMarket}
                         onChange={(e) => setYearsInMarket(e.target.value)}
                         className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                       >
-                        <option value="0-2">0-2 años</option>
-                        <option value="2-5">2-5 años</option>
-                        <option value="5-10">5-10 años</option>
-                        <option value="10+">Más de 10 años</option>
+                        <option value="0-2">{t('onboarding.register.yearsOptions.0-2')}</option>
+                        <option value="2-5">{t('onboarding.register.yearsOptions.2-5')}</option>
+                        <option value="5-10">{t('onboarding.register.yearsOptions.5-10')}</option>
+                        <option value="10+">{t('onboarding.register.yearsOptions.10+')}</option>
                       </select>
                     </div>
                   </div>
@@ -589,20 +588,20 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                   {profileType === 'individual' ? (
                     <>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Especialidad</label>
-                        <input 
+                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.specialtyLabel')}</label>
+                        <input
                           type="text"
-                          placeholder="Ej. Agrónomo"
+                          placeholder={t('onboarding.register.specialtyPlaceholder')}
                           value={profession}
                           onChange={(e) => setProfession(e.target.value)}
                           className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Cargo Actual</label>
-                        <input 
+                        <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.currentRoleLabel')}</label>
+                        <input
                           type="text"
-                          placeholder="Ej. CEO, Emprendedor"
+                          placeholder={t('onboarding.register.currentRolePlaceholder')}
                           value={role}
                           onChange={(e) => setRole(e.target.value)}
                           className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
@@ -611,8 +610,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                     </>
                   ) : (
                     <div className="col-span-2 space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Sector Industrial</label>
-                      <select 
+                      <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.industryLabel')}</label>
+                      <select
                         value={['Energía', 'Agricultura', 'Construcción', 'Banca', 'Tecnología', 'Servicios'].includes(profession) ? profession : (profession ? 'Otro' : '')}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -620,38 +619,38 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                         }}
                         className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                       >
-                        <option value="">Selecciona tu sector...</option>
-                        <option value="Energía">Energía y Petróleo</option>
-                        <option value="Agricultura">Agricultura y Pesca</option>
-                        <option value="Construcción">Construcción</option>
-                        <option value="Banca">Banca y Finanzas</option>
-                        <option value="Tecnología">Tecnología y Software</option>
-                        <option value="Servicios">Servicios Profesionales</option>
-                        <option value="Otro">Otro (Especificar...)</option>
+                        <option value="">{t('onboarding.register.industrySelectPlaceholder')}</option>
+                        <option value="Energía">{t('onboarding.register.industryOptions.energy')}</option>
+                        <option value="Agricultura">{t('onboarding.register.industryOptions.agriculture')}</option>
+                        <option value="Construcción">{t('onboarding.register.industryOptions.construction')}</option>
+                        <option value="Banca">{t('onboarding.register.industryOptions.banking')}</option>
+                        <option value="Tecnología">{t('onboarding.register.industryOptions.technology')}</option>
+                        <option value="Servicios">{t('onboarding.register.industryOptions.services')}</option>
+                        <option value="Otro">{t('onboarding.register.industryOptions.other')}</option>
                       </select>
                       {!['Energía', 'Agricultura', 'Construcción', 'Banca', 'Tecnología', 'Servicios'].includes(profession) && profession !== '' && (
-                        <motion.input 
+                        <motion.input
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           type="text"
-                          placeholder="Escribe tu sector..."
+                          placeholder={t('onboarding.register.industryCustomPlaceholder')}
                           value={profession}
                           onChange={(e) => setProfession(e.target.value)}
                           className="mt-2 w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                         />
                       )}
                       {profession === '' && !['Energía', 'Agricultura', 'Construcción', 'Banca', 'Tecnología', 'Servicios'].includes(profession) && (
-                         <div className="mt-2 text-[10px] text-primary/40 font-medium px-2 italic">Selecciona "Otro" para escribir manualmente.</div>
+                         <div className="mt-2 text-[10px] text-primary/40 font-medium px-2 italic">{t('onboarding.register.industryCustomHint')}</div>
                       )}
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Ciudad</label>
-                  <input 
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.cityLabel')}</label>
+                  <input
                     type="text"
-                    placeholder="Escribe tu ciudad (Ej. Malabo, Bata...)"
+                    placeholder={t('onboarding.register.cityPlaceholder')}
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     className="w-full bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
@@ -660,25 +659,25 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
 
                 {profileType === 'individual' && (
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Cumpleaños</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('onboarding.register.birthdayLabel')}</label>
                     <div className="flex gap-2">
-                      <input 
+                      <input
                         required
                         type="number"
                         min="1"
                         max="31"
-                        placeholder="Día"
+                        placeholder={t('onboarding.register.birthdayDayPlaceholder')}
                         value={birthDay}
                         onChange={(e) => setBirthDay(e.target.value)}
                         className="w-20 bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                       />
-                      <select 
+                      <select
                         required
                         value={birthMonth}
                         onChange={(e) => setBirthMonth(e.target.value)}
                         className="flex-1 bg-white border-2 border-outline/10 rounded-[1.2rem] py-3.5 px-4 text-sm font-bold focus:border-primary/30 focus:outline-hidden shadow-xs"
                       >
-                        <option value="">Mes</option>
+                        <option value="">{t('onboarding.register.birthdayMonthPlaceholder')}</option>
                         {months.map((m, i) => (
                           <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
                         ))}
@@ -695,7 +694,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                   >
                     {loading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : (
                       <>
-                        Finalizar Registro
+                        {t('onboarding.register.submit')}
                         <Check className="w-5 h-5" />
                       </>
                     )}
