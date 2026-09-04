@@ -1,6 +1,7 @@
 import React, { useState, FC, useEffect } from 'react';
 import { MapPin, MessageSquare, Send, User, Sparkles, Share2, Copy, Zap, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { Contact } from '../types';
 import { notificationService } from '../services/notificationService';
 import { generateIcebreaker } from '../services/aiService';
@@ -22,6 +23,7 @@ interface FeedItemProps {
 }
 
 const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }) => {
+  const { t } = useTranslation();
   const ownerId = auth.currentUser?.uid;
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -43,7 +45,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
     author: c.authorName,
     text: c.text,
     parentId: c.parentId ?? null,
-    timestamp: c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Ahora'
+    timestamp: c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : t('feedItem.now')
   }));
   const topLevelComments = comments.filter((c) => !c.parentId);
   const repliesOf = (parentId: string) => comments.filter((c) => c.parentId === parentId);
@@ -62,13 +64,13 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
       const text = await generateIcebreaker(contact.name, contact.role, contact.company, contact.tags);
       if (text) {
         setIcebreaker(text);
-        notificationService.sendNotification('Idea de Gemini', 'Hemos generado una frase de apertura personalizada.');
+        notificationService.sendNotification(t('feedItem.geminiIdeaTitle'), t('feedItem.geminiIdeaBody'));
       } else {
-        setIcebreakerError('El asistente de IA no está disponible ahora mismo. Inténtalo más tarde.');
+        setIcebreakerError(t('feedItem.icebreakerErrorGeneric'));
       }
     } catch (err) {
       console.error(err);
-      setIcebreakerError('El asistente de IA no está disponible ahora mismo. Inténtalo más tarde.');
+      setIcebreakerError(t('feedItem.icebreakerErrorGeneric'));
     } finally {
       setIsGeneratingIcebreaker(false);
     }
@@ -86,8 +88,8 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
     e.stopPropagation();
     setIsSharing(true);
     const shareData = {
-      title: `Contacto: ${contact.name}`,
-      text: `${contact.name} - ${contact.role} en ${contact.company}`,
+      title: t('feedItem.contactShareTitle', { name: contact.name }),
+      text: t('feedItem.contactShareText', { name: contact.name, role: contact.role, company: contact.company }),
       url: window.location.href
     };
 
@@ -96,7 +98,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
-        notificationService.sendNotification('Enlace Copiado', 'La información del contacto ha sido copiada al portapapeles.');
+        notificationService.sendNotification(t('feedItem.linkCopiedTitle'), t('feedItem.linkCopiedBody'));
       }
     } catch (err) {
       console.error('Error al compartir:', err);
@@ -160,7 +162,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-all active:scale-95 disabled:opacity-50"
         >
           {isSharing ? <Copy className="w-3 h-3 animate-pulse" /> : <Share2 className="w-3 h-3" />}
-          <span className="text-[10px] font-bold uppercase tracking-wider">Compartir</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider">{t('feedItem.shareButton')}</span>
         </button>
 
         <button 
@@ -173,7 +175,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           ) : (
             <Zap className={`w-3 h-3 ${icebreaker ? 'fill-amber-500' : ''} group-hover/ai:animate-pulse`} />
           )}
-          <span className="text-[10px] font-bold uppercase tracking-wider">Rompehielo AI</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider">{t('feedItem.icebreakerButton')}</span>
         </button>
       </div>
 
@@ -192,7 +194,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           >
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Sugerencia de Gemini</span>
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">{t('feedItem.geminiSuggestionLabel')}</span>
             </div>
             <p className="text-xs text-amber-900 font-medium leading-relaxed">
               "{icebreaker}"
@@ -205,13 +207,13 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
                 }}
                 className="text-[9px] font-bold bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-amber-600 transition-colors"
               >
-                Usar como comentario
+                {t('feedItem.useAsCommentButton')}
               </button>
-              <button 
+              <button
                 onClick={() => setIcebreaker(null)}
                 className="text-[9px] font-bold text-amber-600 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors"
               >
-                Ocultar
+                {t('feedItem.hideButton')}
               </button>
             </div>
           </motion.div>
@@ -231,7 +233,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
             </motion.p>
           ) : (
             <motion.p layout className="text-xs text-outline-variant font-bold uppercase tracking-widest">
-              Información de contacto
+              {t('feedItem.contactInfoFallback')}
             </motion.p>
           )}
           
@@ -245,7 +247,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-3 h-3 text-primary/60" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Tags de Interés</span>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{t('feedItem.tagsOfInterestLabel')}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {contact.tags.map((tag, idx) => (
@@ -263,7 +265,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
 
           <div className="mt-2 flex justify-center items-center gap-2">
             <span className="text-[10px] font-bold text-primary/40 group-hover/content:text-primary transition-colors uppercase tracking-widest">
-              {isExpanded ? 'Ver menos' : 'Ver más'}
+              {isExpanded ? t('feedItem.viewLess') : t('feedItem.viewMore')}
             </span>
             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
               <span className="material-symbols-outlined text-xs text-primary/40">expand_more</span>
@@ -284,7 +286,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
             <div className="px-6 py-4 border-b border-outline/5 flex items-center justify-between bg-primary/5">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{comments.length} Comentarios</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{t('feedItem.commentsCount', { count: comments.length })}</span>
               </div>
               <div className="flex -space-x-2">
                 {comments.slice(0, 3).map((_, i) => (
@@ -309,7 +311,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
                             onClick={() => setReplyingTo(comment.id)}
                             className="text-secondary hover:underline cursor-pointer"
                           >
-                            Responder
+                            {t('feedItem.replyButton')}
                           </button>
                           <span className="text-outline-variant italic">{comment.timestamp}</span>
                         </div>
@@ -366,7 +368,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
           {replyingTo && (
             <div className="flex items-center justify-between px-3 py-1 bg-secondary/10 rounded-t-xl border-x border-t border-outline/10">
               <span className="text-[9px] font-bold text-secondary uppercase tracking-wider">
-                Respondiendo a {comments.find(c => c.id === replyingTo)?.author}
+                {t('feedItem.replyingTo', { author: comments.find(c => c.id === replyingTo)?.author })}
               </span>
               <button onClick={() => setReplyingTo(null)} className="text-secondary">
                 <span className="material-symbols-outlined text-xs">close</span>
@@ -381,7 +383,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
             </div>
             <input 
               type="text" 
-              placeholder={replyingTo ? "Escribe tu respuesta..." : "Añadir comentario..."}
+              placeholder={replyingTo ? t('feedItem.replyPlaceholder') : t('feedItem.commentPlaceholder')}
               className="flex-1 bg-transparent border-none focus:outline-hidden text-sm py-2 px-1 font-medium placeholder:text-outline-variant/60"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -398,7 +400,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
                   onClick={handleAddComment}
                   className="px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center gap-2 overflow-hidden"
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Enviar</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">{t('feedItem.sendButton')}</span>
                   <Send className="w-3.5 h-3.5 translate-x-0.5 -translate-y-0.5" />
                 </motion.button>
               )}

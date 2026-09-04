@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Sparkles, MessageSquare, Database, Users as UsersIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import FeedItem from './FeedItem';
 import { Contact } from '../types';
 import { auth } from '../services/firebaseService';
@@ -15,6 +16,7 @@ interface TimelineScreenProps {
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop';
 
 export default function TimelineScreen({ onChat, users = [], currentUserName = 'Yo' }: TimelineScreenProps) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
   const { data: contacts, loading } = useFirestoreCollection<Contact>(
     currentUid ? `users/${currentUid}/contacts` : null
@@ -47,8 +49,8 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
               <div className="flex flex-col items-center">
-                <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] animate-pulse">Sincronizando Ecosistema...</p>
-                <p className="text-[10px] text-on-surface-variant font-medium mt-1">Recuperando tus contactos guardados</p>
+                <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] animate-pulse">{t('timeline.syncingTitle')}</p>
+                <p className="text-[10px] text-on-surface-variant font-medium mt-1">{t('timeline.syncingDesc')}</p>
               </div>
             </div>
           </motion.div>
@@ -57,15 +59,15 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
 
       <section className="mb-8 px-1">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="font-display text-4xl font-extrabold text-primary tracking-tight">Conexiones Recientes</h1>
+          <h1 className="font-display text-4xl font-extrabold text-primary tracking-tight">{t('timeline.title')}</h1>
           {!loading && contacts.length > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success rounded-full border border-success/20">
               <Database className="w-3 h-3" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Sincronizado</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{t('timeline.syncedBadge')}</span>
             </div>
           )}
         </div>
-        <p className="text-on-surface-variant font-sans">Su historial cronológico de crecimiento profesional en Guinea Ecuatorial.</p>
+        <p className="text-on-surface-variant font-sans">{t('timeline.subtitle')}</p>
       </section>
 
       {/* Miembros de la Red: personas reales del directorio que aún no son contactos */}
@@ -74,7 +76,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-secondary" />
-              <h3 className="text-lg font-bold font-display text-primary">Miembros de la Red</h3>
+              <h3 className="text-lg font-bold font-display text-primary">{t('timeline.networkMembersTitle')}</h3>
             </div>
           </div>
 
@@ -95,7 +97,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
                   <div className="flex-1">
                     <h4 className="font-bold text-primary">{member.name}</h4>
                     <p className="text-xs text-secondary font-medium leading-tight mb-1">
-                      {member.profession || member.role || 'Miembro de EG Connect'}
+                      {member.profession || member.role || t('timeline.defaultMemberRole')}
                     </p>
                     {member.city && (
                       <div className="flex items-center gap-1 text-[10px] text-on-surface-variant/70">
@@ -112,7 +114,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
                     className="flex items-center gap-2 px-4 py-2 bg-secondary text-white rounded-full text-[10px] font-bold shadow-md shadow-secondary/20 outline-hidden"
                   >
                     <MessageSquare className="w-3 h-3" />
-                    Contactar
+                    {t('timeline.contactButton')}
                   </button>
                 </div>
               </motion.div>
@@ -124,8 +126,8 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
       {!loading && contacts.length === 0 && (
         <div className="text-center py-16 space-y-3 opacity-60 px-1">
           <UsersIcon className="w-10 h-10 mx-auto text-outline" />
-          <p className="text-sm font-bold text-on-surface-variant">Todavía no tienes contactos guardados.</p>
-          <p className="text-xs text-on-surface-variant">Usa "Escanear" para guardar tu primera tarjeta de contacto.</p>
+          <p className="text-sm font-bold text-on-surface-variant">{t('timeline.emptyTitle')}</p>
+          <p className="text-xs text-on-surface-variant">{t('timeline.emptySubtitle')}</p>
         </div>
       )}
 
@@ -133,7 +135,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
       {today.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-secondary font-label">Hoy</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-secondary font-label">{t('timeline.groupToday')}</span>
             <div className="h-px flex-1 bg-surface-container-high" />
           </div>
 
@@ -149,7 +151,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
       {yesterday.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-outline font-label">Ayer</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-outline font-label">{t('timeline.groupYesterday')}</span>
             <div className="h-px flex-1 bg-surface-container-high" />
           </div>
 
@@ -165,7 +167,7 @@ export default function TimelineScreen({ onChat, users = [], currentUserName = '
       {earlier.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-outline font-label">Anteriores</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-outline font-label">{t('timeline.groupEarlier')}</span>
             <div className="h-px flex-1 bg-surface-container-high" />
           </div>
 
