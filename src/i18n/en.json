@@ -345,5 +345,39 @@
     "sending": "Sending...",
     "submitButton": "Send Feedback",
     "versionFooter": "EG CONNECT - Version 1.0"
+  },
+  "discover": {
+    "shareTitle": "Join EG Connect",
+    "shareText": "I'm connecting with professionals in Equatorial Guinea. Join in too!",
+    "shareCopyFallback": "Copy this link to invite: {{url}}",
+    "title": "Directory",
+    "filterAll": "All",
+    "filterIndividual": "Personal",
+    "filterCompany": "Companies",
+    "searchPlaceholder": "Search by name, specialty, or city...",
+    "emptyTitle": "Grow the Ecosystem!",
+    "emptyDesc": "We couldn't find anyone matching that filter. Invite your partners to help EG Connect keep growing.",
+    "shareInviteButton": "Share Invitation",
+    "defaultCity": "Equatorial Guinea",
+    "helloButton": "Hi",
+    "connectButton": "Connect",
+    "viralGrowthBadge": "Viral Growth",
+    "noPartnerTitle": "Can't find your partner?",
+    "noPartnerDesc": "Invite your partners and colleagues to join the largest business network in E.G.",
+    "inviteWhatsappButton": "Invite via WhatsApp / Link"
+  },
+  "searchResults": {
+    "searchLabel": "Search",
+    "resultsCount": "{{count}} results across the network",
+    "noResults": "No results",
+    "emptyStateTitle": "We couldn't find anything for that term",
+    "emptyStateDesc": "Try a different name, company, or keyword.",
+    "peopleSection": "People",
+    "companiesSection": "Companies",
+    "marketplaceSection": "Marketplace",
+    "eventsSection": "Events",
+    "initiativesSection": "Initiatives",
+    "tendersSection": "Tenders",
+    "collaboratorsCount": "{{count}} collaborators"
   }
 }

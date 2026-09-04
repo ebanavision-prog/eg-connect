@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Search, Users, Building2, ShoppingBag, Calendar, Rocket, Briefcase, MessageSquare, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Company, ServicePost, Event, Initiative, LocalContentOpportunity } from '../types';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -14,6 +15,7 @@ interface SearchResultsScreenProps {
 const norm = (s: string | undefined | null) => (s || '').toLowerCase();
 
 export default function SearchResultsScreen({ query, users, onContact, onNavigate }: SearchResultsScreenProps) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
   const q = norm(query);
 
@@ -62,25 +64,25 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
-        <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">Búsqueda</h2>
+        <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">{t('searchResults.searchLabel')}</h2>
         <h1 className="text-3xl font-extrabold font-display text-on-surface">"{query}"</h1>
         <p className="text-on-surface-variant text-sm mt-2">
-          {totalResults > 0 ? `${totalResults} resultados en toda la red` : 'Sin resultados'}
+          {totalResults > 0 ? t('searchResults.resultsCount', { count: totalResults }) : t('searchResults.noResults')}
         </p>
       </header>
 
       {totalResults === 0 && (
         <div className="text-center py-20 px-8 opacity-40">
           <Search className="w-12 h-12 mx-auto mb-4" />
-          <p className="font-bold">No encontramos nada con ese término</p>
-          <p className="text-xs">Prueba con otro nombre, empresa o palabra clave.</p>
+          <p className="font-bold">{t('searchResults.emptyStateTitle')}</p>
+          <p className="text-xs">{t('searchResults.emptyStateDesc')}</p>
         </div>
       )}
 
       {matchedUsers.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <Users className="w-4 h-4" /> Personas
+            <Users className="w-4 h-4" /> {t('searchResults.peopleSection')}
           </h3>
           <div className="space-y-2">
             {matchedUsers.map((u) => (
@@ -102,7 +104,7 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
       {matchedCompanies.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <Building2 className="w-4 h-4" /> Empresas
+            <Building2 className="w-4 h-4" /> {t('searchResults.companiesSection')}
           </h3>
           <div className="space-y-2">
             {matchedCompanies.map((c) => (
@@ -122,7 +124,7 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
       {matchedPosts.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <ShoppingBag className="w-4 h-4" /> Marketplace
+            <ShoppingBag className="w-4 h-4" /> {t('searchResults.marketplaceSection')}
           </h3>
           <div className="space-y-2">
             {matchedPosts.map((p) => (
@@ -141,7 +143,7 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
       {matchedEvents.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <Calendar className="w-4 h-4" /> Eventos
+            <Calendar className="w-4 h-4" /> {t('searchResults.eventsSection')}
           </h3>
           <div className="space-y-2">
             {matchedEvents.map((e) => (
@@ -160,14 +162,14 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
       {matchedInitiatives.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <Rocket className="w-4 h-4" /> Iniciativas
+            <Rocket className="w-4 h-4" /> {t('searchResults.initiativesSection')}
           </h3>
           <div className="space-y-2">
             {matchedInitiatives.map((i) => (
               <button key={i.id} onClick={() => onNavigate('initiatives')} className="w-full flex items-center gap-4 p-4 bg-white border border-outline/10 rounded-[1.5rem] text-left hover:border-primary/20 transition-all">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-on-surface truncate">{i.title}</p>
-                  <p className="text-xs text-on-surface-variant truncate">{i.members?.length || 0} colaboradores</p>
+                  <p className="text-xs text-on-surface-variant truncate">{t('searchResults.collaboratorsCount', { count: i.members?.length || 0 })}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-outline" />
               </button>
@@ -179,7 +181,7 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
       {matchedTenders.length > 0 && (
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest px-1">
-            <Briefcase className="w-4 h-4" /> Licitaciones
+            <Briefcase className="w-4 h-4" /> {t('searchResults.tendersSection')}
           </h3>
           <div className="space-y-2">
             {matchedTenders.map((t) => (

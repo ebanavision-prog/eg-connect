@@ -345,5 +345,39 @@
     "sending": "Enviando información...",
     "submitButton": "Enviar Feedback",
     "versionFooter": "EG CONNECT - Versión 1.0"
+  },
+  "discover": {
+    "shareTitle": "Únete a EG Connect",
+    "shareText": "Estoy conectando con profesionales en Guinea Ecuatorial. ¡Únete tú también!",
+    "shareCopyFallback": "Copia este enlace para invitar: {{url}}",
+    "title": "Directorio",
+    "filterAll": "Todos",
+    "filterIndividual": "Personal",
+    "filterCompany": "Empresas",
+    "searchPlaceholder": "Buscar por nombre, especialidad o ciudad...",
+    "emptyTitle": "¡Haz Crecer el Ecosistema!",
+    "emptyDesc": "No encontramos a nadie con ese filtro. Invita a tus socios para que EG Connect siga creciendo.",
+    "shareInviteButton": "Compartir Invitación",
+    "defaultCity": "Guinea Ecuatorial",
+    "helloButton": "Hola",
+    "connectButton": "Conectar",
+    "viralGrowthBadge": "Viral Growth",
+    "noPartnerTitle": "¿No encuentras a tu partner?",
+    "noPartnerDesc": "Invita a tus socios y colegas a unirse a la red empresarial más grande de G.E.",
+    "inviteWhatsappButton": "Invitar vía WhatsApp / Link"
+  },
+  "searchResults": {
+    "searchLabel": "Búsqueda",
+    "resultsCount": "{{count}} resultados en toda la red",
+    "noResults": "Sin resultados",
+    "emptyStateTitle": "No encontramos nada con ese término",
+    "emptyStateDesc": "Prueba con otro nombre, empresa o palabra clave.",
+    "peopleSection": "Personas",
+    "companiesSection": "Empresas",
+    "marketplaceSection": "Marketplace",
+    "eventsSection": "Eventos",
+    "initiativesSection": "Iniciativas",
+    "tendersSection": "Licitaciones",
+    "collaboratorsCount": "{{count}} colaboradores"
   }
 }
