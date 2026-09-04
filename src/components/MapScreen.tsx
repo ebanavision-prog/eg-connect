@@ -7,6 +7,7 @@ import {
   Users, Loader2, ShieldQuestion, Eye, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { auth, setUserLocationSharing } from '../services/firebaseService';
 import { localDataService } from '../services/localDataService';
 
@@ -79,6 +80,7 @@ interface MapScreenProps {
 }
 
 export default function MapScreen({ users, profileData, onContact, onUpdateProfile }: MapScreenProps) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
 
   const [geoState, setGeoState] = useState<GeoState>('idle');
@@ -101,7 +103,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setGeoState('unsupported');
-      setGeoError('Este navegador no soporta geolocalización. Mostramos Malabo por defecto.');
+      setGeoError(t('map.geoUnsupported'));
       return Promise.resolve<LatLng | null>(null);
     }
     setGeoState('loading');
@@ -118,8 +120,8 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
           setGeoState('denied');
           setGeoError(
             err.code === err.PERMISSION_DENIED
-              ? 'Rechazaste el permiso de ubicación. Mostramos Malabo por defecto y no podemos calcular distancias reales.'
-              : 'No se pudo obtener tu ubicación ahora mismo. Mostramos Malabo por defecto.'
+              ? t('map.geoDenied')
+              : t('map.geoErrorGeneric')
           );
           resolve(null);
         },
@@ -140,7 +142,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
         setSharing(false);
         onUpdateProfile({ ...profileData, locationSharing: false, location: undefined });
       } catch {
-        setSharingError('No se pudo desactivar el compartir. Inténtalo de nuevo.');
+        setSharingError(t('map.disableSharingError'));
       } finally {
         setSharingBusy(false);
       }
@@ -153,7 +155,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
       coords = await requestLocation();
     }
     if (!coords) {
-      setSharingError('Activa tu ubicación arriba antes de poder compartirla.');
+      setSharingError(t('map.enableSharingNeedsLocation'));
       return;
     }
     setSharingBusy(true);
@@ -162,7 +164,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
       setSharing(true);
       onUpdateProfile({ ...profileData, locationSharing: true, location: { lat: coords.lat, lng: coords.lng } });
     } catch {
-      setSharingError('No se pudo activar el compartir. Inténtalo de nuevo.');
+      setSharingError(t('map.enableSharingError'));
     } finally {
       setSharingBusy(false);
     }
@@ -175,7 +177,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
         await setUserLocationSharing(currentUid, coords);
         onUpdateProfile({ ...profileData, locationSharing: true, location: { lat: coords.lat, lng: coords.lng } });
       } catch {
-        setSharingError('Se actualizó tu posición localmente, pero no se pudo guardar. Inténtalo de nuevo.');
+        setSharingError(t('map.refreshSaveError'));
       }
     }
   };
@@ -227,18 +229,18 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
               />
               <div className="flex-1 overflow-hidden">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-primary opacity-70">
-                  {distanceLabelFor(selectedUser.location) || 'Distancia no disponible'}
+                  {distanceLabelFor(selectedUser.location) || t('map.distanceUnavailable')}
                 </p>
                 <p className="text-sm font-bold truncate">{selectedUser.name}</p>
                 <p className="text-[10px] text-on-surface-variant font-medium truncate">
-                  {selectedUser.profession || selectedUser.role || 'Miembro de EG Connect'}
+                  {selectedUser.profession || selectedUser.role || t('map.defaultMemberRole')}
                   {selectedUser.city ? ` · ${selectedUser.city}` : ''}
                 </p>
               </div>
               <button
                 onClick={() => onContact(selectedUser)}
                 className="p-2.5 bg-primary text-white rounded-full shrink-0 active:scale-90 transition-transform outline-hidden"
-                aria-label="Enviar mensaje"
+                aria-label={t('map.sendMessageAria')}
               >
                 <MessageSquare className="w-4 h-4" />
               </button>
@@ -281,7 +283,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
       {!isOnline && (
         <div className="absolute top-24 right-6 z-30 flex items-center gap-2 bg-secondary-container px-3 py-1.5 rounded-full shadow-lg border border-white/20">
           <WifiOff className="w-3 h-3 text-on-secondary-container" />
-          <span className="text-[10px] font-bold text-on-secondary-container uppercase tracking-widest">Sin Conexión</span>
+          <span className="text-[10px] font-bold text-on-secondary-container uppercase tracking-widest">{t('map.offlineBadge')}</span>
         </div>
       )}
 
@@ -293,7 +295,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
           </div>
           <input
             type="text"
-            placeholder="Buscar contactos en el mapa..."
+            placeholder={t('map.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-transparent border-none focus:ring-0 text-on-surface w-full font-sans text-sm outline-hidden"
@@ -312,9 +314,9 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
                 <ShieldQuestion className="w-4 h-4 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-bold text-on-surface">Activa tu ubicación</p>
+                <p className="text-xs font-bold text-on-surface">{t('map.activateLocationTitle')}</p>
                 <p className="text-[11px] text-on-surface-variant leading-snug mt-0.5">
-                  {geoError || 'Para centrar el mapa donde estás y calcular distancias reales, necesitamos tu ubicación del navegador. Nunca se comparte con nadie hasta que tú lo actives abajo.'}
+                  {geoError || t('map.activateLocationDesc')}
                 </p>
               </div>
             </div>
@@ -324,9 +326,9 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-full font-bold text-xs disabled:opacity-60 active:scale-95 transition-all outline-hidden"
             >
               {geoState === 'loading' ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Buscando tu posición...</>
+                <><Loader2 className="w-4 h-4 animate-spin" />{t('map.searchingPosition')}</>
               ) : (
-                <><LocateFixed className="w-4 h-4" />Usar mi ubicación</>
+                <><LocateFixed className="w-4 h-4" />{t('map.useMyLocation')}</>
               )}
             </button>
           </div>
@@ -341,11 +343,11 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
               {sharing ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold font-display text-primary">Compartir mi ubicación</h3>
+              <h3 className="text-sm font-bold font-display text-primary">{t('map.shareLocationTitle')}</h3>
               <p className="text-[11px] text-on-surface-variant leading-snug">
                 {sharing
-                  ? 'Otros miembros de EG Connect pueden verte en este mapa.'
-                  : 'Solo tú ves tu posición. Actívalo para aparecer en el mapa de otros.'}
+                  ? t('map.shareLocationDescOn')
+                  : t('map.shareLocationDescOff')}
               </p>
             </div>
             <button
@@ -354,7 +356,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
               className={`w-12 h-7 rounded-full transition-all relative shrink-0 disabled:opacity-50 outline-hidden ${sharing ? 'bg-secondary' : 'bg-surface-container-high'}`}
               role="switch"
               aria-checked={sharing}
-              aria-label="Compartir mi ubicación"
+              aria-label={t('map.shareLocationAria')}
             >
               {sharingBusy ? (
                 <Loader2 className="w-4 h-4 animate-spin absolute top-1.5 left-1/2 -translate-x-1/2 text-on-surface-variant" />
@@ -373,7 +375,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-surface-container-low text-primary rounded-full font-bold text-[11px] disabled:opacity-60 active:scale-95 transition-all outline-hidden"
             >
               {geoState === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              Actualizar mi posición
+              {t('map.updatePosition')}
             </button>
           )}
 
@@ -381,7 +383,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
             <div className="flex items-center gap-3 pt-1 border-t border-outline/10">
               <Users className="w-4 h-4 text-on-surface-variant/50 shrink-0 mt-3" />
               <p className="text-[11px] text-on-surface-variant/70 leading-snug pt-3">
-                Todavía nadie ha activado compartir ubicación. Actívalo tú y sé el primero en el mapa.
+                {t('map.noOneSharingYet')}
               </p>
             </div>
           )}

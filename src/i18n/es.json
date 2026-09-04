@@ -451,5 +451,29 @@
     "pushDeclinedTitle": "Solicitud rechazada",
     "pushAcceptedBody": "{{name}} aceptó tu solicitud de conexión.",
     "pushDeclinedBody": "{{name}} no aceptó tu solicitud de conexión."
+  },
+  "map": {
+    "geoUnsupported": "Este navegador no soporta geolocalización. Mostramos Malabo por defecto.",
+    "geoDenied": "Rechazaste el permiso de ubicación. Mostramos Malabo por defecto y no podemos calcular distancias reales.",
+    "geoErrorGeneric": "No se pudo obtener tu ubicación ahora mismo. Mostramos Malabo por defecto.",
+    "disableSharingError": "No se pudo desactivar el compartir. Inténtalo de nuevo.",
+    "enableSharingNeedsLocation": "Activa tu ubicación arriba antes de poder compartirla.",
+    "enableSharingError": "No se pudo activar el compartir. Inténtalo de nuevo.",
+    "refreshSaveError": "Se actualizó tu posición localmente, pero no se pudo guardar. Inténtalo de nuevo.",
+    "distanceUnavailable": "Distancia no disponible",
+    "defaultMemberRole": "Miembro de EG Connect",
+    "sendMessageAria": "Enviar mensaje",
+    "offlineBadge": "Sin Conexión",
+    "searchPlaceholder": "Buscar contactos en el mapa...",
+    "activateLocationTitle": "Activa tu ubicación",
+    "activateLocationDesc": "Para centrar el mapa donde estás y calcular distancias reales, necesitamos tu ubicación del navegador. Nunca se comparte con nadie hasta que tú lo actives abajo.",
+    "searchingPosition": "Buscando tu posición...",
+    "useMyLocation": "Usar mi ubicación",
+    "shareLocationTitle": "Compartir mi ubicación",
+    "shareLocationDescOn": "Otros miembros de EG Connect pueden verte en este mapa.",
+    "shareLocationDescOff": "Solo tú ves tu posición. Actívalo para aparecer en el mapa de otros.",
+    "shareLocationAria": "Compartir mi ubicación",
+    "updatePosition": "Actualizar mi posición",
+    "noOneSharingYet": "Todavía nadie ha activado compartir ubicación. Actívalo tú y sé el primero en el mapa."
   }
 }

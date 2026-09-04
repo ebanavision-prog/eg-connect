@@ -451,5 +451,29 @@
     "pushDeclinedTitle": "Request declined",
     "pushAcceptedBody": "{{name}} accepted your connection request.",
     "pushDeclinedBody": "{{name}} didn't accept your connection request."
+  },
+  "map": {
+    "geoUnsupported": "This browser doesn't support geolocation. Showing Malabo by default.",
+    "geoDenied": "You declined location access. Showing Malabo by default and we can't calculate real distances.",
+    "geoErrorGeneric": "Couldn't get your location right now. Showing Malabo by default.",
+    "disableSharingError": "Couldn't turn off sharing. Please try again.",
+    "enableSharingNeedsLocation": "Turn on your location above before you can share it.",
+    "enableSharingError": "Couldn't turn on sharing. Please try again.",
+    "refreshSaveError": "Your position was updated locally, but couldn't be saved. Please try again.",
+    "distanceUnavailable": "Distance unavailable",
+    "defaultMemberRole": "EG Connect Member",
+    "sendMessageAria": "Send message",
+    "offlineBadge": "Offline",
+    "searchPlaceholder": "Search contacts on the map...",
+    "activateLocationTitle": "Turn on your location",
+    "activateLocationDesc": "To center the map where you are and calculate real distances, we need your browser location. It's never shared with anyone until you turn it on below.",
+    "searchingPosition": "Finding your position...",
+    "useMyLocation": "Use my location",
+    "shareLocationTitle": "Share my location",
+    "shareLocationDescOn": "Other EG Connect members can see you on this map.",
+    "shareLocationDescOff": "Only you can see your position. Turn it on to appear on others' maps.",
+    "shareLocationAria": "Share my location",
+    "updatePosition": "Update my position",
+    "noOneSharingYet": "No one has turned on location sharing yet. Turn it on and be the first on the map."
   }
 }
