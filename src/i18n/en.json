@@ -7,10 +7,22 @@
     "welcome": {
       "tagline": "The definitive platform for networking and entrepreneurship in Equatorial Guinea.",
       "features": {
-        "offers": { "title": "Deals", "desc": "EG Opportunities" },
-        "networking": { "title": "Networking", "desc": "Direct Channel" },
-        "investors": { "title": "Investors", "desc": "Connect with Capital" },
-        "initiatives": { "title": "Initiatives", "desc": "Create or Join Projects" }
+        "offers": {
+          "title": "Deals",
+          "desc": "EG Opportunities"
+        },
+        "networking": {
+          "title": "Networking",
+          "desc": "Direct Channel"
+        },
+        "investors": {
+          "title": "Investors",
+          "desc": "Connect with Capital"
+        },
+        "initiatives": {
+          "title": "Initiatives",
+          "desc": "Create or Join Projects"
+        }
       },
       "cta": "Start the Experience"
     },
@@ -97,8 +109,18 @@
       "errorCreateAccount": "Couldn't create the account. Try a different username."
     },
     "months": [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
     ]
   },
   "home": {
@@ -130,10 +152,22 @@
     "agendaEmptySubtitle": "Check back soon for the official agenda.",
     "servicesTitle": "Ecosystem Services",
     "categories": {
-      "timeline": { "label": "Connections", "desc": "Your professional network" },
-      "crm": { "label": "CRM", "desc": "Strategic relationships" },
-      "tenders": { "label": "Tenders", "desc": "New Projects" },
-      "marketplace": { "label": "Marketplace", "desc": "Local market" }
+      "timeline": {
+        "label": "Connections",
+        "desc": "Your professional network"
+      },
+      "crm": {
+        "label": "CRM",
+        "desc": "Strategic relationships"
+      },
+      "tenders": {
+        "label": "Tenders",
+        "desc": "New Projects"
+      },
+      "marketplace": {
+        "label": "Marketplace",
+        "desc": "Local market"
+      }
     },
     "strategyLabel": "National Strategy",
     "strategyQuote": "\"The success of a business in Malabo depends on its ability to scale toward Bata and the rest of the country. Think nationally from day one.\"",
@@ -383,7 +417,20 @@
   "events": {
     "sectionLabel": "Agenda",
     "title": "Local Events",
-    "monthsShort": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+    "monthsShort": [
+      "JAN",
+      "FEB",
+      "MAR",
+      "APR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AUG",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DEC"
+    ],
     "ctaTitle": "Organizing an event?",
     "ctaDesc": "No events have been registered yet. Be the first to publish one.",
     "publishButton": "Publish Event",
@@ -574,5 +621,15 @@
     "publishing": "Publishing...",
     "publishButton": "Publish Tender",
     "errorGeneric": "Couldn't publish the tender. Please try again."
+  },
+  "companyProfileModal": {
+    "locationLabel": "Location",
+    "employeesLabel": "Employees",
+    "sectorLabel": "Sector",
+    "aboutTitle": "About the Company",
+    "certificationsTitle": "Certifications",
+    "leadershipTitle": "Leadership",
+    "visitWebsiteButton": "Visit Website",
+    "noWebsite": "This company hasn't added a website"
   }
 }
