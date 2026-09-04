@@ -29,14 +29,14 @@ El producto está **funcionalmente completo y honesto** (casi nada finge hacer a
 
 ## 1. Arquitectura e infraestructura
 
-**Estado actual:** SPA React sobre Firebase Spark (gratis) + un shim PHP en cPanel para las dos cosas que normalmente serían Cloud Functions (Gemini, FCM send). Sin entorno de staging, sin pipeline, despliegue manual (`firebase deploy` a mano, según memoria de sesiones previas).
+**Estado actual:** SPA React sobre Firebase Spark (gratis) + un shim PHP en cPanel para las dos cosas que normalmente serían Cloud Functions (Gemini, FCM send). Despliegue a producción sigue siendo manual (`firebase deploy` a mano) — eso no cambió y es una decisión, no un hallazgo.
 
-| Hallazgo | Riesgo | Recomendación |
+| Hallazgo | Riesgo | Estado |
 |---|---|---|
-| Cero GitHub Actions / CI (confirmado: no existe `.github/`) | Cualquier regresión llega directo a producción; nadie corre `tsc --noEmit` ni `test:rules` antes de mergear | CI mínimo: typecheck + `npm run test:rules` contra emulador en cada push a `main`. No bloquea tu flujo de "batch deploy" — solo evita que un batch roto se despliegue |
-| Sin staging real | Todo se valida contra emulador local o, en el peor caso, contra producción | Un canal de Firebase Hosting (`firebase hosting:channel:deploy staging`) es gratis en Spark — cero excusa para no tenerlo |
-| Cuenta de servicio de FCM y `config.php` viven solo en el servidor cPanel, subidas a mano | Si se pierde el servidor o el archivo, no hay rotación documentada ni backup | Runbook de 1 página: dónde se genera cada secreto, cómo rotarlo, dónde vive la copia de emergencia (gestor de contraseñas, no el repo) |
-| `firestore-debug.log` (100 KB) vive en la raíz del working tree | Ignorado en git (bien), pero crece sin límite localmente | Cosmético — `npm run clean` podría barrerlo también |
+| ~~Cero GitHub Actions / CI~~ | Cualquier regresión llegaba directo a producción sin que nadie corriera `tsc --noEmit` ni `test:rules` antes de mergear | **RESUELTO** (merge `70aa4b5`, 2026-09-04): `.github/workflows/ci.yml` corre typecheck + build + `test:rules` contra emulador real en cada push/PR a `main` |
+| ~~Sin staging real~~ | Todo se validaba contra emulador local o, en el peor caso, contra producción | **RESUELTO** (mismo merge): `npm run deploy:staging` + `docs/STAGING.md`. Pendiente de una primera prueba real por alguien con acceso al proyecto Firebase (ver sección 7) |
+| Cuenta de servicio de FCM y `config.php` viven solo en el servidor cPanel, subidas a mano | Si se pierde el servidor o el archivo, no hay rotación documentada ni backup | **Sigue pendiente** — runbook de 1 página: dónde se genera cada secreto, cómo rotarlo, dónde vive la copia de emergencia (gestor de contraseñas, no el repo) |
+| `firestore-debug.log` (100 KB) vive en la raíz del working tree | Ignorado en git (bien), pero crece sin límite localmente | **Sigue pendiente**, cosmético — `npm run clean` podría barrerlo también |
 
 ---
 
@@ -106,11 +106,11 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 - ~~Verificación en vivo contra el emulador de los dos merges~~ — **hecho**: reglas 44/44 contra emulador real + dev server booteando limpio; falta solo el click-a-click visual (sin extensión de Chrome disponible en este entorno)
 
 ### Fase 1 — Fundamentos de ingeniería (2-4 sesiones)
-- CI en GitHub Actions: typecheck + `test:rules` en cada push
-- Canal de staging en Firebase Hosting
-- Tipar `UserProfile` y eliminar los `any` más críticos (props de pantallas top-level)
-- Extraer store ligero (Zustand/Context) para `currentUser`/`realUsers`/`notifications`
-- Completar cobertura de i18n en las ~18 pantallas restantes (infraestructura ya lista, ver sección 6.6)
+- ~~CI en GitHub Actions: typecheck + `test:rules` en cada push~~ — **hecho** (merge `70aa4b5`, 2026-09-04): `.github/workflows/ci.yml`, 3 jobs (typecheck/build/rules-tests), ensayado dos veces contra emulador real (38/38 ambas)
+- ~~Canal de staging en Firebase Hosting~~ — **hecho**: script `npm run deploy:staging` + `docs/STAGING.md`. **Pendiente real:** no se pudo probar un deploy real porque la cuenta de Firebase CLI de este entorno no tiene acceso al proyecto `gen-lang-client-0951010679` — falta que alguien con acceso real lo confirme una vez
+- Tipar `UserProfile` y eliminar los `any` más críticos (props de pantallas top-level) — **en curso**
+- Extraer store ligero (Zustand/Context) para `currentUser`/`realUsers`/`notifications` — **en curso, alcance inicial limitado a App.tsx a propósito**
+- Completar cobertura de i18n en las ~18 pantallas restantes (infraestructura ya lista, ver sección 6.6) — **pendiente, bloqueado hasta que cierre el tipado (evitar conflicto masivo de merge)**
 
 ### Fase 2 — Integridad de datos y privacidad
 - Unificar el modelo de empresa (`users` vs `companies`)
