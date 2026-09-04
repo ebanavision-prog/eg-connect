@@ -2,6 +2,54 @@ import { Timestamp } from 'firebase/firestore';
 
 export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'chat' | 'tenders' | 'crm' | 'investors' | 'initiatives' | 'search';
 
+// Modela el documento real de `/users/{uid}` en Firestore. Derivado de un grep
+// exhaustivo de `profileData.`/`userProfile.`/`realUsers`/`getAllUsers()` en
+// src/components + src/App.tsx, cruzado contra la whitelist de campos
+// editables de la regla `update` de `/users/{userId}` en firestore.rules
+// (que a su vez exige `uid`, `name`, `profileType` en `isValidUser()`).
+//
+// Campos opcionales que SÍ se leen en algún sitio pero para los que no existe
+// ningún camino de escritura real hoy (quedan siempre `undefined` en
+// producción) — se documentan igual, ver ProfileScreen.tsx ~717/729:
+//   - `linkedin`, `portfolio`
+export interface UserProfile {
+  uid: string;
+  name: string;
+  avatar: string;
+  profileType: 'individual' | 'company';
+  email?: string;
+  // Solo se escribe al registrarse (`registerWithUsername` en
+  // firebaseService.ts) — no aparece en la whitelist de `update` porque no es
+  // editable después, pero es un campo real del documento.
+  username?: string;
+  phone?: string;
+  birthday?: string; // formato 'MM-DD'
+  profession?: string;
+  role?: string;
+  city?: string;
+  employees?: string; // solo profileType === 'company'; bucket tipo '1-10'
+  yearsInMarket?: string; // solo profileType === 'company'; bucket tipo '0-2'
+  website?: string; // solo profileType === 'company'
+  privacyMode?: 'public' | 'network' | 'private';
+  isInvestor?: boolean;
+  investorSectors?: string[];
+  investorTicketRange?: string;
+  investorStage?: string;
+  investorBio?: string;
+  recoveryEmail?: string;
+  location?: { lat: number; lng: number; updatedAt?: unknown };
+  locationSharing?: boolean;
+  fcmTokens?: string[];
+  isAdmin?: boolean;
+  referredBy?: string;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  // Leídos en ProfileScreen.tsx pero sin ningún campo de edición ni camino de
+  // escritura en todo el código hoy — siempre `undefined` en la práctica.
+  linkedin?: string;
+  portfolio?: string;
+}
+
 export interface InvestorProfile {
   uid: string;
   name: string;

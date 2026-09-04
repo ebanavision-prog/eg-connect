@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Search, Users, Building2, ShoppingBag, Calendar, Rocket, Briefcase, MessageSquare, ChevronRight } from 'lucide-react';
-import { Company, ServicePost, Event, Initiative, LocalContentOpportunity } from '../types';
+import { Company, ServicePost, Event, Initiative, LocalContentOpportunity, UserProfile } from '../types';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 interface SearchResultsScreenProps {
   query: string;
-  users: any[];
+  users: UserProfile[];
   onContact: (participant: { id: string; name: string; avatar: string }) => void;
   onNavigate: (screen: string) => void;
 }

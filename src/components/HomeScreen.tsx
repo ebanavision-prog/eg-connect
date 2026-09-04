@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Logo from './Logo';
+import { UserProfile } from '../types';
 
 
 interface HomeScreenProps {
@@ -17,8 +18,8 @@ interface HomeScreenProps {
     tasks: number;
     unreadChats: number;
   };
-  userProfile: any;
-  realUsers?: any[];
+  userProfile: UserProfile | null;
+  realUsers?: UserProfile[];
   onContact?: (participant: { id: string; name: string; avatar: string }) => void;
 }
 

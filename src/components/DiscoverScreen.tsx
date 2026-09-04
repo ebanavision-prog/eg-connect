@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, MapPin, MessageSquare, UserPlus, Filter, Grid, List as ListIcon, Building2, User, Share2 } from 'lucide-react';
 import { auth } from '../services/firebaseService';
+import { UserProfile } from '../types';
 
 interface DiscoverScreenProps {
-  users: any[];
+  users: UserProfile[];
   onContact: (user: any) => void;
 }
 

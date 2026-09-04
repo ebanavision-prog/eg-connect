@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Mic, StopCircle, Play, Users, UserPlus, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
-import { Conversation, Message } from '../types';
+import { Conversation, Message, UserProfile } from '../types';
 import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead, addParticipantToGroup } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { sendPushToUser } from '../services/pushService';
 
 interface ChatScreenProps {
   initialParticipant?: { id: string; name: string; avatar: string };
-  users: any[];
+  users: UserProfile[];
 }
 
 // Grid de emojis fijo, sin dependencia externa ni llamada a ninguna API.

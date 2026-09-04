@@ -2,22 +2,22 @@ import { useState, useMemo } from 'react';
 import { where } from 'firebase/firestore';
 import { Handshake, MessageSquare, MapPin, Briefcase, X, Loader2, Send, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ConnectionRequest } from '../types';
+import { ConnectionRequest, UserProfile } from '../types';
 import { auth, createConnectionRequest, respondToConnectionRequest } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { sendPushToUser } from '../services/pushService';
 
 interface InvestorsScreenProps {
-  users: any[];
+  users: UserProfile[];
   onContact: (user: any) => void;
-  profileData?: any;
+  profileData?: UserProfile | null;
 }
 
 const SECTOR_FILTERS = ['Todos', 'Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo'];
 
 export default function InvestorsScreen({ users, onContact, profileData }: InvestorsScreenProps) {
   const [sectorFilter, setSectorFilter] = useState('Todos');
-  const [pitchTarget, setPitchTarget] = useState<any | null>(null);
+  const [pitchTarget, setPitchTarget] = useState<UserProfile | null>(null);
   const [pitchText, setPitchText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [respondingId, setRespondingId] = useState<string | null>(null);
@@ -161,7 +161,7 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                key={investor.uid || investor.id}
+                key={investor.uid}
                 className="bg-white border border-outline/10 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-3 mb-4">

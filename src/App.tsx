@@ -38,7 +38,8 @@ import {
   Rocket
 } from 'lucide-react';
 
-import { Screen } from './types';
+import { Screen, UserProfile } from './types';
+import { useAppStore } from './store/useAppStore';
 import HomeScreen from './components/HomeScreen';
 import OnboardingScreen from './components/OnboardingScreen';
 
@@ -87,12 +88,22 @@ export default function App() {
   const setActiveScreen = (screen: Screen) => navigate(screen === 'home' ? '/' : `/${screen}`);
   const [onboarded, setOnboarded] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [profileData, setProfileData] = useState<any>(null);
+  // Fase 1 del store ligero (ver docs/PLAN_MEJORA_360.md, sección 7 -- Fase 1):
+  // `profileData`/`realUsers` ahora viven en un store de Zustand
+  // (`src/store/useAppStore.ts`) en vez de en un `useState` local, pero la
+  // lógica de carga/actualización de abajo (onAuthStateChanged, getAllUsers,
+  // el refetch tras editar el perfil) es exactamente la misma que antes --
+  // solo cambió dónde vive el estado, no qué hace. Las pantallas hijas siguen
+  // recibiendo `profileData`/`realUsers` como props tal cual (Fase 1.5,
+  // pendiente: migrarlas a leer del store directamente).
+  const profileData = useAppStore((s) => s.currentUserProfile);
+  const setProfileData = useAppStore((s) => s.setCurrentUserProfile);
+  const realUsers = useAppStore((s) => s.realUsers);
+  const setRealUsers = useAppStore((s) => s.setRealUsers);
   const [loading, setLoading] = useState(true);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
   const [isOnline, setIsOnline] = useState(localDataService.getIsOnline());
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
-  const [realUsers, setRealUsers] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -109,7 +120,11 @@ export default function App() {
         if (user) {
           const data = await getUserData(user.uid);
           if (data) {
-            setProfileData(data);
+            // getUserData() devuelve `DocumentData` (el tipo genérico sin tipar
+            // del SDK de Firestore) — este cast documenta el límite real del
+            // sistema donde ese documento entra a la app ya con la forma de
+            // `UserProfile`, sin cambiar qué dato llega ni cómo se usa.
+            setProfileData(data as UserProfile);
             setOnboarded(true);
             // Sync with local service for backward compatibility if needed
             localDataService.saveUserProfile(data as any);
@@ -226,7 +241,10 @@ export default function App() {
 
   if (!onboarded) {
     return <OnboardingScreen onComplete={(data) => {
-      setProfileData(data);
+      // OnboardingScreen.onComplete's propio tipo declara `profileType:
+      // string` (más ancho que el `'individual' | 'company'` real de
+      // UserProfile) — mismo límite documentado que en getUserData() arriba.
+      setProfileData(data as UserProfile);
       setOnboarded(true);
     }} />;
   }
