@@ -57,9 +57,9 @@ Otros puntos, menor severidad:
 ## 3. Modelo de datos / Firestore
 
 - **Duplicación de "empresa"**: un usuario tipo `company` guarda campos de empresa (`employees`, `website`, `yearsInMarket`) directamente en `users/{uid}` (ver reglas línea 52), pero *además* existe una colección `companies` separada con su propio `ownerId`, registrada por un flujo de 3 pasos en `CompaniesScreen`. Son dos representaciones de "soy una empresa" que pueden desincronizarse (editas tu perfil de empresa en `ProfileScreen` y el `companies` doc no se entera, o viceversa). **Recomendación:** decidir una fuente de verdad única — probablemente `companies` como entidad canónica, y que el perfil de usuario solo referencie `companyId`.
-- **Sin paginación en ningún lado.** `getAllUsers(100)` es un límite fijo cargado una vez al arrancar; `CompaniesScreen`, `MarketplaceScreen`, `TendersScreen`, `InitiativesScreen` traen la colección entera con `useFirestoreCollection` sin `limit()`. Con 50 usuarios no se nota; con 2.000, cada carga de Marketplace lee 2.000 documentos y el coste de Firestore escala con el crecimiento que la propia app está diseñada para generar (referidos, viral loop). **Recomendación:** `limit()` + scroll infinito o paginación con cursor (`startAfter`) antes de que esto se sienta.
+- ~~**Sin paginación en ningún lado.**~~ — **RESUELTO** (merge `82019f1`, 2026-09-04): `CompaniesScreen`/`MarketplaceScreen`/`TendersScreen`/`InitiativesScreen` ahora usan `orderBy('createdAt','desc') + limit(pageSize)` creciente (20, +20 por "Cargar más"), manteniendo el realtime de `onSnapshot`. Verificado en vivo contra emulador con 25 docs sembrados (páginas sin salto/repetición/reorden). Aviso honesto de "búsqueda limitada" cuando hay término de búsqueda activo y se llegó al límite de página. `getAllUsers(100)` (usuarios en `App.tsx`) queda igual por ahora — no estaba en el alcance de este ítem.
 - ~~**Índices auditados a medias.**~~ — **RESUELTO** (2026-09-04): auditadas TODAS las queries `where()`/`orderBy()` reales del código contra `firestore.indexes.json`. Resultado: ninguna query actual necesita un índice que no tenga ya — Firestore cubre automáticamente filtros de solo igualdad (por muchos campos que sean) y un único `orderBy`; el único caso que sí exige índice compuesto (`conversations`: `participants` array-contains + `lastMessageAt` orderBy) ya lo tenía. Se encontró y eliminó un índice **muerto** (`marketplace_posts`: `type`+`createdAt`) que no correspondía a ninguna query real — Marketplace/SearchResults traen la colección entera y filtran en el cliente.
-- **Sin borrado de cuenta ni exportación de datos.** El botón "Descargar Mis Datos CSV" en `ProfileScreen` es un stub sin `onClick`. Para una app con datos personales reales (cumpleaños, teléfono, ubicación GPS), no tener una vía de exportación/borrado es una deuda de privacidad, no solo una feature pendiente.
+- ~~**Sin borrado de cuenta ni exportación de datos.**~~ — **RESUELTO** (merge `8e60ec0`, 2026-09-04): `exportAllUserData()` (perfil+contactos+notas+tareas a JSON) y `deleteAccount()` (Firestore primero, Auth al final, idempotente, honesto sobre `auth/requires-recent-login`) en `firebaseService.ts`; nueva regla `allow delete: if isOwner(userId)`; modal de confirmación real (escribir palabra de confirmación) en `ProfileScreen`. 46/46 tests de reglas.
 - **Sin soft-delete/auditoría.** `deleteTender`, borrar contactos, etc. son borrados duros — no hay forma de recuperar ni de auditar quién borró qué.
 
 ---
@@ -113,10 +113,10 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 - ~~Completar cobertura de i18n~~ — **hecho, 21/21 pantallas** (2026-09-04): 16 mergeadas (`4b2776c`) + 5 finales (ProfileScreen, InviteScreen, MarketplaceScreen, CompaniesScreen, CompanyProfileModal) mergeadas sin conflictos. **Fase 1 completa en su totalidad.**
 
 ### Fase 2 — Integridad de datos y privacidad
-- Unificar el modelo de empresa (`users` vs `companies`)
-- Paginación real en Companies/Marketplace/Tenders/Initiatives
+- Unificar el modelo de empresa (`users` vs `companies`) — **en curso** (decisión tomada: unificar con migración backfill, `companies` como entidad canónica)
+- ~~Paginación real en Companies/Marketplace/Tenders/Initiatives~~ — **hecho** (2026-09-04, merge `82019f1`)
 - ~~Auditoría de índices Firestore contra queries reales~~ — **hecho** (2026-09-04): sin índices faltantes, uno muerto eliminado (`marketplace_posts`)
-- Exportación de datos + borrado de cuenta real (cumplimiento mínimo de privacidad)
+- ~~Exportación de datos + borrado de cuenta real~~ — **hecho** (2026-09-04, merge `8e60ec0`)
 
 ### Fase 3 — Funcionalidades y crecimiento
 - Grabación de audio real (o retirar la feature si no se prioriza)
