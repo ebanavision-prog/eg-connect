@@ -79,7 +79,7 @@ Otros puntos, menor severidad:
 - **Componentes gigantes.** `CompaniesScreen.tsx` (918 líneas), `App.tsx` (752), `ProfileScreen.tsx` (777), `OnboardingScreen.tsx` (711), `MarketplaceScreen.tsx` (747) concentran demasiada responsabilidad: formularios multi-paso, modales, listas y lógica de negocio en un solo archivo. **Sigue pendiente.** **Recomendación concreta:** extraer el wizard de registro de empresa (`CompaniesScreen` pasos 1-3) y el sidebar de navegación (`App.tsx`) a sus propios componentes — son las dos extracciones de mayor retorno inmediato.
 - **Cero tests de frontend.** Ni unitarios ni de componentes ni E2E. La única suite real es `firestoreRules.test.ts`. **Sigue pendiente.**
 - **Accesibilidad desigual.** Algunos botones tienen `aria-label` (`MapScreen`), la inmensa mayoría de botones-icono en el resto de pantallas no. **Sigue pendiente.**
-- ~~**i18n abandonado a medias.**~~ — **RESUELTO** (merges `ce5c81f`, `4b2776c`, + lote final en curso): las 4 pantallas rescatadas originalmente + 16 más ya traducidas a react-i18next (es/en), quedan 5 en curso (ProfileScreen, InviteScreen, MarketplaceScreen, CompaniesScreen, CompanyProfileModal).
+- ~~**i18n abandonado a medias.**~~ — **RESUELTO POR COMPLETO** (merges `ce5c81f`, `4b2776c`, `+ merge final 2026-09-04`): **21/21 pantallas traducidas** a react-i18next (es/en), 26 namespaces, 774 claves reales — todas verificadas cruzadas contra ambos idiomas (incluyendo las pluralizadas `_one`/`_other`), cero faltantes.
 
 ---
 
@@ -92,7 +92,7 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 3. ~~**Botones muertos en `ProfileScreen`**~~ — **RESUELTO** (rescatado de `agent-aa0e19eb`): exportar CSV y "Panel de Control" ya tienen comportamiento real; también se corrigieron 3 botones muertos más en Tenders (Más Detalles/Download) y Companies (Filter), y el timestamp roto en Marketplace/Feed.
 4. **Unificación de "empresa"** (ver sección 3) — impacto directo en confiabilidad de datos que se muestran en Marketplace/Companies. **Sigue pendiente**, no tocado por las worktrees rescatadas.
 5. **Paginación** antes de que el crecimiento (que el propio sistema de referidos busca provocar) vuelva la app lenta y cara. **Sigue pendiente.**
-6. **i18n — infraestructura lista, cobertura parcial** (rescatado de `agent-ac19ba`, ver 0.1): `react-i18next` real con es/en, selector de idioma funcional en `SyncSettingsScreen`. Traducidas: `OnboardingScreen`, `App.tsx`, `HomeScreen`, `SyncSettingsScreen` (4 de ~22 pantallas). **Queda traducir las ~18 restantes** — trabajo mecánico pero real, ver Fase 1 del roadmap.
+6. ~~**i18n — cobertura parcial**~~ — **RESUELTO POR COMPLETO** (2026-09-04): las 22 pantallas de la app traducidas a `react-i18next` (es/en), selector de idioma funcional en `SyncSettingsScreen`, 774 claves reales sin faltantes en ningún idioma.
 
 ---
 
@@ -110,7 +110,7 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 - ~~Canal de staging en Firebase Hosting~~ — **hecho**: script `npm run deploy:staging` + `docs/STAGING.md`. **Pendiente real:** no se pudo probar un deploy real porque la cuenta de Firebase CLI de este entorno no tiene acceso al proyecto `gen-lang-client-0951010679` — falta que alguien con acceso real lo confirme una vez
 - ~~Tipar `UserProfile` y eliminar los `any` más críticos~~ — **hecho** (merge `bbe4f38`, 2026-09-04): interfaz derivada de grep exhaustivo + whitelist de `firestore.rules`, tipada en App.tsx y 14 pantallas. Cero cambio de comportamiento — dos bugs preexistentes de uid/id (MapScreen/DiscoverScreen) quedaron señalados en el reporte del agente, deliberadamente sin tocar
 - ~~Extraer store ligero (Zustand/Context)~~ — **hecho** (mismo merge): `src/store/useAppStore.ts`, adopción inicial limitada a App.tsx a propósito. **Fase 1.5 pendiente:** migrar las pantallas hijas para leer del store directamente en vez de por props
-- Completar cobertura de i18n en las ~21 pantallas restantes — **21/21 en curso/hecho**: 16 mergeadas (`4b2776c`), 5 restantes (ProfileScreen, InviteScreen, MarketplaceScreen, CompaniesScreen, CompanyProfileModal) con agente dispatchado 2026-09-04
+- ~~Completar cobertura de i18n~~ — **hecho, 21/21 pantallas** (2026-09-04): 16 mergeadas (`4b2776c`) + 5 finales (ProfileScreen, InviteScreen, MarketplaceScreen, CompaniesScreen, CompanyProfileModal) mergeadas sin conflictos. **Fase 1 completa en su totalidad.**
 
 ### Fase 2 — Integridad de datos y privacidad
 - Unificar el modelo de empresa (`users` vs `companies`)
