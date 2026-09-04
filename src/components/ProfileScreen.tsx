@@ -7,6 +7,7 @@ import {
   ChevronLeft, Camera, Edit2, Save, X, RefreshCcw, Lock, ShieldCheck, Edit3
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { Contact, Task, ServicePost, UserProfile } from '../types';
 import { auth, saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -25,6 +26,7 @@ export default function ProfileScreen({
   profileData: UserProfile,
   onUpdateProfile: (data: any) => void
 }) {
+  const { t } = useTranslation();
   const isIndividual = activeProfile === 'individual';
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,16 +64,14 @@ export default function ProfileScreen({
   // Antes, sin cumpleaños guardado, esta tarjeta mostraba "28 de Abril" como si
   // fuera el dato real del usuario — una fecha inventada haciéndose pasar por
   // un hecho sobre su propio perfil. Ahora es un estado vacío honesto.
+  const months = t('profile.months', { returnObjects: true }) as string[];
+
   const formattedBirthday = profileData?.birthday
     ? (() => {
         const [month, day] = profileData.birthday.split('-');
-        const monthNames = [
-          'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        return `${parseInt(day)} de ${monthNames[parseInt(month) - 1]}`;
+        return t('profile.birthdayFormat', { day: parseInt(day), month: months[parseInt(month) - 1] });
       })()
-    : 'Sin definir';
+    : t('profile.undefinedFallback');
 
   const handleSave = async () => {
     try {
@@ -97,11 +97,6 @@ export default function ProfileScreen({
     }
   };
 
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -120,15 +115,15 @@ export default function ProfileScreen({
   // "Compartir Red" y el botón de Share no tenían onClick — no hacían nada.
   const handleShareProfile = () => {
     const shareData = {
-      title: profileData?.name || 'Mi perfil en EG CONNECT',
-      text: `Conéctate conmigo en EG CONNECT: ${profileData?.name || 'mi perfil'}${profileData?.profession ? ` — ${profileData.profession}` : ''}`,
+      title: profileData?.name || t('profile.defaultShareTitle'),
+      text: `${t('profile.shareTextBase', { name: profileData?.name || t('profile.myProfileFallback') })}${profileData?.profession ? ` — ${profileData.profession}` : ''}`,
       url: window.location.origin
     };
     if (navigator.share) {
       navigator.share(shareData).catch(() => {});
     } else {
       navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`).then(() => {
-        setShareFeedback('Enlace copiado');
+        setShareFeedback(t('profile.linkCopiedFeedback'));
         setTimeout(() => setShareFeedback(''), 2500);
       });
     }
@@ -137,7 +132,11 @@ export default function ProfileScreen({
   // "Descargar Mis Datos CSV" no tenía onClick. Exporta los contactos reales
   // ya cargados (myContacts) — nada inventado, es la misma data del CRM.
   const handleExportContactsCsv = () => {
-    const headers = ['Nombre', 'Cargo', 'Empresa', 'Ubicación', 'Estado CRM', 'Último contacto', 'Notas'];
+    const headers = [
+      t('profile.csvHeaderName'), t('profile.csvHeaderRole'), t('profile.csvHeaderCompany'),
+      t('profile.csvHeaderLocation'), t('profile.csvHeaderCrmStatus'), t('profile.csvHeaderLastContact'),
+      t('profile.csvHeaderNotes')
+    ];
     const rows = myContacts.map((c) => [
       c.name, c.role, c.company, c.location, c.crmStatus || 'Prospecto', c.lastMet, (c.note || '').replace(/\s+/g, ' ')
     ]);
@@ -183,18 +182,18 @@ export default function ProfileScreen({
           }`}
         >
           <User className="w-4 h-4" />
-          Perfil Personal
+          {t('profile.tabPersonal')}
         </button>
-        <button 
+        <button
           onClick={() => onToggleProfile('company')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all duration-300 ${
-            !isIndividual 
-              ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' 
+            !isIndividual
+              ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
               : 'text-on-surface-variant opacity-60 hover:opacity-100'
           }`}
         >
           <Building2 className="w-4 h-4" />
-          Perfil Corporativo
+          {t('profile.tabCompany')}
         </button>
       </div>
 
@@ -203,7 +202,7 @@ export default function ProfileScreen({
         {/* Completion Indicator */}
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 w-full max-w-[200px]">
           <div className="flex justify-between w-full px-2">
-            <span className="text-[8px] font-black uppercase tracking-widest text-primary/40 bg-surface px-2 py-0.5 rounded-full">Progreso del Perfil</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-primary/40 bg-surface px-2 py-0.5 rounded-full">{t('profile.progressLabel')}</span>
             <span className="text-[8px] font-black text-secondary bg-surface px-2 py-0.5 rounded-full">{completeness}%</span>
           </div>
           <div className="w-full h-1 bg-primary/5 rounded-full overflow-hidden border border-white shadow-sm">
@@ -243,7 +242,7 @@ export default function ProfileScreen({
           <div className="absolute top-8 right-8 flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
             {isIndividual ? <User className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
             <span className="text-[9px] font-bold uppercase tracking-widest tracking-[0.2em]">
-              {isIndividual ? 'Socio' : 'Compañía'}
+              {isIndividual ? t('profile.badgeIndividual') : t('profile.badgeCompany')}
             </span>
           </div>
 
@@ -273,32 +272,32 @@ export default function ProfileScreen({
             {isEditing ? (
               <div className="w-full max-w-sm space-y-4 px-4 h-[400px] overflow-y-auto no-scrollbar py-4 bg-white/5 rounded-[2rem] backdrop-blur-md">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Tipo de Perfil</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.profileTypeLabel')}</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setEditForm({ ...editForm, profileType: 'individual' })}
                       className={`py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all ${editForm.profileType === 'individual' ? 'bg-white text-primary border-white' : 'bg-white/10 border-white/20 text-white'}`}
                     >
-                      Personal
+                      {t('common.profileTypePersonal')}
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setEditForm({ ...editForm, profileType: 'company' })}
                       className={`py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest transition-all ${editForm.profileType === 'company' ? 'bg-white text-primary border-white' : 'bg-white/10 border-white/20 text-white'}`}
                     >
-                      Empresa
+                      {t('common.profileTypeCompany')}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">
-                    {editForm.profileType === 'company' ? 'Nombre de la Empresa' : 'Nombre Completo'}
+                    {editForm.profileType === 'company' ? t('profile.companyNameLabel') : t('profile.fullNameLabel')}
                   </label>
-                  <input 
+                  <input
                     type="text"
-                    placeholder="Ej: GE Petrol S.A."
+                    placeholder={t('profile.namePlaceholder')}
                     value={editForm.name || ''}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold"
@@ -308,8 +307,8 @@ export default function ProfileScreen({
                 {editForm.profileType === 'company' ? (
                   <>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sector Industrial</label>
-                      <select 
+                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.industrySectorLabel')}</label>
+                      <select
                         value={['Energía', 'Agricultura', 'Banca', 'Construcción', 'Telecomunicaciones', 'Tecnología', 'Servicios'].includes(editForm.profession || '') ? editForm.profession : (editForm.profession ? 'Otro' : 'Energía')}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -317,19 +316,19 @@ export default function ProfileScreen({
                         }}
                         className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white focus:bg-white/20 outline-hidden font-bold appearance-none"
                       >
-                        <option value="Energía" className="text-primary">Energía y Petróleo</option>
-                        <option value="Agricultura" className="text-primary">Agricultura y Pesca</option>
-                        <option value="Banca" className="text-primary">Banca y Finanzas</option>
-                        <option value="Construcción" className="text-primary">Construcción</option>
-                        <option value="Telecomunicaciones" className="text-primary">Telecomunicaciones</option>
-                        <option value="Tecnología" className="text-primary">Tecnología y Software</option>
-                        <option value="Servicios" className="text-primary">Servicios Profesionales</option>
-                        <option value="Otro" className="text-primary">Otro / Manual...</option>
+                        <option value="Energía" className="text-primary">{t('profile.sectorEnergy')}</option>
+                        <option value="Agricultura" className="text-primary">{t('profile.sectorAgriculture')}</option>
+                        <option value="Banca" className="text-primary">{t('profile.sectorBanking')}</option>
+                        <option value="Construcción" className="text-primary">{t('profile.sectorConstruction')}</option>
+                        <option value="Telecomunicaciones" className="text-primary">{t('profile.sectorTelecom')}</option>
+                        <option value="Tecnología" className="text-primary">{t('profile.sectorTech')}</option>
+                        <option value="Servicios" className="text-primary">{t('profile.sectorServices')}</option>
+                        <option value="Otro" className="text-primary">{t('profile.sectorOther')}</option>
                       </select>
                       {!['Energía', 'Agricultura', 'Banca', 'Construcción', 'Telecomunicaciones', 'Tecnología', 'Servicios'].includes(editForm.profession || '') && (
-                        <input 
+                        <input
                           type="text"
-                          placeholder="Especificar sector..."
+                          placeholder={t('profile.specifySectorPlaceholder')}
                           value={editForm.profession || ''}
                           onChange={(e) => setEditForm({ ...editForm, profession: e.target.value })}
                           className="mt-2 w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold"
@@ -338,8 +337,8 @@ export default function ProfileScreen({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Empleados</label>
-                        <select 
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.employeesLabel')}</label>
+                        <select
                           value={editForm.employees || '1-10'}
                           onChange={(e) => setEditForm({ ...editForm, employees: e.target.value })}
                           className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white focus:bg-white/20 outline-hidden font-bold appearance-none text-xs"
@@ -351,22 +350,22 @@ export default function ProfileScreen({
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Trayectoria</label>
-                        <select 
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.trajectoryLabel')}</label>
+                        <select
                           value={editForm.yearsInMarket || '0-2'}
                           onChange={(e) => setEditForm({ ...editForm, yearsInMarket: e.target.value })}
                           className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white focus:bg-white/20 outline-hidden font-bold appearance-none text-xs"
                         >
-                          <option value="0-2" className="text-primary">0-2 años</option>
-                          <option value="2-5" className="text-primary">2-5 años</option>
-                          <option value="5-10" className="text-primary">5-10 años</option>
-                          <option value="10+" className="text-primary">10+ años</option>
+                          <option value="0-2" className="text-primary">{t('profile.trajectoryOption0to2')}</option>
+                          <option value="2-5" className="text-primary">{t('profile.trajectoryOption2to5')}</option>
+                          <option value="5-10" className="text-primary">{t('profile.trajectoryOption5to10')}</option>
+                          <option value="10+" className="text-primary">{t('profile.trajectoryOption10plus')}</option>
                         </select>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sitio Web Corporativo</label>
-                      <input 
+                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.corporateWebsiteLabel')}</label>
+                      <input
                         type="url"
                         placeholder="https://..."
                         value={editForm.website || ''}
@@ -378,33 +377,33 @@ export default function ProfileScreen({
                 ) : (
                   <>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Especialidad / Cargo</label>
-                      <input 
+                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.specialtyRoleLabel')}</label>
+                      <input
                         type="text"
-                        placeholder="Ej: Director Comercial"
+                        placeholder={t('profile.specialtyPlaceholder')}
                         value={editForm.profession || ''}
                         onChange={(e) => setEditForm({ ...editForm, profession: e.target.value })}
                         className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Fecha de Cumpleaños</label>
+                      <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.birthdayDateLabel')}</label>
                       <div className="flex gap-2">
-                        <input 
+                        <input
                           type="number"
-                          placeholder="DD"
+                          placeholder={t('profile.dayPlaceholder')}
                           min="1"
                           max="31"
                           value={birthDay}
                           onChange={(e) => setBirthDay(e.target.value)}
                           className="w-20 bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white text-center focus:bg-white/20 outline-hidden font-bold"
                         />
-                        <select 
+                        <select
                           value={birthMonth}
                           onChange={(e) => setBirthMonth(e.target.value)}
                           className="flex-1 bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white focus:bg-white/20 outline-hidden font-bold appearance-none"
                         >
-                          {months.map((m, i) => (
+                          {months.map((m: string, i: number) => (
                             <option key={m} value={(i + 1).toString().padStart(2, '0')} className="text-primary">{m}</option>
                           ))}
                         </select>
@@ -415,20 +414,20 @@ export default function ProfileScreen({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Ciudad Principal</label>
-                    <input 
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.mainCityLabel')}</label>
+                    <input
                       type="text"
-                      placeholder="Ciudad"
+                      placeholder={t('profile.cityPlaceholder')}
                       value={editForm.city || ''}
                       onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                       className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Teléfono Directo</label>
-                    <input 
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.directPhoneLabel')}</label>
+                    <input
                       type="tel"
-                      placeholder="+240 ..."
+                      placeholder={t('profile.phonePlaceholder')}
                       value={editForm.phone || ''}
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                       className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-white/40 focus:bg-white/20 outline-hidden font-bold"
@@ -438,7 +437,7 @@ export default function ProfileScreen({
 
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1 flex items-center justify-between">
-                    Visibilidad en la Red
+                    {t('profile.networkVisibilityLabel')}
                   </label>
                   <div className="flex bg-white/10 p-1 rounded-xl gap-1">
                     {(['public', 'network', 'private'] as const).map((mode) => (
@@ -447,7 +446,7 @@ export default function ProfileScreen({
                         onClick={() => setPrivacyMode(mode)}
                         className={`flex-1 py-2 rounded-lg font-bold text-[9px] uppercase tracking-tighter transition-all ${privacyMode === mode ? 'bg-white text-primary' : 'text-white/40'}`}
                       >
-                        {mode === 'public' ? 'Público' : mode === 'network' ? 'Mi Red' : 'Privado'}
+                        {mode === 'public' ? t('profile.privacyPublic') : mode === 'network' ? t('profile.privacyNetwork') : t('profile.privacyPrivate')}
                       </button>
                     ))}
                   </div>
@@ -455,7 +454,7 @@ export default function ProfileScreen({
 
                 <div className="space-y-3 pt-2 border-t border-white/10">
                   <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1 flex items-center justify-between pt-3">
-                    <span>Soy Inversionista</span>
+                    <span>{t('profile.isInvestorLabel')}</span>
                     <button
                       onClick={() => setEditForm({ ...editForm, isInvestor: !editForm.isInvestor })}
                       className={`w-11 h-6 rounded-full transition-all relative ${editForm.isInvestor ? 'bg-amber-400' : 'bg-white/20'}`}
@@ -467,7 +466,10 @@ export default function ProfileScreen({
                   {editForm.isInvestor && (
                     <div className="space-y-3 bg-white/5 rounded-2xl p-4">
                       <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sectores de Interés</label>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.sectorsOfInterestLabel')}</label>
+                        {/* Estos valores se guardan tal cual en Firestore (investorSectors)
+                            y se comparan por igualdad exacta -- se dejan en español sin
+                            traducir, igual que TENDER_CATEGORIES en TendersScreen.tsx. */}
                         <div className="flex flex-wrap gap-2">
                           {['Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo'].map((sector) => {
                             const selected = (editForm.investorSectors || []).includes(sector);
@@ -492,7 +494,9 @@ export default function ProfileScreen({
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Rango de Ticket</label>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.ticketRangeLabel')}</label>
+                          {/* Valores persistidos tal cual en Firestore (investorTicketRange);
+                              no contienen palabras en español que traducir (solo cifras/USD). */}
                           <select
                             value={editForm.investorTicketRange || '5.000 - 25.000 USD'}
                             onChange={(e) => setEditForm({ ...editForm, investorTicketRange: e.target.value })}
@@ -505,7 +509,9 @@ export default function ProfileScreen({
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Etapa Preferida</label>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.investmentStageLabel')}</label>
+                          {/* Valores persistidos tal cual en Firestore (investorStage) -- se
+                              dejan en español sin traducir, igual que TENDER_CATEGORIES. */}
                           <select
                             value={editForm.investorStage || 'Idea / Semilla'}
                             onChange={(e) => setEditForm({ ...editForm, investorStage: e.target.value })}
@@ -519,9 +525,9 @@ export default function ProfileScreen({
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">Sobre tu Tesis de Inversión</label>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-1">{t('profile.investmentThesisLabel')}</label>
                         <textarea
-                          placeholder="¿Qué tipo de proyectos buscas?"
+                          placeholder={t('profile.investmentThesisPlaceholder')}
                           rows={2}
                           value={editForm.investorBio || ''}
                           onChange={(e) => setEditForm({ ...editForm, investorBio: e.target.value })}
@@ -539,13 +545,13 @@ export default function ProfileScreen({
                     className="flex-1 bg-secondary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-secondary/20"
                   >
                     {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Guardar
+                    {t('profile.saveButton')}
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsEditing(false)}
                     className="flex-1 bg-white/10 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
                   >
-                    Cancelar
+                    {t('profile.cancelButton')}
                   </button>
                 </div>
               </div>
@@ -558,15 +564,15 @@ export default function ProfileScreen({
                         usuario en su propia tarjeta de perfil (el mismo "Bernardino Edu"
                         que ya se había señalado como autor inventado en FeedItem.tsx). */}
                     <h2 className="text-3xl font-black font-display tracking-tight leading-tight text-white">
-                      {profileData?.name || (isIndividual ? 'Completa tu nombre' : 'Nombre de tu empresa')}
+                      {profileData?.name || (isIndividual ? t('profile.nameFallbackIndividual') : t('profile.nameFallbackCompany'))}
                     </h2>
                     {!isIndividual && <CheckCircle2 className="w-5 h-5 text-secondary" />}
                   </div>
                   <div className="flex flex-col items-center gap-1">
                     <p className="text-white/70 font-sans text-sm tracking-wide px-6">
-                      {isIndividual 
-                        ? (profileData?.profession || 'Especialista') 
-                        : (profileData?.profession || 'Sector Industrial')}
+                      {isIndividual
+                        ? (profileData?.profession || t('profile.professionFallbackIndividual'))
+                        : (profileData?.profession || t('profile.professionFallbackCompany'))}
                     </p>
                     {isIndividual && profileData?.role && (
                       <p className="text-[10px] text-secondary font-black uppercase tracking-widest opacity-80">
@@ -575,7 +581,7 @@ export default function ProfileScreen({
                     )}
                     <div className="mt-2 flex gap-2">
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${profileData?.privacyMode === 'private' ? 'bg-red-500/20 text-red-100' : 'bg-green-500/20 text-green-100'}`}>
-                        {profileData?.privacyMode === 'private' ? 'Modo Invisible' : 'Visibilidad Pública'}
+                        {profileData?.privacyMode === 'private' ? t('profile.invisibleModeBadge') : t('profile.publicVisibilityBadge')}
                       </span>
                     </div>
                   </div>
@@ -584,7 +590,7 @@ export default function ProfileScreen({
                 <div className="flex gap-4 w-full px-4 relative">
                   <button onClick={handleShareProfile} className="flex-1 bg-white text-primary py-4 rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-black/10 uppercase tracking-widest">
                     <Radio className="w-4 h-4 animate-pulse text-secondary" />
-                    Compartir Red
+                    {t('profile.shareNetworkButton')}
                   </button>
                   <button onClick={handleShareProfile} className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-4 rounded-2xl active:scale-95 transition-all outline-hidden border border-white/20 text-white">
                     <Share className="w-5 h-5" />
@@ -615,7 +621,7 @@ export default function ProfileScreen({
           className="editorial-card p-6 flex flex-col justify-between h-36 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
         >
           <span className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest opacity-60">
-            Conexiones
+            {t('profile.connectionsLabel')}
           </span>
           <motion.div
             key={`${activeProfile}-stat-1`}
@@ -632,7 +638,7 @@ export default function ProfileScreen({
           className="editorial-card p-6 flex flex-col justify-between h-36 bg-surface-container-low border-none shadow-none"
         >
           <span className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest opacity-60">
-            {isIndividual ? 'Tareas' : 'Anuncios'}
+            {isIndividual ? t('profile.tasksLabel') : t('profile.postsLabel')}
           </span>
           <motion.div
             key={`${activeProfile}-stat-2`}
@@ -652,14 +658,14 @@ export default function ProfileScreen({
       <section className="space-y-4">
         <h3 className="text-lg font-bold font-display text-on-surface flex items-center gap-2 px-1">
           <div className="w-1 h-6 bg-amber-500 rounded-full" />
-          Logros y Reconocimientos
+          {t('profile.achievementsTitle')}
         </h3>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
           {[
-            { label: 'Pionero', icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-            { label: 'Conectado', icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-            { label: 'Empresario', icon: Building2, color: 'text-primary', bg: 'bg-primary/10' },
-            { label: 'Activo', icon: Zap, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { label: t('profile.badgePioneer'), icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            { label: t('profile.badgeConnected'), icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { label: t('profile.badgeEntrepreneur'), icon: Building2, color: 'text-primary', bg: 'bg-primary/10' },
+            { label: t('profile.badgeActive'), icon: Zap, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
           ].map((badge, i) => (
             <motion.div 
               key={i}
@@ -683,7 +689,7 @@ export default function ProfileScreen({
         >
           <h3 className="text-lg font-bold font-display text-on-surface flex items-center gap-2">
             <div className="w-1 h-6 bg-primary rounded-full" />
-            {isIndividual ? 'Detalles de contacto' : 'Información de Enlace'}
+            {isIndividual ? t('profile.contactDetailsTitle') : t('profile.linkInfoTitle')}
           </h3>
           <motion.div
             animate={{ rotate: expandedSections.contact ? 0 : -90 }}
@@ -709,20 +715,20 @@ export default function ProfileScreen({
                 {[
                   {
                     icon: Phone,
-                    label: 'Teléfono',
-                    value: isIndividual ? (profileData?.phone || '+240 222 123 456') : (profileData?.phone || 'Sin definir'),
+                    label: t('profile.phoneLabel'),
+                    value: isIndividual ? (profileData?.phone || t('profile.samplePhoneFallback')) : (profileData?.phone || t('profile.undefinedFallback')),
                     color: 'bg-secondary/5 text-secondary'
                   },
                   {
                     icon: MapPin,
-                    label: 'Ciudad / Ubicación',
-                    value: isIndividual ? (profileData?.city || 'Malabo II, Torre K') : (profileData?.city || 'Sin definir'),
+                    label: t('profile.cityLocationLabel'),
+                    value: isIndividual ? (profileData?.city || t('profile.sampleCityFallback')) : (profileData?.city || t('profile.undefinedFallback')),
                     color: 'bg-secondary/5 text-secondary'
                   },
                   {
                     icon: isIndividual ? Cake : Sparkles,
-                    label: isIndividual ? 'Cumpleaños' : 'Trayectoria',
-                    value: isIndividual ? formattedBirthday : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : 'No especificado'),
+                    label: isIndividual ? t('profile.birthdayLabel') : t('profile.trajectoryLabel'),
+                    value: isIndividual ? formattedBirthday : (profileData?.yearsInMarket ? t('profile.yearsSuffix', { years: profileData.yearsInMarket }) : t('profile.notSpecifiedFallback')),
                     color: isIndividual ? 'bg-secondary/5 text-secondary' : 'bg-primary/5 text-primary'
                   }
                 ].map((item, i) => (
@@ -756,7 +762,7 @@ export default function ProfileScreen({
         >
           <h3 className="text-lg font-bold font-display text-on-surface flex items-center gap-2">
             <div className="w-1 h-6 bg-secondary rounded-full" />
-            {isIndividual ? 'Presencia Digital' : 'Información Corporativa'}
+            {isIndividual ? t('profile.digitalPresenceTitle') : t('profile.corporateInfoTitle')}
           </h3>
           <motion.div
             animate={{ rotate: expandedSections.digital ? 0 : -90 }}
@@ -778,21 +784,21 @@ export default function ProfileScreen({
                 {[
                   {
                     icon: Globe,
-                    label: isIndividual ? 'Portfolio' : 'Sitio Web',
-                    value: isIndividual ? (profileData?.portfolio || 'Sin portfolio añadido') : (profileData?.website || 'No especificado'),
+                    label: isIndividual ? t('profile.portfolioLabel') : t('profile.websiteLabel'),
+                    value: isIndividual ? (profileData?.portfolio || t('profile.noPortfolioFallback')) : (profileData?.website || t('profile.notSpecifiedFallback')),
                     color: 'bg-primary/5 text-primary'
                   },
                   {
                     icon: Users,
-                    label: isIndividual ? 'Red' : 'Empleados',
-                    value: isIndividual ? `${myContacts.length} Conexiones` : (profileData?.employees || 'No especificado'),
+                    label: isIndividual ? t('profile.networkLabel') : t('profile.employeesDetailLabel'),
+                    value: isIndividual ? t('profile.connectionsCount', { count: myContacts.length }) : (profileData?.employees || t('profile.notSpecifiedFallback')),
                     color: 'bg-primary/5 text-primary'
                   },
                   {
                     icon: Link2,
-                    label: isIndividual ? 'LinkedIn' : 'Trayectoria',
-                    value: isIndividual ? (profileData?.linkedin || 'Sin enlace añadido') : (profileData?.yearsInMarket ? `${profileData.yearsInMarket} años` : 'No especificado'),
-                    color: 'bg-primary/5 text-primary' 
+                    label: isIndividual ? t('profile.linkedinLabel') : t('profile.trajectoryLabel'),
+                    value: isIndividual ? (profileData?.linkedin || t('profile.noLinkFallback')) : (profileData?.yearsInMarket ? t('profile.yearsSuffix', { years: profileData.yearsInMarket }) : t('profile.notSpecifiedFallback')),
+                    color: 'bg-primary/5 text-primary'
                   }
                 ].map((item, i) => (
                   <motion.div 
@@ -826,8 +832,8 @@ export default function ProfileScreen({
             className="w-full flex justify-between items-center p-4 bg-white/50 rounded-2xl hover:bg-white transition-colors outline-hidden text-left"
           >
             <div className="text-left pr-2">
-              <p className="font-bold text-on-surface">Configuración</p>
-              <p className="text-xs text-on-surface-variant">Gestione sus preferencias y datos locales</p>
+              <p className="font-bold text-on-surface">{t('profile.settingsTitle')}</p>
+              <p className="text-xs text-on-surface-variant">{t('profile.settingsSubtitle')}</p>
             </div>
             <Settings className="w-5 h-5 text-primary" />
           </button>
@@ -844,11 +850,11 @@ export default function ProfileScreen({
               disabled={myContacts.length === 0}
               className="w-full text-center py-4 text-primary font-bold hover:bg-white/80 rounded-2xl transition-colors uppercase tracking-widest text-[10px] outline-hidden disabled:opacity-40 disabled:hover:bg-transparent"
             >
-              Descargar Mis Datos CSV
+              {t('profile.downloadCsvButton')}
             </button>
           ) : (
             <button disabled className="w-full text-center py-4 text-on-surface-variant/50 font-bold rounded-2xl uppercase tracking-widest text-[10px] cursor-not-allowed">
-              Panel de Control de Empresa · Próximamente
+              {t('profile.companyDashboardComingSoon')}
             </button>
           )}
         </div>
