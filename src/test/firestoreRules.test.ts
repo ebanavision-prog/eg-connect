@@ -127,6 +127,23 @@ async function main() {
     await assertFails(updateDoc(doc(userB, 'users/user-a'), { fcmTokens: ['token-falso'] }));
   });
 
+  // --- users: companyId (unificación del modelo de empresa, ver
+  // docs/PLAN_MEJORA_360.md sección 3/7 Fase 2 y docs/MIGRACION_EMPRESA.md) ---
+  await check('El dueño SÍ puede enlazar su perfil a una empresa (profileType + companyId)', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'users/user-a'), {
+      profileType: 'company',
+      companyId: 'company-a'
+    }));
+  });
+
+  await check('Un usuario NO puede escribir el companyId de otro usuario', async () => {
+    await assertFails(updateDoc(doc(userB, 'users/user-a'), { companyId: 'company-fake' }));
+  });
+
+  await check('Un usuario NO puede colar isAdmin junto con su propio companyId', async () => {
+    await assertFails(updateDoc(doc(userA, 'users/user-a'), { companyId: 'company-a', isAdmin: true }));
+  });
+
   // --- users: borrado de cuenta (derecho al olvido) ---
   await check('El dueño SÍ puede borrar su propio documento de usuario', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
