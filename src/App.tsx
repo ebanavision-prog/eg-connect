@@ -37,7 +37,7 @@ import {
   Rocket
 } from 'lucide-react';
 
-import { Screen } from './types';
+import { Screen, UserProfile } from './types';
 import HomeScreen from './components/HomeScreen';
 import OnboardingScreen from './components/OnboardingScreen';
 
@@ -84,12 +84,12 @@ export default function App() {
   const setActiveScreen = (screen: Screen) => navigate(screen === 'home' ? '/' : `/${screen}`);
   const [onboarded, setOnboarded] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [profileData, setProfileData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
   const [isOnline, setIsOnline] = useState(localDataService.getIsOnline());
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
-  const [realUsers, setRealUsers] = useState<any[]>([]);
+  const [realUsers, setRealUsers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -106,7 +106,11 @@ export default function App() {
         if (user) {
           const data = await getUserData(user.uid);
           if (data) {
-            setProfileData(data);
+            // getUserData() devuelve `DocumentData` (el tipo genérico sin tipar
+            // del SDK de Firestore) — este cast documenta el límite real del
+            // sistema donde ese documento entra a la app ya con la forma de
+            // `UserProfile`, sin cambiar qué dato llega ni cómo se usa.
+            setProfileData(data as UserProfile);
             setOnboarded(true);
             // Sync with local service for backward compatibility if needed
             localDataService.saveUserProfile(data as any);
@@ -208,7 +212,10 @@ export default function App() {
 
   if (!onboarded) {
     return <OnboardingScreen onComplete={(data) => {
-      setProfileData(data);
+      // OnboardingScreen.onComplete's propio tipo declara `profileType:
+      // string` (más ancho que el `'individual' | 'company'` real de
+      // UserProfile) — mismo límite documentado que en getUserData() arriba.
+      setProfileData(data as UserProfile);
       setOnboarded(true);
     }} />;
   }
