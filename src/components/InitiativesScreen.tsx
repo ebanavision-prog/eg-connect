@@ -1,13 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Rocket, Plus, X, Loader2, CheckCircle2, Users, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { Initiative } from '../types';
 import { auth, createInitiative, toggleInitiativeMembership } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
+// Valores persistidos tal cual en Firestore (initiative.category) -- se dejan
+// en español para no desincronizar categorías ya guardadas por usuarios existentes.
 const CATEGORIES = ['Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo', 'Otro'];
 
 export default function InitiativesScreen({ profileData }: { profileData?: any }) {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
@@ -43,7 +47,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
       setIsModalOpen(false);
       setNewInitiative({ title: '', description: '', category: 'Tecnología' });
     } catch (error) {
-      setPublishError('No se pudo crear la iniciativa. Inténtalo de nuevo.');
+      setPublishError(t('initiatives.errorGeneric'));
     } finally {
       setIsPublishing(false);
     }
@@ -64,8 +68,8 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex justify-between items-end">
         <div>
-          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">Iniciativas</h2>
-          <h1 className="text-4xl font-extrabold font-display text-on-surface">Crea o Únete a Proyectos</h1>
+          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">{t('initiatives.sectionLabel')}</h2>
+          <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('initiatives.title')}</h1>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -93,8 +97,8 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
         {!loading && filtered.length === 0 && (
           <div className="text-center py-20 px-8 opacity-40">
             <Rocket className="w-12 h-12 mx-auto mb-4" />
-            <p className="font-bold">Todavía no hay iniciativas{filterCategory !== 'Todas' ? ` en ${filterCategory}` : ''}</p>
-            <p className="text-xs">Sé el primero en crear una y suma colaboradores.</p>
+            <p className="font-bold">{filterCategory !== 'Todas' ? t('initiatives.noInitiativesInCategory', { category: filterCategory }) : t('initiatives.noInitiatives')}</p>
+            <p className="text-xs">{t('initiatives.emptySubtitle')}</p>
           </div>
         )}
 
@@ -114,7 +118,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
                   <img src={initiative.creatorAvatar} alt={initiative.creatorName} className="w-10 h-10 rounded-full object-cover" />
                   <div>
                     <h4 className="font-bold text-on-surface leading-none">{initiative.creatorName}</h4>
-                    <span className="text-[10px] text-on-surface-variant/60">Creador de la iniciativa</span>
+                    <span className="text-[10px] text-on-surface-variant/60">{t('initiatives.creatorLabel')}</span>
                   </div>
                 </div>
                 <div className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700">
@@ -128,7 +132,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
               <div className="flex items-center justify-between pt-4 border-t border-outline/5">
                 <div className="flex items-center gap-2 text-on-surface-variant">
                   <Users className="w-4 h-4" />
-                  <span className="text-xs font-semibold">{initiative.members?.length || 0} colaboradores</span>
+                  <span className="text-xs font-semibold">{t('initiatives.collaboratorsCount', { count: initiative.members?.length || 0 })}</span>
                 </div>
                 {!isCreator && (
                   <button
@@ -141,9 +145,9 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
                     {joiningId === initiative.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : isMember ? (
-                      <><LogOut className="w-4 h-4" />Salir</>
+                      <><LogOut className="w-4 h-4" />{t('initiatives.leaveButton')}</>
                     ) : (
-                      <><CheckCircle2 className="w-4 h-4" />Unirme</>
+                      <><CheckCircle2 className="w-4 h-4" />{t('initiatives.joinButton')}</>
                     )}
                   </button>
                 )}
@@ -171,7 +175,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
             >
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-extrabold font-display text-on-surface">Crear Iniciativa</h2>
+                  <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('initiatives.modalTitle')}</h2>
                   <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
                     <X className="w-6 h-6 text-on-surface-variant" />
                   </button>
@@ -179,10 +183,10 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Título</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('initiatives.titleLabel')}</label>
                     <input
                       type="text"
-                      placeholder="Ej: Cooperativa de exportación de cacao"
+                      placeholder={t('initiatives.titlePlaceholder')}
                       className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                       value={newInitiative.title}
                       onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
@@ -190,9 +194,9 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Descripción</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('initiatives.descriptionLabel')}</label>
                     <textarea
-                      placeholder="¿Qué problema resuelve? ¿Qué tipo de colaboradores buscas?"
+                      placeholder={t('initiatives.descriptionPlaceholder')}
                       rows={4}
                       className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                       value={newInitiative.description}
@@ -201,7 +205,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Categoría</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('initiatives.categoryLabel')}</label>
                     <select
                       className="select-field-custom"
                       value={newInitiative.category}
@@ -220,9 +224,9 @@ export default function InitiativesScreen({ profileData }: { profileData?: any }
                   className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
                   {isPublishing ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" />Creando...</>
+                    <><Loader2 className="w-5 h-5 animate-spin" />{t('initiatives.creating')}</>
                   ) : (
-                    <><Rocket className="w-5 h-5" />Lanzar Iniciativa</>
+                    <><Rocket className="w-5 h-5" />{t('initiatives.launchButton')}</>
                   )}
                 </button>
               </div>
