@@ -30,6 +30,14 @@ export interface UserProfile {
   employees?: string; // solo profileType === 'company'; bucket tipo '1-10'
   yearsInMarket?: string; // solo profileType === 'company'; bucket tipo '0-2'
   website?: string; // solo profileType === 'company'
+  // Enlaza al doc canónico de la empresa en `companies/{companyId}` (ver
+  // docs/PLAN_MEJORA_360.md sección 3/7 Fase 2: unificación del modelo de
+  // empresa, `companies` es la entidad canónica). Se rellena solo hacia
+  // adelante: al registrar una empresa desde CompaniesScreen, o al marcar
+  // profileType='company' y guardar desde ProfileScreen. `scripts/migrate-
+  // company-model.mjs` rellena este campo con backfill para los perfiles
+  // `profileType==='company'` creados antes de que existiera este enlace.
+  companyId?: string;
   privacyMode?: 'public' | 'network' | 'private';
   isInvestor?: boolean;
   investorSectors?: string[];
