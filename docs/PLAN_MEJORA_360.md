@@ -113,10 +113,12 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 - ~~Completar cobertura de i18n~~ — **hecho, 21/21 pantallas** (2026-09-04): 16 mergeadas (`4b2776c`) + 5 finales (ProfileScreen, InviteScreen, MarketplaceScreen, CompaniesScreen, CompanyProfileModal) mergeadas sin conflictos. **Fase 1 completa en su totalidad.**
 
 ### Fase 2 — Integridad de datos y privacidad
-- Unificar el modelo de empresa (`users` vs `companies`) — **en curso** (decisión tomada: unificar con migración backfill, `companies` como entidad canónica)
+- ~~Unificar el modelo de empresa (`users` vs `companies`)~~ — **hecho** (2026-09-04, merge `5aee0ab`, rescatado de la worktree huérfana `agent-a56997c9fe3a4df04`): `UserProfile.companyId` enlaza a `companies/{companyId}` (entidad canónica); `CompaniesScreen`/`ProfileScreen` enlazan hacia adelante en el momento de registrar/marcar empresa; `scripts/migrate-company-model.mjs` hace backfill idempotente para perfiles `profileType='company'` creados antes del cambio (dry-run por defecto, nunca corre solo contra producción — ver `docs/MIGRACION_EMPRESA.md`). Verificado: `tsc`/build limpios, `test:rules` 49/49 contra emulador real. **Pendiente real, para un humano con acceso**: correr la migración de backfill contra producción siguiendo el runbook (`docs/MIGRACION_EMPRESA.md`).
 - ~~Paginación real en Companies/Marketplace/Tenders/Initiatives~~ — **hecho** (2026-09-04, merge `82019f1`)
 - ~~Auditoría de índices Firestore contra queries reales~~ — **hecho** (2026-09-04): sin índices faltantes, uno muerto eliminado (`marketplace_posts`)
 - ~~Exportación de datos + borrado de cuenta real~~ — **hecho** (2026-09-04, merge `8e60ec0`)
+
+**Fase 2 completa en su totalidad** (salvo la corrida real de la migración de backfill en producción, que requiere credenciales humanas — ver arriba).
 
 ### Fase 3 — Funcionalidades y crecimiento
 - Grabación de audio real (o retirar la feature si no se prioriza)
