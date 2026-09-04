@@ -10,7 +10,7 @@ import {
 import { where } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { Contact, Task, ServicePost, UserProfile } from '../types';
-import { auth, saveUserData, uploadAvatarIfNeeded, exportAllUserData, deleteAccount } from '../services/firebaseService';
+import { auth, saveUserData, uploadAvatarIfNeeded, exportAllUserData, deleteAccount, createCompany } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import NetworkBackground from './NetworkBackground';
 
@@ -88,10 +88,38 @@ export default function ProfileScreen({
     try {
       setLoading(true);
       const avatarUrl = await uploadAvatarIfNeeded(`avatars/${profileData.uid}`, editForm.avatar);
+      // Enlace hacia adelante (ver docs/PLAN_MEJORA_360.md sección 3/7 Fase 2:
+      // `companies` es la entidad canónica): si el usuario marca su perfil
+      // como 'company' y todavía no tiene un companyId, creamos aquí mismo el
+      // doc canónico en `companies/` a partir de los datos que ya tiene en su
+      // perfil -- así "marcar company en mi perfil" y "registrar empresa" en
+      // CompaniesScreen terminan siempre en el mismo sitio. Si ya tiene
+      // companyId (de un registro anterior en CompaniesScreen, o de una
+      // ejecución previa de este mismo guardado), no se crea uno nuevo.
+      let companyId = profileData.companyId;
+      if (editForm.profileType === 'company' && !companyId) {
+        companyId = await createCompany(profileData.uid, {
+          name: editForm.name || '',
+          // Valor de dato, no texto de UI -- 'Servicios' es una opción real
+          // del desplegable de industria en CompaniesScreen.tsx (igual criterio
+          // que scripts/migrate-company-model.mjs), no la etiqueta de UI
+          // "Otro / Manual..." de t('profile.sectorOther').
+          industry: editForm.profession || 'Servicios',
+          description: '',
+          location: editForm.city || '',
+          employees: editForm.employees || '1-10',
+          yearsInMarket: editForm.yearsInMarket || '0-2',
+          website: editForm.website || '',
+          logo: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(editForm.name || '')}&background=045C68&color=fff&size=256`,
+          tags: editForm.profession ? [editForm.profession] : [],
+          social: { website: editForm.website || '' }
+        });
+      }
       const updatedData = {
         ...editForm,
         avatar: avatarUrl,
         privacyMode,
+        companyId: editForm.profileType === 'company' ? companyId : editForm.companyId,
         birthday: editForm.profileType === 'individual' ? `${birthMonth}-${birthDay.padStart(2, '0')}` : ''
       };
       await saveUserData(profileData.uid, updatedData);
