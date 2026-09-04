@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { limit, orderBy } from 'firebase/firestore';
 import { Company, UserProfile } from '../types';
-import { auth, createCompany, setCompanyVerified } from '../services/firebaseService';
+import { auth, createCompany, saveUserData, setCompanyVerified } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 const PAGE_SIZE_INCREMENT = 20;
@@ -121,13 +121,31 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
     setIsSubmitting(true);
     setSubmitError('');
     try {
-      await createCompany(currentUid, {
+      const newCompanyId = await createCompany(currentUid, {
         ...formData,
         website: formData.social.website,
         logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=045C68&color=fff&size=256`,
         tags: [formData.industry],
         isVerified: false
       });
+      // Enlace hacia adelante (ver docs/PLAN_MEJORA_360.md sección 3/7 Fase 2:
+      // `companies` es la entidad canónica): tras registrar la empresa,
+      // reflejamos profileType='company' + companyId en el propio users/{uid}
+      // para que este registro y "marcar company en mi perfil" (ProfileScreen)
+      // nunca vuelvan a desincronizarse. Si este segundo guardado fallara, la
+      // empresa ya quedó creada de todas formas (lo principal de esta acción);
+      // no bloqueamos el cierre del modal por esto, solo queda en consola.
+      // CompaniesScreen no recibe `onUpdateProfile` como prop hoy (a diferencia
+      // de ProfileScreen) -- no se inventa una prop nueva en App.tsx sin
+      // necesidad real; la próxima recarga de perfil ya reflejará estos campos
+      // desde Firestore.
+      if (newCompanyId) {
+        try {
+          await saveUserData(currentUid, { profileType: 'company', companyId: newCompanyId });
+        } catch (linkError) {
+          console.error('Empresa creada pero no se pudo enlazar al perfil del usuario:', linkError);
+        }
+      }
       setIsModalOpen(false);
       setRegistrationStep(1);
       setFormData({
