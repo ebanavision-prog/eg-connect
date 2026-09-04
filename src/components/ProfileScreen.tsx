@@ -7,7 +7,7 @@ import {
   ChevronLeft, Camera, Edit2, Save, X, RefreshCcw, Lock, ShieldCheck, Edit3
 } from 'lucide-react';
 import { where } from 'firebase/firestore';
-import { Contact, Task, ServicePost } from '../types';
+import { Contact, Task, ServicePost, UserProfile } from '../types';
 import { localDataService } from '../services/localDataService';
 import { auth, saveUserData, uploadAvatarIfNeeded } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -20,16 +20,20 @@ export default function ProfileScreen({
   profileData,
   onUpdateProfile
 }: { 
-  onSettings: () => void, 
+  onSettings: () => void,
   activeProfile: 'individual' | 'company',
   onToggleProfile: (profile: 'individual' | 'company') => void,
-  profileData: any,
+  profileData: UserProfile,
   onUpdateProfile: (data: any) => void
 }) {
   const isIndividual = activeProfile === 'individual';
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [editForm, setEditForm] = useState(profileData || {});
+  // `|| {}` es un resguardo defensivo heredado — profileData es un prop
+  // requerido, así que en la práctica siempre llega con datos reales. Se tipa
+  // como `Partial<UserProfile>` (en vez de forzar `UserProfile`) precisamente
+  // para reflejar con honestidad que ese resguardo existe.
+  const [editForm, setEditForm] = useState<Partial<UserProfile>>(profileData || {});
   
   // Initialize birthday parts
   const initialBirthday = profileData?.birthday?.split('-') || ['04', '28'];
