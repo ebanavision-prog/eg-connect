@@ -475,5 +475,31 @@
     "shareLocationAria": "Compartir mi ubicación",
     "updatePosition": "Actualizar mi posición",
     "noOneSharingYet": "Todavía nadie ha activado compartir ubicación. Actívalo tú y sé el primero en el mapa."
+  },
+  "crm": {
+    "importGoogleTooltip": "Importar contactos de Google",
+    "importErrorGeneric": "No se pudo conectar con Google Contactos.",
+    "sectionLabel": "Networking CRM",
+    "title": "Gestor de Relaciones",
+    "subtitle": "Optimiza tu red de contactos y haz seguimiento a tus alianzas estratégicas.",
+    "totalContactsLabel": "Total Contactos",
+    "partnersAlliesLabel": "Socios y Aliados",
+    "searchPlaceholder": "Nombre, empresa o etiquetas...",
+    "filterAllLabel": "Ver Todos",
+    "emptyTitle": "Todavía no tienes contactos guardados.",
+    "emptySubtitle": "Usa \"Escanear\" para guardar tu primera tarjeta de contacto.",
+    "contactSincePrefix": "Contacto: {{lastMet}}",
+    "funnelStatusLabel": "Estado en el embudo",
+    "notesLabel": "Notas",
+    "noNotesSaved": "Sin notas guardadas para este contacto.",
+    "locationLabel": "Ubicación",
+    "closeManagerButton": "Cerrar Gestor",
+    "chooseImportTitle": "Elige qué importar",
+    "contactsFoundCount": "{{count}} contactos encontrados en Google",
+    "noGoogleContactsFound": "No encontramos contactos con nombre en tu cuenta de Google.",
+    "importingButton": "Importando...",
+    "importCount_one": "Importar {{count}} contacto",
+    "importCount_other": "Importar {{count}} contactos",
+    "footerPrivacyNote": "Los datos del CRM se almacenan localmente y son totalmente privados de tu cuenta de EG Connect."
   }
 }

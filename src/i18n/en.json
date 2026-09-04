@@ -475,5 +475,31 @@
     "shareLocationAria": "Share my location",
     "updatePosition": "Update my position",
     "noOneSharingYet": "No one has turned on location sharing yet. Turn it on and be the first on the map."
+  },
+  "crm": {
+    "importGoogleTooltip": "Import Google contacts",
+    "importErrorGeneric": "Couldn't connect to Google Contacts.",
+    "sectionLabel": "Networking CRM",
+    "title": "Relationship Manager",
+    "subtitle": "Optimize your contact network and track your strategic alliances.",
+    "totalContactsLabel": "Total Contacts",
+    "partnersAlliesLabel": "Partners & Allies",
+    "searchPlaceholder": "Name, company, or tags...",
+    "filterAllLabel": "View All",
+    "emptyTitle": "You don't have any saved contacts yet.",
+    "emptySubtitle": "Use \"Scan\" to save your first business card.",
+    "contactSincePrefix": "Contact: {{lastMet}}",
+    "funnelStatusLabel": "Funnel status",
+    "notesLabel": "Notes",
+    "noNotesSaved": "No notes saved for this contact.",
+    "locationLabel": "Location",
+    "closeManagerButton": "Close Manager",
+    "chooseImportTitle": "Choose what to import",
+    "contactsFoundCount": "{{count}} contacts found in Google",
+    "noGoogleContactsFound": "We couldn't find any named contacts in your Google account.",
+    "importingButton": "Importing...",
+    "importCount_one": "Import {{count}} contact",
+    "importCount_other": "Import {{count}} contacts",
+    "footerPrivacyNote": "CRM data is stored locally and is completely private to your EG Connect account."
   }
 }
