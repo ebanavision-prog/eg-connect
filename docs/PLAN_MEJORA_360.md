@@ -1,8 +1,21 @@
 # EG CONNECT — Plan de Mejora Integral (360°)
 
-**Fecha:** 2026-09-04
+**Fecha:** 2026-09-04 (actualizado el mismo día tras rescatar 2 worktrees huérfanas)
 **Base:** auditoría completa del código (frontend + backend + reglas + infra), `main` en `1b0827a`.
 **Alcance:** arquitectura, seguridad, datos, frontend, funcionalidades, operaciones. Cada punto está anclado a un archivo/línea real del repo, no es una recomendación genérica.
+
+---
+
+## 0.1 Actualización — worktrees huérfanas rescatadas e integradas
+
+Las dos worktrees de agentes anteriores (`.claude/worktrees/agent-aa0e19eb...`, `agent-ac19ba...`) que en la auditoría original aparecían como "clutter sin mergear" **ya se revisaron, mergearon a `main` y se limpiaron**:
+
+- **`agent-aa0e19eb` → merge `8c59232`** (7 commits): arregla exactamente varios de los hallazgos de este mismo plan antes de que se escribieran a mano — CRM con `crmStatus`/estadística fabricados por índice (sección 6.1, ahora con `updateContactStatus()` real en Firestore), botones muertos en Tenders/Companies/Profile, selector de emoji sin cablear en Chat, timestamp roto en Marketplace/Feed. Conflicto real en `ChatScreen.tsx` (dos features aditivas — push notifications de `main` y el emoji picker de la rama — en la misma zona del archivo) resuelto conservando ambas.
+- **`agent-ac19ba` → merge `ce5c81f`** (5 commits): infraestructura real de `react-i18next` (es/en, fallback español duro, detección por navegador/localStorage) + traducción de `OnboardingScreen`, `App.tsx`, `HomeScreen` y `SyncSettingsScreen` con selector de idioma. Conflicto real en `SyncSettingsScreen.tsx` (la rama tradujo una versión del archivo anterior a las push notifications reales) resuelto a mano: se conservó toda la lógica de push de `main` y se añadieron claves i18n nuevas (`enableNotificationsDescConfigured/Basic`, `enablingButton`, `notificationsEnabledBodyReal/Basic`) para cubrir el texto condicional que la rama no contemplaba.
+
+**Verificado:** `npm run lint` (typecheck) limpio, `npm run build` exitoso, y las 187 claves `t(...)` usadas en el código auditadas una por una contra `es.json`/`en.json` (sin ninguna faltante real). Ambas worktrees y sus ramas (`worktree-agent-aa0e19eb0904af075`, `worktree-agent-ac19ba366918cb82b`) se eliminaron tras el merge. **Pendiente antes de dar esto por cerrado de verdad:** una pasada en vivo contra el emulador (login real, click a click) — el typecheck y el build no sustituyen probar la app corriendo, solo descartan errores de compilación.
+
+Esto **reordena el roadmap** de la sección 7: los ítems de Fase 0 "CRM con datos fabricados" y "botones muertos de ProfileScreen" quedan resueltos; i18n pasa de "decisión pendiente" (Fase 3) a "infraestructura ya elegida y parcialmente ejecutada — falta completar cobertura" (ver sección 6 actualizada).
 
 ---
 
@@ -72,28 +85,31 @@ Otros puntos, menor severidad:
 
 Priorizado por impacto real en el usuario, no por tamaño del cambio:
 
-1. **CRM con datos inventados** (`CRMScreen.tsx:67-73`): `crmStatus`, `lastInteraction`, `engagement` se calculan como `i % 4` sobre el contacto — ningún usuario ve su estado de relación real. Esto es lo más visible como "no confiable" de toda la app si un usuario se fija.
-2. **Mensajes de voz no graban audio real** (`ChatScreen.tsx`): hay un timer y una UI completa de grabación, pero nunca se usa `MediaRecorder` — se guarda `audioUrl: '#'` con solo la duración. El otro participante "reproduce" un mensaje que no existe.
-3. **Botones muertos en `ProfileScreen`**: exportar CSV y "Panel de Control de Empresa" no hacen nada.
-4. **Unificación de "empresa"** (ver sección 3) — impacto directo en confiabilidad de datos que se muestran en Marketplace/Companies.
-5. **Paginación** antes de que el crecimiento (que el propio sistema de referidos busca provocar) vuelva la app lenta y cara.
+1. ~~**CRM con datos inventados**~~ — **RESUELTO** (rescatado de `agent-aa0e19eb`, ver 0.1): `crmStatus` ahora es un campo real persistido vía `updateContactStatus()`, editable desde el modal de detalle del contacto; el stat "Socios y Aliados" se calcula sobre datos reales, ya no un `+4` fijo.
+2. **Mensajes de voz no graban audio real** (`ChatScreen.tsx`): hay un timer y una UI completa de grabación, pero nunca se usa `MediaRecorder` — se guarda `audioUrl: '#'` con solo la duración. El otro participante "reproduce" un mensaje que no existe. **Sigue pendiente.**
+3. ~~**Botones muertos en `ProfileScreen`**~~ — **RESUELTO** (rescatado de `agent-aa0e19eb`): exportar CSV y "Panel de Control" ya tienen comportamiento real; también se corrigieron 3 botones muertos más en Tenders (Más Detalles/Download) y Companies (Filter), y el timestamp roto en Marketplace/Feed.
+4. **Unificación de "empresa"** (ver sección 3) — impacto directo en confiabilidad de datos que se muestran en Marketplace/Companies. **Sigue pendiente**, no tocado por las worktrees rescatadas.
+5. **Paginación** antes de que el crecimiento (que el propio sistema de referidos busca provocar) vuelva la app lenta y cara. **Sigue pendiente.**
+6. **i18n — infraestructura lista, cobertura parcial** (rescatado de `agent-ac19ba`, ver 0.1): `react-i18next` real con es/en, selector de idioma funcional en `SyncSettingsScreen`. Traducidas: `OnboardingScreen`, `App.tsx`, `HomeScreen`, `SyncSettingsScreen` (4 de ~22 pantallas). **Queda traducir las ~18 restantes** — trabajo mecánico pero real, ver Fase 1 del roadmap.
 
 ---
 
 ## 7. Roadmap propuesto
 
 ### Fase 0 — Higiene inmediata (bajo riesgo, alto retorno, ~1 sesión)
-- Cerrar el agujero de `gemini-proxy.php` (verificación de idToken, reutilizando código de `fcm-send.php`)
-- Rate limiting básico en ambos endpoints PHP
-- Decidir y ejecutar sobre las worktrees huérfanas (rescatar i18n o borrar)
-- Arreglar botones muertos de `ProfileScreen`
-- Reemplazar datos fabricados del CRM por campos reales (aunque sea un estado manual editable, no matemática sobre el índice)
+- ~~Decidir y ejecutar sobre las worktrees huérfanas~~ — **hecho** (ver 0.1): ambas rescatadas, mergeadas (`8c59232`, `ce5c81f`) y eliminadas
+- ~~Arreglar botones muertos de `ProfileScreen`~~ — **hecho**, vía el rescate
+- ~~Reemplazar datos fabricados del CRM~~ — **hecho**, vía el rescate
+- Cerrar el agujero de `gemini-proxy.php` (verificación de idToken, reutilizando código de `fcm-send.php`) — **pendiente**
+- Rate limiting básico en ambos endpoints PHP — **pendiente**
+- Verificación en vivo contra el emulador de los dos merges (login real, click a click — typecheck/build ya pasaron, falta la prueba funcional)
 
 ### Fase 1 — Fundamentos de ingeniería (2-4 sesiones)
 - CI en GitHub Actions: typecheck + `test:rules` en cada push
 - Canal de staging en Firebase Hosting
 - Tipar `UserProfile` y eliminar los `any` más críticos (props de pantallas top-level)
 - Extraer store ligero (Zustand/Context) para `currentUser`/`realUsers`/`notifications`
+- Completar cobertura de i18n en las ~18 pantallas restantes (infraestructura ya lista, ver sección 6.6)
 
 ### Fase 2 — Integridad de datos y privacidad
 - Unificar el modelo de empresa (`users` vs `companies`)
@@ -103,7 +119,6 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 
 ### Fase 3 — Funcionalidades y crecimiento
 - Grabación de audio real (o retirar la feature si no se prioriza)
-- Decisión + ejecución de i18n
 - Descomposición de los 5 componentes más grandes
 - Pase de accesibilidad (aria-labels, foco, contraste)
 
