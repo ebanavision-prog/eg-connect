@@ -1,7 +1,9 @@
 {
   "common": {
     "profileTypePersonal": "Individual",
-    "profileTypeCompany": "Company"
+    "profileTypeCompany": "Company",
+    "loadMoreButton": "Load more",
+    "loadingMoreLabel": "Loading more..."
   },
   "onboarding": {
     "welcome": {
@@ -593,6 +595,7 @@
     "subtitle": "Access priority public and private sector contracts in Equatorial Guinea.",
     "publishTooltip": "Publish tender (admin)",
     "searchPlaceholder": "Search by project or entity...",
+    "searchLimitedNotice": "Showing the first {{count}} results — use \"Load more\" to widen the search.",
     "filterAll": "All",
     "filterTech": "Technology",
     "filterInfra": "Infrastructure",
@@ -673,6 +676,7 @@
   },
   "marketplace": {
     "sectionLabel": "Marketplace",
+    "searchLimitedNotice": "Showing the first {{count}} results — use \"Load more\" to widen the search.",
     "actingAsPrefix": "Acting as: {{name}}",
     "title": "Local Services",
     "partnerServicesLabel": "Partner Services",
@@ -744,6 +748,7 @@
     "clearFiltersButton": "Clear filters",
     "emptyTitle": "No companies registered yet.",
     "emptySubtitle": "Be the first with the button below.",
+    "searchLimitedNotice": "Showing the first {{count}} results — use \"Load more\" to widen the search.",
     "employeesUnit": "Employees",
     "viewProfileButton": "View Profile",
     "contactButton": "Contact",

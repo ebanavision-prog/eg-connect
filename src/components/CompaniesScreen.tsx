@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Building2, Search, Filter, Globe, MapPin, Users, CheckCircle2, ChevronRight, X, ShieldCheck, Plus, Trash2, Linkedin, Instagram, Twitter, Facebook, Award, Network, Loader2, MessageSquare, UserCircle, Grid, LayoutList, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { limit, orderBy } from 'firebase/firestore';
 import { Company, UserProfile } from '../types';
 import { auth, createCompany, setCompanyVerified } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
+
+const PAGE_SIZE_INCREMENT = 20;
 
 export default function CompaniesScreen({ onChat, profileData }: { onChat?: (participant?: { id: string; name: string; avatar: string }) => void, profileData?: UserProfile | null }) {
   const { t } = useTranslation();
@@ -19,10 +22,21 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
   const [showFilters, setShowFilters] = useState(false);
   const [filterLocation, setFilterLocation] = useState('');
   const [filterVerifiedOnly, setFilterVerifiedOnly] = useState(false);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_INCREMENT);
 
   const isAdmin = !!profileData?.isAdmin;
   const currentUid = auth.currentUser?.uid;
-  const { data: companies, loading } = useFirestoreCollection<Company & { ownerId?: string }>(currentUid ? 'companies' : null);
+  // Límite creciente en vez de traer la colección entera (ver docs/PLAN_MEJORA_360.md
+  // sección 3/7 Fase 2): sigue siendo realtime (onSnapshot) para lo ya cargado,
+  // solo cambia cuántos documentos se piden. orderBy('createdAt', 'desc') es
+  // obligatorio junto a limit() para un orden determinista -- companies se
+  // crean con serverTimestamp() en createCompany (firebaseService.ts).
+  const { data: companies, loading } = useFirestoreCollection<Company & { ownerId?: string }>(
+    currentUid ? 'companies' : null,
+    [orderBy('createdAt', 'desc'), limit(pageSize)]
+  );
+  const hasMoreToLoad = companies.length === pageSize;
+  const isSearchActive = searchQuery.trim().length > 0;
 
   const handleToggleVerified = async (company: Company) => {
     setIsVerifying(true);
@@ -228,6 +242,12 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
         </div>
       </div>
 
+      {isSearchActive && hasMoreToLoad && (
+        <div className="px-4 py-3 bg-secondary/5 border border-secondary/10 rounded-2xl text-xs font-semibold text-secondary">
+          {t('companies.searchLimitedNotice', { count: companies.length })}
+        </div>
+      )}
+
       {!loading && filteredCompanies.length === 0 ? (
         <div className="text-center py-16 space-y-3 opacity-60">
           <Building2 className="w-10 h-10 mx-auto text-outline" />
@@ -353,6 +373,23 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {loading && companies.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-4 text-on-surface-variant">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-bold">{t('common.loadingMoreLabel')}</span>
+        </div>
+      )}
+      {!loading && hasMoreToLoad && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={() => setPageSize((prev) => prev + PAGE_SIZE_INCREMENT)}
+            className="px-8 py-3.5 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest font-bold text-xs uppercase tracking-widest rounded-full transition-all active:scale-95"
+          >
+            {t('common.loadMoreButton')}
+          </button>
         </div>
       )}
 
