@@ -6,6 +6,7 @@ import {
   Shield, User, Gift, Cake, Calendar, Zap, Lightbulb, ShoppingBag, UserPlus, QrCode, Share2
 } from 'lucide-react';
 import Logo from './Logo';
+import { UserProfile } from '../types';
 
 
 interface HomeScreenProps {
@@ -16,8 +17,8 @@ interface HomeScreenProps {
     tasks: number;
     unreadChats: number;
   };
-  userProfile: any;
-  realUsers?: any[];
+  userProfile: UserProfile | null;
+  realUsers?: UserProfile[];
   onContact?: (participant: { id: string; name: string; avatar: string }) => void;
 }
 

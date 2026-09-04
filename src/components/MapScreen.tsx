@@ -9,6 +9,13 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, setUserLocationSharing } from '../services/firebaseService';
 import { localDataService } from '../services/localDataService';
+import { UserProfile } from '../types';
+
+// Un miembro de `users` cuya presencia en el mapa ya pasó el filtro de
+// `visibleUsers` (locationSharing===true, privacyMode!=='private', coords
+// numéricas reales) — a diferencia de `UserProfile`, aquí `location` es
+// obligatorio porque el filtro ya lo garantizó en runtime.
+type LocatedUser = UserProfile & { location: { lat: number; lng: number } };
 
 // Guinea Ecuatorial es la base de usuarios entera de esta app — nunca
 // arrancar en una vista genérica de mundo/0,0. Malabo, zoom que muestra
@@ -72,8 +79,8 @@ function RecenterOnce({ position, zoom }: { position: LatLng | null; zoom: numbe
 type GeoState = 'idle' | 'loading' | 'granted' | 'denied' | 'unsupported';
 
 interface MapScreenProps {
-  users: any[];
-  profileData: any;
+  users: UserProfile[];
+  profileData: UserProfile | null;
   onContact: (user: any) => void;
   onUpdateProfile: (data: any) => void;
 }
@@ -89,7 +96,7 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
   const [sharingBusy, setSharingBusy] = useState(false);
   const [sharingError, setSharingError] = useState<string | null>(null);
 
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<LocatedUser | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOnline, setIsOnline] = useState(localDataService.getIsOnline());
 
@@ -184,12 +191,12 @@ export default function MapScreen({ users, profileData, onContact, onUpdateProfi
   // numéricas reales, nunca el propio usuario, y siempre respetando
   // privacyMode==='private' aunque por algún motivo tuviera ubicación guardada.
   const visibleUsers = useMemo(() => {
-    return (users || []).filter((u) => {
+    return (users || []).filter((u): u is LocatedUser => {
       if (!u || u.uid === currentUid) return false;
       if (u.privacyMode === 'private') return false;
       if (u.locationSharing !== true) return false;
       const loc = u.location;
-      return loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
+      return !!loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
     });
   }, [users, currentUid]);
 

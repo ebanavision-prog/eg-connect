@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Sparkles, MessageSquare, Database, Users as UsersIcon } from 'lucide-react';
 import FeedItem from './FeedItem';
-import { Contact } from '../types';
+import { Contact, UserProfile } from '../types';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 interface TimelineScreenProps {
   onChat?: (participant: { id: string; name: string; avatar: string }) => void;
-  users?: any[];
+  users?: UserProfile[];
   currentUserName?: string;
 }
 
