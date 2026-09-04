@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Mic, StopCircle, Play, Users, UserPlus, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { Conversation, Message, UserProfile } from '../types';
 import { auth, getOrCreateConversation, createGroupConversation, sendMessage, markConversationRead, addParticipantToGroup } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -13,19 +14,20 @@ interface ChatScreenProps {
 }
 
 // Grid de emojis fijo, sin dependencia externa ni llamada a ninguna API.
-const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
-  { label: 'Caras', emojis: ['😀', '😂', '😅', '😉', '😊', '😍', '🤔', '😎', '😢', '😭', '😡', '🥳', '😴', '🤯', '🙄', '😇'] },
-  { label: 'Gestos', emojis: ['👍', '👎', '👏', '🙌', '🙏', '💪', '✌️', '🤝', '👋', '✍️', '🤞', '👌'] },
-  { label: 'Trabajo', emojis: ['💼', '📈', '📉', '📄', '📌', '📎', '💡', '⏰', '📅', '💰', '💻', '📞'] },
-  { label: 'Símbolos', emojis: ['❤️', '🔥', '✅', '❌', '⭐', '🎉', '⚠️', '❓', '❗', '💯', '🚀', '🎯'] }
+const EMOJI_GROUPS: { labelKey: string; emojis: string[] }[] = [
+  { labelKey: 'chat.emojiCategoryFaces', emojis: ['😀', '😂', '😅', '😉', '😊', '😍', '🤔', '😎', '😢', '😭', '😡', '🥳', '😴', '🤯', '🙄', '😇'] },
+  { labelKey: 'chat.emojiCategoryGestures', emojis: ['👍', '👎', '👏', '🙌', '🙏', '💪', '✌️', '🤝', '👋', '✍️', '🤞', '👌'] },
+  { labelKey: 'chat.emojiCategoryWork', emojis: ['💼', '📈', '📉', '📄', '📌', '📎', '💡', '⏰', '📅', '💰', '💻', '📞'] },
+  { labelKey: 'chat.emojiCategorySymbols', emojis: ['❤️', '🔥', '✅', '❌', '⭐', '🎉', '⚠️', '❓', '❗', '💯', '🚀', '🎯'] }
 ];
 
-function formatTime(ts: { toDate: () => Date } | null | undefined) {
-  if (!ts) return 'Ahora';
+function formatTime(ts: { toDate: () => Date } | null | undefined, nowLabel: string) {
+  if (!ts) return nowLabel;
   return ts.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function ChatScreen({ initialParticipant, users }: ChatScreenProps) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -90,7 +92,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     const otherUid = conv.participants.find((id) => id !== currentUid);
     const profile = users.find((u) => u.uid === otherUid);
     return {
-      name: profile?.name || 'Usuario de EG CONNECT',
+      name: profile?.name || t('chat.defaultParticipantName'),
       avatar: profile?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=100&h=100&fit=crop'
     };
   };
@@ -104,7 +106,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   // ningún catch que mostrar aquí porque no debe afectar la conversación.
   const notifyOtherParticipants = (conv: Conversation | undefined, body: string) => {
     if (!conv || !currentUid) return;
-    const senderName = users.find((u) => u.uid === currentUid)?.name || 'Alguien';
+    const senderName = users.find((u) => u.uid === currentUid)?.name || t('chat.defaultSenderName');
     conv.participants
       .filter((uid) => uid !== currentUid)
       .forEach((uid) => {
@@ -155,8 +157,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     setIsRecording(false);
     if (recordingTime > 0 && activeConversationId && currentUid) {
       sendMessage(activeConversationId, currentUid, { type: 'audio', audioUrl: '#', audioDuration: recordingTime })
-        .then(() => notifyOtherParticipants(activeConversation || undefined, '🎤 Mensaje de voz'))
-        .catch(() => setSendError('No se pudo enviar el audio.'));
+        .then(() => notifyOtherParticipants(activeConversation || undefined, t('chat.voiceMessagePush')))
+        .catch(() => setSendError(t('chat.audioSendError')));
     }
   };
 
@@ -167,7 +169,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     sendMessage(activeConversationId, currentUid, { type: 'text', text })
       .then(() => notifyOtherParticipants(activeConversation || undefined, text))
       .catch(() => {
-        setSendError('No se pudo enviar el mensaje. Revisa tu conexión.');
+        setSendError(t('chat.textSendError'));
         setNewMessage(text);
       });
   };
@@ -219,7 +221,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                 {!activeConversation.isGroup && <ShieldCheck className="w-3 h-3 text-secondary" />}
               </h3>
               <p className="text-[10px] text-secondary font-bold uppercase tracking-widest mt-1">
-                {activeConversation.isGroup ? `${activeConversation.participants.length} participantes` : 'Conexión directa'}
+                {activeConversation.isGroup ? t('chat.groupParticipantsCount', { count: activeConversation.participants.length }) : t('chat.directConnection')}
               </p>
             </div>
           </div>
@@ -243,7 +245,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-surface-container-low/30">
           {messages.length === 0 && (
-            <p className="text-center text-xs text-on-surface-variant/60 font-medium pt-10">Todavía no hay mensajes — escribe el primero.</p>
+            <p className="text-center text-xs text-on-surface-variant/60 font-medium pt-10">{t('chat.noMessagesYet')}</p>
           )}
           {messages.map((msg) => {
             const isMe = msg.senderId === currentUid;
@@ -264,7 +266,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                     </div>
                   )}
                   <div className={`flex items-center gap-1 mt-1 justify-end ${isMe ? 'text-white/60' : 'text-on-surface-variant/60'}`}>
-                    <span className="text-[9px] font-medium">{formatTime(msg.createdAt)}</span>
+                    <span className="text-[9px] font-medium">{formatTime(msg.createdAt, t('chat.now'))}</span>
                     {isMe && <CheckCheck className="w-3 h-3" />}
                   </div>
                 </div>
@@ -286,16 +288,16 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                 <div className="flex-1 px-4 py-3 flex items-center justify-between text-primary">
                   <div className="flex items-center gap-2">
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-red-500 rounded-full" />
-                    <span className="text-sm font-bold">Grabando... {Math.floor(recordingTime / 60)}:{String(recordingTime % 60).padStart(2, '0')}</span>
+                    <span className="text-sm font-bold">{t('chat.recordingLabel', { time: `${Math.floor(recordingTime / 60)}:${String(recordingTime % 60).padStart(2, '0')}` })}</span>
                   </div>
-                  <button onClick={stopRecording} className="text-xs font-black uppercase tracking-widest text-red-500">Cancelar</button>
+                  <button onClick={stopRecording} className="text-xs font-black uppercase tracking-widest text-red-500">{t('chat.cancelButton')}</button>
                 </div>
               ) : (
                 <>
                   <textarea
                     ref={textareaRef}
                     rows={1}
-                    placeholder="Escribe un mensaje..."
+                    placeholder={t('chat.messagePlaceholder')}
                     className="w-full bg-transparent p-3 pl-4 pr-10 text-sm focus:outline-hidden resize-none transition-all overflow-hidden"
                     value={newMessage}
                     onChange={(e) => {
@@ -328,8 +330,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                         className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-outline/10 p-3 space-y-3 z-20"
                       >
                         {EMOJI_GROUPS.map((group) => (
-                          <div key={group.label}>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 px-0.5">{group.label}</p>
+                          <div key={group.labelKey}>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 px-0.5">{t(group.labelKey)}</p>
                             <div className="grid grid-cols-8 gap-1">
                               {group.emojis.map((emoji) => (
                                 <button
@@ -376,7 +378,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddParticipant(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-black font-display text-on-surface">Añadir Integrante</h2>
+                <h2 className="text-xl font-black font-display text-on-surface">{t('chat.addParticipantTitle')}</h2>
                 <button onClick={() => setShowAddParticipant(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto p-1">
@@ -395,7 +397,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                     </button>
                   ))}
                 {users.filter((u) => u.uid !== currentUid && !activeConversation.participants.includes(u.uid)).length === 0 && (
-                  <p className="col-span-2 text-xs text-on-surface-variant/60 italic px-2">Todos los miembros de la red ya están en este grupo.</p>
+                  <p className="col-span-2 text-xs text-on-surface-variant/60 italic px-2">{t('chat.allMembersAlreadyIn')}</p>
                 )}
               </div>
             </motion.div>
@@ -411,7 +413,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-black font-display text-on-surface">
-                  {activeConversation.isGroup ? 'Info del Grupo' : 'Info de la Conversación'}
+                  {activeConversation.isGroup ? t('chat.groupInfoTitle') : t('chat.conversationInfoTitle')}
                 </h2>
                 <button onClick={() => setShowGroupInfo(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
               </div>
@@ -423,7 +425,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
               )}
               <div className="space-y-1">
                 <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
-                  {activeConversation.participants.length} Participantes
+                  {t('chat.participantsCountLabel', { count: activeConversation.participants.length })}
                 </label>
                 <div className="max-h-[240px] overflow-y-auto space-y-2 p-1">
                   {activeConversation.participants.map((uid) => {
@@ -431,7 +433,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                     return (
                       <div key={uid} className="flex items-center gap-3 p-2 rounded-xl bg-surface-container-low">
                         <img src={person?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=50'} className="w-8 h-8 rounded-full object-cover" />
-                        <span className="text-xs font-bold truncate">{uid === currentUid ? 'Tú' : (person?.name || 'Usuario de EG CONNECT')}</span>
+                        <span className="text-xs font-bold truncate">{uid === currentUid ? t('chat.youLabel') : (person?.name || t('chat.defaultParticipantName'))}</span>
                       </div>
                     );
                   })}
@@ -449,12 +451,12 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     <div className="py-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex justify-between items-end">
         <div>
-          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">Mensajería</h2>
-          <h1 className="text-4xl font-extrabold font-display text-on-surface">Conversaciones</h1>
+          <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">{t('chat.messagingSectionLabel')}</h2>
+          <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('chat.conversationsTitle')}</h1>
         </div>
         <button onClick={() => setIsCreatingGroup(true)} className="flex items-center gap-2 py-3 px-6 bg-primary/10 text-primary rounded-[1.5rem] font-bold text-sm hover:bg-primary/20 transition-all border border-primary/20">
           <Users className="w-5 h-5" />
-          Nuevo Grupo
+          {t('chat.newGroupButton')}
         </button>
       </header>
 
@@ -462,7 +464,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
         <input
           type="text"
-          placeholder="Buscar contactos o mensajes..."
+          placeholder={t('chat.searchPlaceholder')}
           className="w-full bg-surface-container-low border border-outline/10 pl-12 pr-4 py-4 rounded-[1.5rem] text-sm focus:outline-hidden focus:border-primary transition-colors"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -472,8 +474,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
       {filteredConversations.length === 0 ? (
         <div className="text-center py-16 space-y-3 opacity-60">
           <MessageSquare className="w-10 h-10 mx-auto text-outline" />
-          <p className="text-sm font-bold text-on-surface-variant">Aún no tienes conversaciones.</p>
-          <p className="text-xs text-on-surface-variant">Usa "Contactar" en el Directorio, Empresas o el Marketplace para empezar una.</p>
+          <p className="text-sm font-bold text-on-surface-variant">{t('chat.noConversationsTitle')}</p>
+          <p className="text-xs text-on-surface-variant">{t('chat.noConversationsSubtitle')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -495,9 +497,9 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                       {conv.isGroup ? conv.groupName : other?.name}
                       {conv.isGroup && <Users className="w-3 h-3 text-on-surface-variant/40" />}
                     </h3>
-                    <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter shrink-0">{formatTime(conv.lastMessageAt)}</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter shrink-0">{formatTime(conv.lastMessageAt, t('chat.now'))}</span>
                   </div>
-                  <p className={`text-xs truncate ${unread ? 'text-primary font-bold' : 'text-on-surface-variant/70'}`}>{conv.lastMessage || 'Sin mensajes todavía'}</p>
+                  <p className={`text-xs truncate ${unread ? 'text-primary font-bold' : 'text-on-surface-variant/70'}`}>{conv.lastMessage || t('chat.noMessagesPreview')}</p>
                 </div>
                 {unread && <div className="w-2.5 h-2.5 bg-secondary rounded-full shrink-0" />}
               </motion.div>
@@ -510,9 +512,9 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
         <div className="absolute right-0 bottom-0 opacity-10 translate-x-4 translate-y-4">
           <MessageSquare className="w-32 h-32 text-primary" />
         </div>
-        <h3 className="font-bold text-primary mb-2">Mensajería real</h3>
+        <h3 className="font-bold text-primary mb-2">{t('chat.realMessagingTitle')}</h3>
         <p className="text-xs text-on-surface-variant leading-relaxed">
-          Cada conversación se guarda en tu cuenta de EG CONNECT — la ve la otra persona real al iniciar sesión, no solo en este navegador.
+          {t('chat.realMessagingDesc')}
         </p>
       </div>
 
@@ -522,22 +524,22 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCreatingGroup(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-black font-display text-on-surface">Nuevo Grupo</h2>
+                <h2 className="text-2xl font-black font-display text-on-surface">{t('chat.newGroupButton')}</h2>
                 <button onClick={() => setIsCreatingGroup(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Nombre del Grupo</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('chat.groupNameLabel')}</label>
                   <input
                     type="text"
-                    placeholder="Ej. Proyecto Alquileres"
+                    placeholder={t('chat.groupNamePlaceholder')}
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-2xl font-bold focus:border-primary outline-hidden"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Participantes</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">{t('chat.participantsLabel')}</label>
                   <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
                     {users.filter((u) => u.uid !== currentUid).map((contact) => (
                       <button
@@ -551,7 +553,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                         <span className="text-xs font-bold truncate">{contact.name}</span>
                       </button>
                     ))}
-                    {users.length <= 1 && <p className="col-span-2 text-xs text-on-surface-variant/60 italic px-2">Todavía no hay más miembros en la red para añadir.</p>}
+                    {users.length <= 1 && <p className="col-span-2 text-xs text-on-surface-variant/60 italic px-2">{t('chat.noMoreMembersToAdd')}</p>}
                   </div>
                 </div>
               </div>
@@ -560,7 +562,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                 disabled={!groupName || selectedContacts.length === 0}
                 className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-all"
               >
-                Crear Grupo
+                {t('chat.createGroupButton')}
               </button>
             </motion.div>
           </div>

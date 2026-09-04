@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { where } from 'firebase/firestore';
 import { Users, Calendar, Rocket, MapPin, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Contact, Event, Initiative } from '../types';
 import { auth } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
 export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: string) => void }) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
 
   const { data: contacts } = useFirestoreCollection<Contact>(currentUid ? `users/${currentUid}/contacts` : null);
@@ -33,8 +35,8 @@ export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: st
         <div className="editorial-card p-8 overflow-hidden relative border-none">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-on-surface-variant font-bold text-[10px] tracking-widest uppercase mb-1 opacity-60">Tu Red</p>
-              <h2 className="text-4xl font-extrabold font-display text-primary leading-none">{contacts.length} Contactos</h2>
+              <p className="text-on-surface-variant font-bold text-[10px] tracking-widest uppercase mb-1 opacity-60">{t('summary.yourNetwork')}</p>
+              <h2 className="text-4xl font-extrabold font-display text-primary leading-none">{t('summary.contactsCount', { count: contacts.length })}</h2>
             </div>
             <div className="bg-secondary-container/20 p-4 rounded-full">
               <Users className="w-8 h-8 text-secondary" />
@@ -43,11 +45,11 @@ export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: st
           <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-outline/10">
             <div>
               <p className="text-2xl font-extrabold font-display text-primary leading-none">{myEvents.length}</p>
-              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">Eventos confirmados</p>
+              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">{t('summary.eventsConfirmed')}</p>
             </div>
             <div>
               <p className="text-2xl font-extrabold font-display text-primary leading-none">{myInitiatives.length}</p>
-              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">Iniciativas activas</p>
+              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">{t('summary.initiativesActive')}</p>
             </div>
           </div>
         </div>
@@ -55,17 +57,17 @@ export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: st
 
       <section>
         <div className="flex justify-between items-center mb-6 px-1">
-          <h3 className="font-display font-bold text-xl text-primary">Próximos Eventos</h3>
+          <h3 className="font-display font-bold text-xl text-primary">{t('summary.upcomingEventsTitle')}</h3>
           {onNavigate && (
             <button onClick={() => onNavigate('events')} className="text-[10px] font-bold text-secondary tracking-widest uppercase bg-secondary/10 px-3 py-1 rounded-full flex items-center gap-1">
-              Ver todos <ArrowRight className="w-3 h-3" />
+              {t('summary.viewAll')} <ArrowRight className="w-3 h-3" />
             </button>
           )}
         </div>
         {upcomingEvents.length === 0 ? (
           <div className="editorial-card p-6 text-center border-dashed border-2 shadow-none">
             <Calendar className="w-6 h-6 text-outline/40 mx-auto mb-2" />
-            <p className="text-xs font-bold text-on-surface-variant">No tienes eventos próximos confirmados.</p>
+            <p className="text-xs font-bold text-on-surface-variant">{t('summary.noUpcomingEvents')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -89,7 +91,7 @@ export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: st
 
       {myInitiatives.length > 0 && (
         <section className="pb-10">
-          <h3 className="font-display font-bold text-xl text-primary mb-6 px-1">Tus Iniciativas</h3>
+          <h3 className="font-display font-bold text-xl text-primary mb-6 px-1">{t('summary.yourInitiativesTitle')}</h3>
           <div className="space-y-3">
             {myInitiatives.slice(0, 3).map((initiative) => (
               <div key={initiative.id} className="bg-surface-container-low border border-outline/5 p-4 rounded-[1.5rem] flex items-center gap-4">
@@ -98,7 +100,7 @@ export default function SummaryScreen({ onNavigate }: { onNavigate?: (screen: st
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-on-surface text-sm truncate">{initiative.title}</h4>
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">{initiative.members?.length || 0} colaboradores</span>
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t('summary.collaboratorsCount', { count: initiative.members?.length || 0 })}</span>
                 </div>
               </div>
             ))}

@@ -7,13 +7,17 @@ import {
   TrendingUp, Circle, CheckCircle2, UserPlus,
   StickyNote, Mail, Loader2, X, Check
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Contact } from '../types';
 import { auth, addContact, importGoogleContacts, GoogleImportedContact, updateContactStatus } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
+// Valores persistidos tal cual en Firestore (contact.crmStatus) -- se dejan
+// en español para no romper el filtrado/comparación con datos ya guardados.
 const CRM_STATUSES = ['Prospecto', 'Socio', 'Aliado', 'Cliente'] as const;
 
 export default function CRMScreen() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'Prospecto' | 'Socio' | 'Aliado' | 'Cliente'>('all');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -35,7 +39,7 @@ export default function CRMScreen() {
       setGoogleContacts(results);
       setSelectedGoogle(new Set(results.map((_, i) => i)));
     } catch (error: any) {
-      setImportError(error?.message || 'No se pudo conectar con Google Contactos.');
+      setImportError(error?.message || t('crm.importErrorGeneric'));
     } finally {
       setIsImporting(false);
     }
@@ -110,18 +114,18 @@ export default function CRMScreen() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <h2 className="text-sm font-black text-primary uppercase tracking-[0.2em]">Networking CRM</h2>
+            <h2 className="text-sm font-black text-primary uppercase tracking-[0.2em]">{t('crm.sectionLabel')}</h2>
           </div>
-          <h1 className="text-3xl font-black font-display text-primary leading-tight">Gestor de Relaciones</h1>
+          <h1 className="text-3xl font-black font-display text-primary leading-tight">{t('crm.title')}</h1>
           <p className="text-on-surface-variant mt-2 text-sm max-w-xs">
-            Optimiza tu red de contactos y haz seguimiento a tus alianzas estratégicas.
+            {t('crm.subtitle')}
           </p>
         </div>
         <button
           onClick={handleImportGoogle}
           disabled={isImporting}
           className="bg-white border-2 border-outline/10 text-primary p-4 rounded-2xl shadow-sm active:scale-90 transition-all disabled:opacity-50"
-          title="Importar contactos de Google"
+          title={t('crm.importGoogleTooltip')}
         >
           {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
         </button>
@@ -136,11 +140,11 @@ export default function CRMScreen() {
       {/* CRM Stats Summary */}
       <div className="grid grid-cols-2 gap-4 px-1 text-center">
         <div className="bg-white p-4 rounded-[1.8rem] shadow-sm border border-outline/5">
-          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Total Contactos</p>
+          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">{t('crm.totalContactsLabel')}</p>
           <div className="text-2xl font-black text-primary">{contactsWithCRM.length}</div>
         </div>
         <div className="bg-white p-4 rounded-[1.8rem] shadow-sm border border-outline/5">
-          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Socios y Aliados</p>
+          <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">{t('crm.partnersAlliesLabel')}</p>
           <div className="text-2xl font-black text-emerald-500">
             {contactsWithCRM.filter((c) => c.crmStatus === 'Socio' || c.crmStatus === 'Aliado').length}
           </div>
@@ -153,7 +157,7 @@ export default function CRMScreen() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
           <input 
             type="text"
-            placeholder="Nombre, empresa o etiquetas..."
+            placeholder={t('crm.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white border-2 border-outline/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold focus:border-primary shadow-sm"
@@ -171,7 +175,7 @@ export default function CRMScreen() {
                   : 'bg-white border-outline/10 text-on-surface-variant'
               }`}
             >
-              {s === 'all' ? 'Ver Todos' : s}
+              {s === 'all' ? t('crm.filterAllLabel') : s}
             </button>
           ))}
         </div>
@@ -181,8 +185,8 @@ export default function CRMScreen() {
       {!loading && filtered.length === 0 ? (
         <div className="text-center py-16 space-y-3 opacity-60">
           <Users className="w-10 h-10 mx-auto text-outline" />
-          <p className="text-sm font-bold text-on-surface-variant">Todavía no tienes contactos guardados.</p>
-          <p className="text-xs text-on-surface-variant">Usa "Escanear" para guardar tu primera tarjeta de contacto.</p>
+          <p className="text-sm font-bold text-on-surface-variant">{t('crm.emptyTitle')}</p>
+          <p className="text-xs text-on-surface-variant">{t('crm.emptySubtitle')}</p>
         </div>
       ) : (
       <div className="space-y-3">
@@ -219,7 +223,7 @@ export default function CRMScreen() {
                   </span>
                   <div className="flex items-center gap-1 text-[8px] font-bold text-outline uppercase tracking-tighter">
                     <Clock className="w-2.5 h-2.5" />
-                    Contacto: {contact.lastMet}
+                    {t('crm.contactSincePrefix', { lastMet: contact.lastMet })}
                   </div>
                 </div>
               </div>
@@ -270,7 +274,7 @@ export default function CRMScreen() {
 
                 <div className="space-y-4 text-left">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Estado en el embudo</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">{t('crm.funnelStatusLabel')}</p>
                     <div className="flex flex-wrap gap-2">
                       {CRM_STATUSES.map((status) => (
                         <button
@@ -292,10 +296,10 @@ export default function CRMScreen() {
                   <div className="p-4 bg-surface-container rounded-2xl border border-outline/5">
                     <div className="flex items-center gap-2 mb-2 text-primary">
                       <StickyNote className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Notas</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{t('crm.notesLabel')}</span>
                     </div>
                     <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                      {selectedContact.note || 'Sin notas guardadas para este contacto.'}
+                      {selectedContact.note || t('crm.noNotesSaved')}
                     </p>
                   </div>
 
@@ -303,7 +307,7 @@ export default function CRMScreen() {
                     <div className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl border border-primary/10">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-primary" />
-                        <span className="text-[10px] font-black uppercase">Ubicación</span>
+                        <span className="text-[10px] font-black uppercase">{t('crm.locationLabel')}</span>
                       </div>
                       <span className="text-[10px] font-bold text-primary">{selectedContact.location}</span>
                     </div>
@@ -314,7 +318,7 @@ export default function CRMScreen() {
                   onClick={() => setSelectedContact(null)}
                   className="w-full mt-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20"
                 >
-                  Cerrar Gestor
+                  {t('crm.closeManagerButton')}
                 </button>
               </div>
             </motion.div>
@@ -341,8 +345,8 @@ export default function CRMScreen() {
               <div className="p-8 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-extrabold font-display text-on-surface">Elige qué importar</h2>
-                    <p className="text-xs text-on-surface-variant mt-1">{googleContacts.length} contactos encontrados en Google</p>
+                    <h2 className="text-xl font-extrabold font-display text-on-surface">{t('crm.chooseImportTitle')}</h2>
+                    <p className="text-xs text-on-surface-variant mt-1">{t('crm.contactsFoundCount', { count: googleContacts.length })}</p>
                   </div>
                   <button onClick={() => setGoogleContacts(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
                     <X className="w-5 h-5 text-on-surface-variant" />
@@ -352,7 +356,7 @@ export default function CRMScreen() {
 
               <div className="flex-1 overflow-y-auto px-8 space-y-2">
                 {googleContacts.length === 0 && (
-                  <p className="text-sm text-on-surface-variant text-center py-8">No encontramos contactos con nombre en tu cuenta de Google.</p>
+                  <p className="text-sm text-on-surface-variant text-center py-8">{t('crm.noGoogleContactsFound')}</p>
                 )}
                 {googleContacts.map((c, i) => {
                   const isSelected = selectedGoogle.has(i);
@@ -389,9 +393,9 @@ export default function CRMScreen() {
                   className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
                   {isSavingImport ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" />Importando...</>
+                    <><Loader2 className="w-5 h-5 animate-spin" />{t('crm.importingButton')}</>
                   ) : (
-                    `Importar ${selectedGoogle.size} contacto${selectedGoogle.size !== 1 ? 's' : ''}`
+                    t('crm.importCount', { count: selectedGoogle.size })
                   )}
                 </button>
               </div>
@@ -402,7 +406,7 @@ export default function CRMScreen() {
 
       <footer className="pt-8 text-center px-6">
         <p className="text-[9px] font-bold text-outline uppercase tracking-[0.2em] leading-relaxed">
-          Los datos del CRM se almacenan localmente y son totalmente privados de tu cuenta de EG Connect.
+          {t('crm.footerPrivacyNote')}
         </p>
       </footer>
     </div>

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { where } from 'firebase/firestore';
 import { Handshake, MessageSquare, MapPin, Briefcase, X, Loader2, Send, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { ConnectionRequest, UserProfile } from '../types';
 import { auth, createConnectionRequest, respondToConnectionRequest } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
@@ -13,9 +14,12 @@ interface InvestorsScreenProps {
   profileData?: UserProfile | null;
 }
 
+// Valores usados para filtrar/comparar contra investorSectors (mismos que
+// selecciona el usuario en su perfil) -- se dejan en español, son datos.
 const SECTOR_FILTERS = ['Todos', 'Tecnología', 'Agricultura', 'Educación', 'Salud', 'Comercio', 'Energía', 'Turismo'];
 
 export default function InvestorsScreen({ users, onContact, profileData }: InvestorsScreenProps) {
+  const { t } = useTranslation();
   const [sectorFilter, setSectorFilter] = useState('Todos');
   const [pitchTarget, setPitchTarget] = useState<UserProfile | null>(null);
   const [pitchText, setPitchText] = useState('');
@@ -59,7 +63,11 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
       });
       // Push real, best-effort — nunca puede romper el envío de la solicitud
       // en sí, que ya se guardó en Firestore en la línea de arriba.
-      sendPushToUser(pitchTarget.uid, 'Nueva solicitud de conexión', `${profileData?.name || 'Alguien'}: "${pitchText.trim()}"`).catch(() => {});
+      sendPushToUser(
+        pitchTarget.uid,
+        t('investors.pushNewRequestTitle'),
+        t('investors.pushNewRequestBody', { name: profileData?.name || t('investors.fallbackSomeone'), pitch: pitchText.trim() })
+      ).catch(() => {});
       setPitchTarget(null);
       setPitchText('');
     } finally {
@@ -73,10 +81,10 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
       await respondToConnectionRequest(req.id, status);
       sendPushToUser(
         req.fromUid,
-        status === 'accepted' ? 'Solicitud aceptada' : 'Solicitud rechazada',
+        status === 'accepted' ? t('investors.pushAcceptedTitle') : t('investors.pushDeclinedTitle'),
         status === 'accepted'
-          ? `${profileData?.name || 'El inversionista'} aceptó tu solicitud de conexión.`
-          : `${profileData?.name || 'El inversionista'} no aceptó tu solicitud de conexión.`
+          ? t('investors.pushAcceptedBody', { name: profileData?.name || t('investors.fallbackInvestor') })
+          : t('investors.pushDeclinedBody', { name: profileData?.name || t('investors.fallbackInvestor') })
       ).catch(() => {});
       if (status === 'accepted') {
         onContact({ id: req.fromUid, name: req.fromName, avatar: req.fromAvatar });
@@ -89,17 +97,17 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
-        <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">Inversionistas</h2>
-        <h1 className="text-4xl font-extrabold font-display text-on-surface">Conecta con Capital</h1>
+        <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2">{t('investors.sectionLabel')}</h2>
+        <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('investors.title')}</h1>
         <p className="text-sm text-on-surface-variant mt-2 max-w-lg">
-          Perfiles que se han identificado como inversionistas activos en Guinea Ecuatorial. Envía una propuesta breve — el chat se abre solo si el inversionista la acepta.
+          {t('investors.subtitle')}
         </p>
       </header>
 
       {isInvestorMyself && pendingReceived.length > 0 && (
         <section className="space-y-3 bg-amber-50 border border-amber-200 rounded-[2rem] p-6">
           <h3 className="flex items-center gap-2 text-xs font-bold text-amber-700 uppercase tracking-widest">
-            <Handshake className="w-4 h-4" /> Solicitudes Recibidas ({pendingReceived.length})
+            <Handshake className="w-4 h-4" /> {t('investors.receivedRequestsTitle', { count: pendingReceived.length })}
           </h3>
           <div className="space-y-3">
             {pendingReceived.map((req) => (
@@ -116,14 +124,14 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-full text-xs font-bold disabled:opacity-50"
                   >
                     {respondingId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    Aceptar y Chatear
+                    {t('investors.acceptChatButton')}
                   </button>
                   <button
                     onClick={() => handleRespond(req, 'declined')}
                     disabled={respondingId === req.id}
                     className="flex-1 py-2.5 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-bold disabled:opacity-50"
                   >
-                    Rechazar
+                    {t('investors.declineButton')}
                   </button>
                 </div>
               </div>
@@ -149,8 +157,8 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
       {investors.length === 0 ? (
         <div className="text-center py-20 px-8 opacity-40">
           <Handshake className="w-12 h-12 mx-auto mb-4" />
-          <p className="font-bold">Todavía no hay inversionistas registrados{sectorFilter !== 'Todos' ? ` en ${sectorFilter}` : ''}</p>
-          <p className="text-xs">Actívalo en tu perfil si quieres aparecer aquí.</p>
+          <p className="font-bold">{sectorFilter !== 'Todos' ? t('investors.noInvestorsInSector', { sector: sectorFilter }) : t('investors.noInvestors')}</p>
+          <p className="text-xs">{t('investors.emptySubtitle')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -170,7 +178,7 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                     <h3 className="font-bold text-primary truncate">{investor.name}</h3>
                     <div className="flex items-center gap-1 text-[10px] text-on-surface-variant/60">
                       <MapPin className="w-3 h-3" />
-                      <span className="truncate">{investor.city || 'Guinea Ecuatorial'}</span>
+                      <span className="truncate">{investor.city || t('investors.defaultCity')}</span>
                     </div>
                   </div>
                 </div>
@@ -188,7 +196,7 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                 <div className="flex items-center gap-2 text-on-surface-variant mb-6">
                   <Briefcase className="w-4 h-4" />
                   <span className="text-xs font-semibold">
-                    {investor.investorTicketRange || 'Rango no especificado'} · {investor.investorStage || 'Cualquier etapa'}
+                    {investor.investorTicketRange || t('investors.ticketRangeUnspecified')} · {investor.investorStage || t('investors.stageAny')}
                   </span>
                 </div>
 
@@ -198,15 +206,15 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                     className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-full text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Ir al Chat
+                    {t('investors.goToChat')}
                   </button>
                 ) : existing?.status === 'pending' ? (
                   <div className="w-full flex items-center justify-center gap-2 py-3 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-bold">
-                    Solicitud Enviada — Esperando Respuesta
+                    {t('investors.requestSentWaiting')}
                   </div>
                 ) : existing?.status === 'declined' ? (
                   <div className="w-full flex items-center justify-center gap-2 py-3 bg-error/5 text-error rounded-full text-xs font-bold">
-                    Solicitud Rechazada
+                    {t('investors.requestDeclined')}
                   </div>
                 ) : (
                   <button
@@ -214,7 +222,7 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                     className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-full text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
                   >
                     <Send className="w-4 h-4" />
-                    Presentar mi Proyecto
+                    {t('investors.presentProject')}
                   </button>
                 )}
               </motion.div>
@@ -242,8 +250,8 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-extrabold font-display text-on-surface">Presenta tu Proyecto</h2>
-                    <p className="text-xs text-on-surface-variant mt-1">A {pitchTarget.name}</p>
+                    <h2 className="text-xl font-extrabold font-display text-on-surface">{t('investors.pitchModalTitle')}</h2>
+                    <p className="text-xs text-on-surface-variant mt-1">{t('investors.pitchModalTo', { name: pitchTarget.name })}</p>
                   </div>
                   <button onClick={() => setPitchTarget(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
                     <X className="w-5 h-5 text-on-surface-variant" />
@@ -252,11 +260,11 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">
-                    ¿Qué buscas y por qué encaja con este inversionista?
+                    {t('investors.pitchQuestionLabel')}
                   </label>
                   <textarea
                     rows={5}
-                    placeholder="Ej: Busco 20.000 USD para escalar mi taller de agroprocesamiento en Bata. Ya tengo clientes en Malabo y..."
+                    placeholder={t('investors.pitchPlaceholder')}
                     className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                     value={pitchText}
                     onChange={(e) => setPitchText(e.target.value)}
@@ -269,9 +277,9 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                   className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
                   {isSending ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" />Enviando...</>
+                    <><Loader2 className="w-5 h-5 animate-spin" />{t('investors.sendingPitch')}</>
                   ) : (
-                    <><Send className="w-5 h-5" />Enviar Propuesta</>
+                    <><Send className="w-5 h-5" />{t('investors.sendProposalButton')}</>
                   )}
                 </button>
               </div>

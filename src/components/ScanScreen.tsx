@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { QrCode, Image, ArrowLeft, UserPlus, Sparkles, Edit3, Loader2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { extractContactFromImage } from '../services/aiService';
 import { auth, addContact } from '../services/firebaseService';
 
 const EMPTY_MANUAL_CONTACT = { name: '', role: '', company: '', location: '', note: '' };
 
 export default function ScanScreen({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [scannedResult, setScannedResult] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,7 +42,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
       setScannedResult(null);
       onBack();
     } catch (error) {
-      setSaveError('No se pudo guardar el contacto. Inténtalo de nuevo.');
+      setSaveError(t('scan.saveErrorGeneric'));
     } finally {
       setIsSaving(false);
     }
@@ -60,7 +62,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
         if (result) {
           setScannedResult(result);
         } else {
-          setScanError('No se pudo leer la tarjeta. Inténtalo de nuevo o usa "Manual".');
+          setScanError(t('scan.scanErrorGeneric'));
         }
       }
       setIsScanning(false);
@@ -88,7 +90,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
       setManualContact(EMPTY_MANUAL_CONTACT);
       onBack();
     } catch (error) {
-      setManualError('No se pudo guardar el contacto. Inténtalo de nuevo.');
+      setManualError(t('scan.saveErrorGeneric'));
     } finally {
       setIsSavingManual(false);
     }
@@ -101,8 +103,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft className="w-6 h-6 text-primary" />
         </button>
         <div className="text-center">
-          <h1 className="font-display font-bold text-2xl text-primary tracking-tight">Escaneo Inteligente</h1>
-          <p className="text-on-surface-variant text-sm font-medium">Extrae datos automáticamente de cualquier tarjeta</p>
+          <h1 className="font-display font-bold text-2xl text-primary tracking-tight">{t('scan.title')}</h1>
+          <p className="text-on-surface-variant text-sm font-medium">{t('scan.subtitle')}</p>
         </div>
         <div className="w-10" />
       </div>
@@ -123,8 +125,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <>
               <Loader2 className="w-12 h-12 text-secondary animate-spin" />
               <div className="space-y-1">
-                <p className="text-sm font-bold text-primary">Procesando Tarjeta...</p>
-                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest leading-normal">El sistema está analizando los datos</p>
+                <p className="text-sm font-bold text-primary">{t('scan.processingTitle')}</p>
+                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest leading-normal">{t('scan.processingDesc')}</p>
               </div>
             </>
           ) : scannedResult ? (
@@ -141,7 +143,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
                 className="px-6 py-2 bg-primary text-white rounded-full text-xs font-bold shadow-lg shadow-primary/20 outline-hidden active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2 mx-auto"
               >
                 {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {isSaving ? 'Guardando...' : 'Guardar Contacto'}
+                {isSaving ? t('scan.saving') : t('scan.saveContact')}
               </button>
               {saveError && <p className="text-[10px] font-bold text-error mt-3">{saveError}</p>}
             </div>
@@ -149,7 +151,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <>
               <QrCode className="w-16 h-16 text-primary/10" />
               <p className="text-xs font-medium text-on-surface-variant leading-relaxed">
-                Apunta a una tarjeta de visita o sube una foto para que el sistema la guarde automáticamente.
+                {t('scan.viewfinderHint')}
               </p>
               {scanError && <p className="text-[10px] font-bold text-error mt-3">{scanError}</p>}
             </>
@@ -185,8 +187,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <Sparkles className="w-6 h-6 text-secondary-container" />
           </div>
           <div className="text-left">
-            <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60">Escaneo Automático</span>
-            <span className="font-display font-bold text-lg">Tarjeta Física</span>
+            <span className="block text-[10px] uppercase font-bold tracking-widest opacity-60">{t('scan.autoScanLabel')}</span>
+            <span className="font-display font-bold text-lg">{t('scan.autoScanCard')}</span>
           </div>
         </button>
 
@@ -198,8 +200,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <Edit3 className="w-6 h-6" />
           </div>
           <div className="text-left">
-            <span className="block text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Sin Cámara</span>
-            <span className="font-display font-bold text-lg text-primary">Manual</span>
+            <span className="block text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">{t('scan.noCameraLabel')}</span>
+            <span className="font-display font-bold text-lg text-primary">{t('scan.manualCard')}</span>
           </div>
         </button>
       </div>
@@ -208,7 +210,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
         <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md bg-surface rounded-[2.5rem] shadow-2xl p-8 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-display font-bold text-xl text-primary">Añadir Contacto Manual</h2>
+              <h2 className="font-display font-bold text-xl text-primary">{t('scan.manualFormTitle')}</h2>
               <button
                 onClick={() => { setShowManualForm(false); setManualError(''); }}
                 className="p-2 rounded-full hover:bg-surface-container-high transition-all outline-hidden"
@@ -220,34 +222,34 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
             <div className="space-y-3">
               <input
                 type="text"
-                placeholder="Nombre completo"
+                placeholder={t('scan.namePlaceholder')}
                 value={manualContact.name}
                 onChange={(e) => setManualContact({ ...manualContact, name: e.target.value })}
                 className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
               />
               <input
                 type="text"
-                placeholder="Cargo"
+                placeholder={t('scan.rolePlaceholder')}
                 value={manualContact.role}
                 onChange={(e) => setManualContact({ ...manualContact, role: e.target.value })}
                 className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
               />
               <input
                 type="text"
-                placeholder="Empresa"
+                placeholder={t('scan.companyPlaceholder')}
                 value={manualContact.company}
                 onChange={(e) => setManualContact({ ...manualContact, company: e.target.value })}
                 className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
               />
               <input
                 type="text"
-                placeholder="Ciudad"
+                placeholder={t('scan.cityPlaceholder')}
                 value={manualContact.location}
                 onChange={(e) => setManualContact({ ...manualContact, location: e.target.value })}
                 className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
               />
               <textarea
-                placeholder="Nota (opcional)"
+                placeholder={t('scan.notePlaceholder')}
                 rows={2}
                 value={manualContact.note}
                 onChange={(e) => setManualContact({ ...manualContact, note: e.target.value })}
@@ -263,7 +265,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
               className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               {isSavingManual && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSavingManual ? 'Guardando...' : 'Guardar Contacto'}
+              {isSavingManual ? t('scan.saving') : t('scan.saveContact')}
             </button>
           </div>
         </div>
@@ -271,7 +273,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
 
       <div className="mt-12 flex items-center gap-2 bg-secondary-container/20 px-4 py-2 rounded-full border border-secondary/10">
         <Sparkles className="w-3.5 h-3.5 text-secondary" />
-        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Optimizado para Guinea Ecuatorial</span>
+        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">{t('scan.footerBadge')}</span>
       </div>
     </div>
   );

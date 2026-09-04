@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, MapPin, MessageSquare, UserPlus, Filter, Grid, List as ListIcon, Building2, User, Share2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { auth } from '../services/firebaseService';
 import { UserProfile } from '../types';
 
@@ -10,6 +11,7 @@ interface DiscoverScreenProps {
 }
 
 export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps) {
+  const { t } = useTranslation();
   const currentUid = auth.currentUser?.uid;
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -40,8 +42,8 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Únete a EG Connect',
-          text: 'Estoy conectando con profesionales en Guinea Ecuatorial. ¡Únete tú también!',
+          title: t('discover.shareTitle'),
+          text: t('discover.shareText'),
           url: window.location.origin,
         });
       } catch (err) {
@@ -49,7 +51,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
       }
     } else {
       // Fallback
-      alert('Copia este enlace para invitar: ' + window.location.origin);
+      alert(t('discover.shareCopyFallback', { url: window.location.origin }));
     }
   };
 
@@ -57,7 +59,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
     <div className="space-y-6 pb-20">
       <header className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-black text-primary">Directorio</h2>
+          <h2 className="text-3xl font-black text-primary">{t('discover.title')}</h2>
           <div className="flex bg-surface-container-high p-1 rounded-xl">
             <button 
               onClick={() => setViewMode('grid')}
@@ -81,7 +83,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
               onClick={() => setFilterType(type)}
               className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${filterType === type ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant/60'}`}
             >
-              {type === 'all' ? 'Todos' : type === 'individual' ? 'Personal' : 'Empresas'}
+              {type === 'all' ? t('discover.filterAll') : type === 'individual' ? t('discover.filterIndividual') : t('discover.filterCompany')}
             </button>
           ))}
         </div>
@@ -90,7 +92,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
           <input 
             type="text" 
-            placeholder="Buscar por nombre, especialidad o ciudad..."
+            placeholder={t('discover.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white border-2 border-outline/10 rounded-2xl py-4 pl-12 pr-4 outline-hidden font-bold text-sm"
@@ -104,17 +106,17 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
             <UserPlus className="w-8 h-8 text-primary shadow-2xl" />
           </div>
           <div className="space-y-2">
-            <p className="text-lg font-black text-primary">¡Haz Crecer el Ecosistema!</p>
+            <p className="text-lg font-black text-primary">{t('discover.emptyTitle')}</p>
             <p className="text-sm font-medium text-on-surface-variant px-12 opacity-60">
-              No encontramos a nadie con ese filtro. Invita a tus socios para que EG Connect siga creciendo.
+              {t('discover.emptyDesc')}
             </p>
           </div>
-          <button 
+          <button
             onClick={handleShare}
             className="px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center gap-3 mx-auto active:scale-95 transition-all"
           >
             <Share2 className="w-4 h-4" />
-            Compartir Invitación
+            {t('discover.shareInviteButton')}
           </button>
         </div>
       ) : (
@@ -147,7 +149,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
                 </p>
                 <div className="mt-2 flex items-center gap-1 text-[9px] font-medium text-outline-variant">
                   <MapPin className="w-3 h-3" />
-                  <span className="truncate">{user.city || 'Guinea Ecuatorial'}</span>
+                  <span className="truncate">{user.city || t('discover.defaultCity')}</span>
                 </div>
                 
                 {viewMode === 'list' && (
@@ -157,7 +159,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
                       className="flex-1 py-2 bg-primary/10 text-primary rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <MessageSquare className="w-3 h-3" />
-                      Hola
+                      {t('discover.helloButton')}
                     </button>
                   </div>
                 )}
@@ -170,7 +172,7 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
                     className="flex-1 py-2.5 bg-primary/5 text-primary rounded-xl font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95 transition-all"
                   >
                     <MessageSquare className="w-3 h-3" />
-                    Conectar
+                    {t('discover.connectButton')}
                   </button>
                 </div>
               )}
@@ -189,15 +191,15 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
         <div className="relative z-10 space-y-4">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Viral Growth</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">{t('discover.viralGrowthBadge')}</span>
           </div>
-          <h4 className="text-xl font-black leading-tight">¿No encuentras a tu partner?</h4>
-          <p className="text-xs font-medium opacity-80">Invita a tus socios y colegas a unirse a la red empresarial más grande de G.E.</p>
-          <button 
+          <h4 className="text-xl font-black leading-tight">{t('discover.noPartnerTitle')}</h4>
+          <p className="text-xs font-medium opacity-80">{t('discover.noPartnerDesc')}</p>
+          <button
             onClick={handleShare}
             className="w-full py-4 bg-white text-secondary rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all"
           >
-            Invitar vía WhatsApp / Link
+            {t('discover.inviteWhatsappButton')}
             <Share2 className="w-4 h-4" />
           </button>
         </div>

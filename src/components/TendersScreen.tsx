@@ -5,13 +5,17 @@ import {
   Building2, ShieldCheck,
   FileText, Zap, Globe, Plus, X, Loader2, Trash2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { LocalContentOpportunity, UserProfile } from '../types';
 import { auth, createTender, deleteTender } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 
+// Valores persistidos tal cual en Firestore (tender.category) -- se dejan en
+// español para no desincronizar licitaciones ya guardadas.
 const TENDER_CATEGORIES = ['IT', 'Construcción', 'Energía', 'Servicios', 'Logística'];
 
 export default function TendersScreen({ profileData }: { profileData?: UserProfile | null }) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'it' | 'const' | 'energy'>('all');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +50,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
       setIsModalOpen(false);
       setNewTender({ title: '', companyName: '', companyLogo: newTender.companyLogo, description: '', location: 'Malabo', deadline: '', category: 'IT', requirements: [''] });
     } catch (error) {
-      setPublishError('No se pudo publicar la licitación. Inténtalo de nuevo.');
+      setPublishError(t('tenders.errorGeneric'));
     } finally {
       setIsPublishing(false);
     }
@@ -77,18 +81,18 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-6 bg-secondary rounded-full" />
-            <h2 className="text-sm font-black text-secondary uppercase tracking-[0.2em]">Oportunidades</h2>
+            <h2 className="text-sm font-black text-secondary uppercase tracking-[0.2em]">{t('tenders.opportunitiesLabel')}</h2>
           </div>
-          <h1 className="text-3xl font-black font-display text-primary leading-tight">Licitaciones y Proyectos</h1>
+          <h1 className="text-3xl font-black font-display text-primary leading-tight">{t('tenders.title')}</h1>
           <p className="text-on-surface-variant mt-2 text-sm max-w-xs">
-            Accede a contratos prioritarios del sector público y privado en Guinea Ecuatorial.
+            {t('tenders.subtitle')}
           </p>
         </div>
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}
             className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden shrink-0"
-            title="Publicar licitación (admin)"
+            title={t('tenders.publishTooltip')}
           >
             <Plus className="w-6 h-6" />
           </button>
@@ -101,7 +105,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
           <input 
             type="text"
-            placeholder="Buscar por proyecto o entidad..."
+            placeholder={t('tenders.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white border-2 border-outline/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold focus:border-secondary shadow-sm"
@@ -110,10 +114,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
         
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {[
-            { id: 'all', label: 'Todos', icon: Globe },
-            { id: 'it', label: 'Tecnología', icon: Zap },
-            { id: 'const', label: 'Infraestructura', icon: Building2 },
-            { id: 'energy', label: 'Energía', icon: ShieldCheck }
+            { id: 'all', label: t('tenders.filterAll'), icon: Globe },
+            { id: 'it', label: t('tenders.filterTech'), icon: Zap },
+            { id: 'const', label: t('tenders.filterInfra'), icon: Building2 },
+            { id: 'energy', label: t('tenders.filterEnergy'), icon: ShieldCheck }
           ].map((btn) => (
             <button
               key={btn.id}
@@ -168,12 +172,12 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
               </div>
               <div className="flex items-center gap-2 text-on-surface-variant">
                 <Calendar className="w-3.5 h-3.5 text-secondary" />
-                <span className="text-[10px] font-bold">Cierre: {tender.deadline}</span>
+                <span className="text-[10px] font-bold">{t('tenders.deadlinePrefix', { date: tender.deadline })}</span>
               </div>
             </div>
 
             <div className="space-y-2 mb-6">
-              <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em] mb-1">Requisitos Clave</p>
+              <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em] mb-1">{t('tenders.keyRequirementsLabel')}</p>
               {tender.requirements.map((req, i) => (
                 <div key={i} className="flex items-start gap-2 text-[10px] font-bold text-primary">
                   <div className="w-1 h-1 rounded-full bg-secondary mt-1.5 flex-shrink-0" />
@@ -188,14 +192,14 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                 className="flex-1 bg-primary text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <FileText className="w-3.5 h-3.5" />
-                Más Detalles
+                {t('tenders.moreDetailsButton')}
               </button>
               {isAdmin && (
                 <button
                   onClick={() => handleDelete(tender.id)}
                   disabled={deletingId === tender.id}
                   className="w-12 h-12 bg-error/10 text-error rounded-2xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-50"
-                  title="Borrar (admin)"
+                  title={t('tenders.deleteTooltip')}
                 >
                   {deletingId === tender.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </button>
@@ -209,8 +213,8 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
             <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8 text-outline/30" />
             </div>
-            <h3 className="font-bold text-primary mb-2">No se encontraron licitaciones</h3>
-            <p className="text-xs text-on-surface-variant font-medium">Intenta cambiar los filtros o la búsqueda.</p>
+            <h3 className="font-bold text-primary mb-2">{t('tenders.noTendersFoundTitle')}</h3>
+            <p className="text-xs text-on-surface-variant font-medium">{t('tenders.noTendersFoundDesc')}</p>
           </div>
         )}
       </div>
@@ -218,10 +222,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
       <div className="p-6 bg-secondary/5 rounded-3xl border-2 border-secondary/10 mx-1">
         <h4 className="font-bold text-secondary text-sm mb-2 flex items-center gap-2">
           <Globe className="w-4 h-4" />
-          Aviso de Contenido Local
+          {t('tenders.localContentNoticeTitle')}
         </h4>
         <p className="text-[10px] text-on-surface-variant leading-relaxed">
-          Las licitaciones marcadas con el sello de **Contenido Local** requieren una cuota mínima del 35% de participación de empresas nacionales según la normativa vigente en Guinea Ecuatorial.
+          {t('tenders.localContentNoticeDesc')}
         </p>
       </div>
 
@@ -266,7 +270,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                   </div>
                   <div className="flex items-center gap-2 text-on-surface-variant">
                     <Calendar className="w-3.5 h-3.5 text-secondary" />
-                    <span className="text-xs font-bold">Cierre: {selectedTender.deadline}</span>
+                    <span className="text-xs font-bold">{t('tenders.deadlinePrefix', { date: selectedTender.deadline })}</span>
                   </div>
                   <div className="flex items-center gap-2 text-on-surface-variant">
                     <Building2 className="w-3.5 h-3.5 text-secondary" />
@@ -281,13 +285,13 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">Descripción</p>
+                  <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">{t('tenders.descriptionLabel')}</p>
                   <p className="text-sm text-on-surface-variant leading-relaxed">{selectedTender.description}</p>
                 </div>
 
                 {selectedTender.requirements.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">Requisitos Clave</p>
+                    <p className="text-[9px] font-black uppercase text-outline tracking-[0.2em]">{t('tenders.keyRequirementsLabel')}</p>
                     {selectedTender.requirements.map((req, i) => (
                       <div key={i} className="flex items-start gap-2 text-xs font-bold text-primary">
                         <div className="w-1 h-1 rounded-full bg-secondary mt-1.5 shrink-0" />
@@ -321,7 +325,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
               >
                 <div className="p-8 space-y-6">
                   <div className="flex justify-between items-start">
-                    <h2 className="text-2xl font-extrabold font-display text-on-surface">Publicar Licitación</h2>
+                    <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('tenders.modalTitle')}</h2>
                     <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
                       <X className="w-6 h-6 text-on-surface-variant" />
                     </button>
@@ -329,10 +333,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Título del Proyecto</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.projectTitleLabel')}</label>
                       <input
                         type="text"
-                        placeholder="Ej: Mantenimiento de Red Eléctrica"
+                        placeholder={t('tenders.projectTitlePlaceholder')}
                         className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                         value={newTender.title}
                         onChange={(e) => setNewTender({ ...newTender, title: e.target.value })}
@@ -340,10 +344,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Entidad Convocante</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.entityLabel')}</label>
                       <input
                         type="text"
-                        placeholder="Ej: Ministerio de Minas y Energía"
+                        placeholder={t('tenders.entityPlaceholder')}
                         className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                         value={newTender.companyName}
                         onChange={(e) => setNewTender({ ...newTender, companyName: e.target.value })}
@@ -352,7 +356,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Categoría</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.categoryLabel')}</label>
                         <select
                           className="select-field-custom"
                           value={newTender.category}
@@ -362,7 +366,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Fecha de Cierre</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.deadlineLabel')}</label>
                         <input
                           type="date"
                           className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
@@ -373,10 +377,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Ubicación</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.locationLabel')}</label>
                       <input
                         type="text"
-                        placeholder="Ej: Malabo"
+                        placeholder={t('tenders.locationPlaceholder')}
                         className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary"
                         value={newTender.location}
                         onChange={(e) => setNewTender({ ...newTender, location: e.target.value })}
@@ -384,10 +388,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Descripción</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.descriptionLabel')}</label>
                       <textarea
                         rows={3}
-                        placeholder="Detalles del proyecto..."
+                        placeholder={t('tenders.descriptionPlaceholder')}
                         className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                         value={newTender.description}
                         onChange={(e) => setNewTender({ ...newTender, description: e.target.value })}
@@ -395,10 +399,10 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">Requisitos (uno por línea)</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 block">{t('tenders.requirementsLabel')}</label>
                       <textarea
                         rows={3}
-                        placeholder={'Ej: Certificación ISO 9001\nExperiencia mínima 5 años'}
+                        placeholder={t('tenders.requirementsPlaceholder')}
                         className="w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary resize-none"
                         value={newTender.requirements.join('\n')}
                         onChange={(e) => setNewTender({ ...newTender, requirements: e.target.value.split('\n') })}
@@ -414,9 +418,9 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                     className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-bold shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                   >
                     {isPublishing ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" />Publicando...</>
+                      <><Loader2 className="w-5 h-5 animate-spin" />{t('tenders.publishing')}</>
                     ) : (
-                      <><Briefcase className="w-5 h-5" />Publicar Licitación</>
+                      <><Briefcase className="w-5 h-5" />{t('tenders.publishButton')}</>
                     )}
                   </button>
                 </div>

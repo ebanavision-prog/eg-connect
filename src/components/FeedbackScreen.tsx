@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, MessageSquare, AlertCircle, Sparkles, Star, CheckCircle2, Loader2, ArrowLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { auth, submitFeedback } from '../services/firebaseService';
 
 interface FeedbackScreenProps {
@@ -8,6 +9,7 @@ interface FeedbackScreenProps {
 }
 
 export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
+  const { t } = useTranslation();
   const [type, setType] = useState<'feedback' | 'error' | 'proposal'>('feedback');
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState('');
@@ -24,7 +26,7 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
       await submitFeedback(uid, { type, rating, message: message.trim() });
       setIsSent(true);
     } catch (error) {
-      setSubmitError('No se pudo enviar tu mensaje. Inténtalo de nuevo.');
+      setSubmitError(t('feedback.errorGeneric'));
     } finally {
       setIsSubmitting(false);
     }
@@ -36,15 +38,15 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
         <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-8 shadow-xl shadow-emerald-500/20">
           <CheckCircle2 className="w-12 h-12 text-white" />
         </div>
-        <h2 className="text-3xl font-extrabold font-display text-primary mb-4">¡Gracias por tu aporte!</h2>
+        <h2 className="text-3xl font-extrabold font-display text-primary mb-4">{t('feedback.thanksTitle')}</h2>
         <p className="text-on-surface-variant leading-relaxed mb-10 font-sans max-w-xs mx-auto">
-          Tus sugerencias nos ayudan a construir una mejor plataforma para todos los profesionales de Guinea Ecuatorial.
+          {t('feedback.thanksDesc')}
         </p>
         <button
           onClick={onBack}
           className="px-8 py-4 bg-primary text-white rounded-full font-bold shadow-xl active:scale-95 transition-all outline-hidden"
         >
-          Volver al Inicio
+          {t('feedback.backHome')}
         </button>
       </div>
     );
@@ -55,10 +57,10 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
       <header className="px-1 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">Comunidad</h2>
+            <h2 className="text-sm font-bold text-secondary uppercase tracking-[0.2em]">{t('feedback.communityLabel')}</h2>
           </div>
-          <h1 className="text-4xl font-extrabold font-display text-on-surface">Feedback</h1>
-          <p className="text-on-surface-variant font-sans mt-2">Ayúdanos a evolucionar EG CONNECT.</p>
+          <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('feedback.title')}</h1>
+          <p className="text-on-surface-variant font-sans mt-2">{t('feedback.subtitle')}</p>
         </div>
         <button 
           onClick={onBack}
@@ -71,12 +73,12 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
       <div className="space-y-8">
         {/* Type Selector */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Tipo de mensaje</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('feedback.messageTypeLabel')}</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { id: 'feedback', icon: MessageSquare, label: 'Opinión', color: 'bg-emerald-500' },
-              { id: 'error', icon: AlertCircle, label: 'Error', color: 'bg-error' },
-              { id: 'proposal', icon: Sparkles, label: 'Idea', color: 'bg-secondary' },
+              { id: 'feedback', icon: MessageSquare, label: t('feedback.typeFeedback'), color: 'bg-emerald-500' },
+              { id: 'error', icon: AlertCircle, label: t('feedback.typeError'), color: 'bg-error' },
+              { id: 'proposal', icon: Sparkles, label: t('feedback.typeProposal'), color: 'bg-secondary' },
             ].map((item) => (
               <button
                 key={item.id}
@@ -96,7 +98,7 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
 
         {/* Rating */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 text-center">Califica tu experiencia</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 text-center">{t('feedback.rateExperience')}</h3>
           <div className="flex justify-center gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -114,12 +116,12 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
 
         {/* Text Area */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Tu mensaje</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">{t('feedback.yourMessageLabel')}</h3>
           <div className="bg-surface-container-low border border-outline/10 rounded-[2.5rem] p-6 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
             <textarea
               className="w-full bg-transparent border-none focus:outline-hidden text-sm leading-relaxed font-sans placeholder:opacity-40 min-h-[120px] resize-none"
               placeholder={
-                type === 'error' ? 'Describe el error: ¿En qué pantalla ocurrió? ¿Qué estabas haciendo?' : 'Escribe tus sugerencias aquí...'
+                type === 'error' ? t('feedback.placeholderError') : t('feedback.placeholderDefault')
               }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -137,19 +139,19 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Enviando información...</span>
+              <span>{t('feedback.sending')}</span>
             </>
           ) : (
             <>
               <Send className="w-5 h-5" />
-              <span>Enviar Feedback</span>
+              <span>{t('feedback.submitButton')}</span>
             </>
           )}
         </button>
 
         <div className="text-center p-6 bg-surface-container-low/50 rounded-[2rem] border border-outline/5">
           <p className="text-[9px] font-bold text-on-surface-variant/60 uppercase tracking-[0.2em] leading-relaxed">
-            EG CONNECT - Versión 1.0
+            {t('feedback.versionFooter')}
           </p>
         </div>
       </div>
