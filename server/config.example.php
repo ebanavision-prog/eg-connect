@@ -14,8 +14,9 @@ return [
     ],
 
     // Firebase project ID (visible, not secret) — usado por server/fcm-send.php
-    // para validar el "aud"/"iss" del idToken del usuario y para construir la
-    // URL de FCM HTTP v1.
+    // y server/gemini-proxy.php (vía server/lib/firebase_auth.php) para validar
+    // el "aud"/"iss" del idToken del usuario, y por fcm-send.php además para
+    // construir la URL de FCM HTTP v1.
     'FIREBASE_PROJECT_ID' => 'gen-lang-client-0951010679',
 
     // Ruta al JSON de la cuenta de servicio de Firebase, usada por

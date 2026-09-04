@@ -4,9 +4,28 @@
  * (extractContact, actionSteps, icebreaker). The API key lives only here —
  * config.php — and never reaches the browser. Runs on plain PHP so it works on
  * the existing cPanel hosting with no extra service or billing plan.
+ *
+ * Request contract (POST, JSON body):
+ *   {
+ *     "action": "extractContact" | "actionSteps" | "icebreaker",
+ *     "payload": { ... específico de cada acción, ver el switch más abajo ... },
+ *     "idToken": "<Firebase Auth ID token del usuario que llama>"
+ *   }
+ *
+ * Por qué idToken es obligatorio (no lo era antes): la única defensa previa
+ * era comprobar la cabecera Origin contra una lista blanca, pero Origin no
+ * es una cabecera protegida fuera de un navegador real — un simple
+ * `curl -H "Origin: https://connect.ebanavision.com"` la falsifica sin
+ * esfuerzo, y con eso cualquiera podría quemar la cuota gratis de Gemini.
+ * Se exige la misma verificación de idToken que ya usaba server/fcm-send.php
+ * (código compartido ahora vía server/lib/firebase_auth.php), para que solo
+ * usuarios con una sesión real de EG CONNECT puedan llegar a llamar a Gemini
+ * a través de este proxy.
  */
 
 $config = require __DIR__ . '/config.php';
+require_once __DIR__ . '/lib/firebase_auth.php';
+require_once __DIR__ . '/lib/rate_limiter.php';
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $config['ALLOWED_ORIGINS'], true)) {
@@ -34,8 +53,51 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $body = json_decode(file_get_contents('php://input'), true);
+if (!is_array($body)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Cuerpo JSON inválido.']);
+    exit;
+}
+
 $action = $body['action'] ?? '';
 $payload = $body['payload'] ?? [];
+$idToken = (string)($body['idToken'] ?? '');
+
+if ($idToken === '') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Falta idToken.']);
+    exit;
+}
+
+$projectId = $config['FIREBASE_PROJECT_ID'] ?? '';
+if ($projectId === '') {
+    http_response_code(500);
+    echo json_encode(['error' => 'Servidor sin FIREBASE_PROJECT_ID configurado.']);
+    exit;
+}
+
+// Misma verificación de idToken que server/fcm-send.php (ver
+// server/lib/firebase_auth.php para el detalle y las notas de honestidad
+// sobre qué comprueba y qué no).
+$verification = verify_firebase_id_token($idToken, $projectId);
+if (!$verification['ok']) {
+    http_response_code(401);
+    echo json_encode(['error' => 'idToken inválido: ' . $verification['error']]);
+    exit;
+}
+// A partir de aquí sabemos que el request viene de una sesión real y
+// vigente de un usuario de EG CONNECT — su uid es $verification['uid'],
+// que se usa a continuación solo para el rate limiting anti-abuso.
+
+// Límite conservador: las llamadas a Gemini cuestan cuota real (aunque sea
+// del tier gratis), así que 20/minuto por uid alcanza de sobra para el uso
+// normal (escanear tarjetas, pedir pasos de acción, icebreakers) sin dejar
+// que un bug de cliente o un uso malintencionado agote la cuota del proyecto.
+if (!rate_limit_check('gemini', $verification['uid'], 20, 60)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Demasiadas solicitudes a la IA. Espera un minuto antes de volver a intentarlo.']);
+    exit;
+}
 
 function call_gemini(string $apiKey, array $requestBody): array {
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' . urlencode($apiKey);
