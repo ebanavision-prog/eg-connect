@@ -126,8 +126,10 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 - ~~Pase de accesibilidad (aria-labels, foco, contraste)~~ — **hecho** (2026-09-05, merge `60905f7`): ~50 botones-icono + 2 toggles sin nombre accesible en 19 pantallas reciben `aria-label`/`role="switch"`, siguiendo el patrón ya usado en `MapScreen.tsx`; 28 claves `*Aria` nuevas en `es.json`/`en.json` (874 claves, 1:1). Foco visible vía 2 utilidades Tailwind nuevas (`.focus-ring-custom`/`.focus-ring-inverse`) en `src/index.css`. Contraste revisado, sin hallazgos que corregir. Verificado igual (`tsc`/build/`test:rules` 49/49).
 
 ### Fase 4 — Escala (cuando el volumen lo justifique, no antes)
-- Evaluar activar Blaze: Storage real, App Check, posible migración de PHP→Cloud Functions
+- ~~Evaluar activar Blaze~~ — **evaluación hecha, decisión: NO activar por ahora (confirmado por el usuario 2026-09-05).** Investigación completa en `docs/EVALUACION_BLAZE_2026-09-05.md` (qué cambia en el código) y `docs/EVALUACION_BLAZE_COSTOS_2026-09-05.md` (costo real con pricing verificado: ~$0/mes hasta 500 usuarios activos, ~$55-65/mes en 2.000, ~$150/mes en 5.000 — dominado casi todo por egreso de fotos de Storage sin cache, no por Firestore/Functions). **Decisión explícita del usuario: cero gasto en esta fase de prueba, sin importar cuántas features queden limitadas por seguir en Spark — se revisa solo si el volumen real de usuarios lo justifica más adelante.** No activar Storage/Blaze, no migrar PHP→Cloud Functions, hasta nueva decisión explícita. App Check sigue siendo una opción de costo $0 en cualquier momento (no depende de Blaze) si se quiere retomar por separado.
 - Observabilidad real (logs agregados, alertas de cuota/errores)
+
+**Hallazgo colateral pendiente, gratis, no depende de esta decisión:** los avatares se guardan hoy como base64 dentro del documento Firestore (mientras Storage está apagado) — un documento tiene un límite duro de 1 MiB, y una foto de cámara sin comprimir (2-8 MB típico) puede hacer fallar el guardado. Arreglarlo (comprimir/redimensionar la imagen en el cliente antes de guardarla) no cuesta nada y no depende de Blaze — sigue pendiente, no tocado en esta sesión.
 
 ---
 
