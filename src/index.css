@@ -58,4 +58,16 @@
   .textarea-field-custom {
     @apply w-full bg-surface-container-low border border-outline/10 p-4 rounded-xl text-sm focus:outline-hidden focus:border-primary transition-all resize-none;
   }
+  /* Foco visible para botones/enlaces sin texto (icon-only): el resto de
+     controles ya marca el foco cambiando borde/color (ver *-field-custom
+     arriba), pero los botones circulares de solo-icono no tenían ningún
+     indicador de foco de teclado. Dos variantes según el fondo del propio
+     control -- swatch primary para fondos claros, blanco para fondos
+     oscuros/overlays (bg-primary, bg-black/*, bg-white/10-20 sobre imagen). */
+  .focus-ring-custom {
+    @apply focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+  .focus-ring-inverse {
+    @apply focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-primary;
+  }
 }

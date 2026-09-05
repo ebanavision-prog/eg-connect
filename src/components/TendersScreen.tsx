@@ -103,8 +103,9 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden shrink-0"
+            className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all focus-ring-inverse shrink-0"
             title={t('tenders.publishTooltip')}
+            aria-label={t('tenders.publishTooltip')}
           >
             <Plus className="w-6 h-6" />
           </button>
@@ -216,8 +217,9 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                 <button
                   onClick={() => handleDelete(tender.id)}
                   disabled={deletingId === tender.id}
-                  className="w-12 h-12 bg-error/10 text-error rounded-2xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-50"
+                  className="w-12 h-12 bg-error/10 text-error rounded-2xl flex items-center justify-center active:scale-95 transition-all disabled:opacity-50 focus-ring-custom"
                   title={t('tenders.deleteTooltip')}
+                  aria-label={t('tenders.deleteTooltip')}
                 >
                   {deletingId === tender.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </button>
@@ -293,7 +295,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                       <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{selectedTender.companyName}</p>
                     </div>
                   </div>
-                  <button onClick={() => setSelectedTender(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all shrink-0">
+                  <button onClick={() => setSelectedTender(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all shrink-0 focus-ring-custom" aria-label={t('tenders.closeTenderDetailAria')}>
                     <X className="w-6 h-6 text-on-surface-variant" />
                   </button>
                 </div>
@@ -361,7 +363,7 @@ export default function TendersScreen({ profileData }: { profileData?: UserProfi
                 <div className="p-8 space-y-6">
                   <div className="flex justify-between items-start">
                     <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('tenders.modalTitle')}</h2>
-                    <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                    <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('tenders.closePublishModalAria')}>
                       <X className="w-6 h-6 text-on-surface-variant" />
                     </button>
                   </div>

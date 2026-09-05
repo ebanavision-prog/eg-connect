@@ -321,9 +321,10 @@ export default function ProfileScreen({
           <NetworkBackground color="rgba(255, 255, 255, 0.05)" />
 
           <div className="absolute top-8 left-8">
-            <button 
+            <button
               onClick={() => setIsEditing(!isEditing)}
-              className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10 hover:bg-white/20 transition-all active:scale-95 outline-hidden"
+              className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10 hover:bg-white/20 transition-all active:scale-95 focus-ring-inverse"
+              aria-label={isEditing ? t('profile.closeEditAria') : t('profile.editProfileAria')}
             >
               {isEditing ? <ChevronLeft className="w-5 h-5" /> : <Edit2 className="w-5 h-5" />}
             </button>
@@ -349,9 +350,9 @@ export default function ProfileScreen({
                 referrerPolicy="no-referrer"
               />
               {isEditing ? (
-                <label className="absolute -bottom-2 -right-2 bg-secondary text-white p-3 rounded-2xl shadow-lg cursor-pointer hover:scale-110 transition-all border-4 border-white">
+                <label className="absolute -bottom-2 -right-2 bg-secondary text-white p-3 rounded-2xl shadow-lg cursor-pointer hover:scale-110 transition-all border-4 border-white focus-within:ring-2 focus-within:ring-white/80 focus-within:ring-offset-2 focus-within:ring-offset-primary">
                   <Camera className="w-5 h-5" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} aria-label={t('profile.uploadPhotoAria')} />
                 </label>
               ) : (
                 <div className="absolute -bottom-2 -right-2 bg-secondary text-white p-2.5 rounded-xl shadow-lg border-2 border-white">
@@ -548,7 +549,10 @@ export default function ProfileScreen({
                     <span>{t('profile.isInvestorLabel')}</span>
                     <button
                       onClick={() => setEditForm({ ...editForm, isInvestor: !editForm.isInvestor })}
-                      className={`w-11 h-6 rounded-full transition-all relative ${editForm.isInvestor ? 'bg-amber-400' : 'bg-white/20'}`}
+                      className={`w-11 h-6 rounded-full transition-all relative focus-ring-inverse ${editForm.isInvestor ? 'bg-amber-400' : 'bg-white/20'}`}
+                      role="switch"
+                      aria-checked={!!editForm.isInvestor}
+                      aria-label={t('profile.isInvestorLabel')}
                     >
                       <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${editForm.isInvestor ? 'left-5' : 'left-0.5'}`} />
                     </button>
@@ -683,7 +687,7 @@ export default function ProfileScreen({
                     <Radio className="w-4 h-4 animate-pulse text-secondary" />
                     {t('profile.shareNetworkButton')}
                   </button>
-                  <button onClick={handleShareProfile} className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-4 rounded-2xl active:scale-95 transition-all outline-hidden border border-white/20 text-white">
+                  <button onClick={handleShareProfile} className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-4 rounded-2xl active:scale-95 transition-all focus-ring-inverse border border-white/20 text-white" aria-label={t('profile.shareProfileIconAria')}>
                     <Share className="w-5 h-5" />
                   </button>
                   <AnimatePresence>
@@ -1012,7 +1016,8 @@ export default function ProfileScreen({
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   disabled={deletingAccount}
-                  className="p-1.5 rounded-full hover:bg-surface-container-low transition-colors disabled:opacity-40"
+                  className="p-1.5 rounded-full hover:bg-surface-container-low transition-colors disabled:opacity-40 focus-ring-custom"
+                  aria-label={t('profile.closeDeleteModalAria')}
                 >
                   <X className="w-4 h-4 text-on-surface-variant" />
                 </button>

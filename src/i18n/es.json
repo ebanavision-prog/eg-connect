@@ -28,6 +28,7 @@
       },
       "cta": "Comenzar Experiencia"
     },
+    "backAria": "Volver",
     "auth": {
       "title": "Bienvenido",
       "subtitle": "Accede a tu cuenta empresarial",
@@ -64,6 +65,7 @@
       "title": "Crea tu Perfil",
       "subtitle": "Ayúdanos a crear el ecosistema empresarial de Guinea Ecuatorial.",
       "uploadPhoto": "Sube tu mejor foto",
+      "uploadPhotoAria": "Subir foto de perfil",
       "profileTypeLabel": "Tipo de Perfil",
       "companyNameLabel": "Nombre de la Empresa",
       "fullNameLabel": "Nombre Completo",
@@ -178,6 +180,7 @@
     "footer": "Desarrollado para el Ecosistema de G.E."
   },
   "syncSettings": {
+    "backAria": "Volver",
     "title": "Sincronización y Alertas",
     "statusTitle": "Estado",
     "online": "Online",
@@ -276,6 +279,9 @@
     "autoScanCard": "Tarjeta Física",
     "noCameraLabel": "Sin Cámara",
     "manualCard": "Manual",
+    "backAria": "Volver",
+    "uploadPhotoAria": "Subir foto de tarjeta de contacto",
+    "closeManualFormAria": "Cerrar formulario manual",
     "manualFormTitle": "Añadir Contacto Manual",
     "namePlaceholder": "Nombre completo",
     "rolePlaceholder": "Cargo",
@@ -301,7 +307,8 @@
     "viewTender": "Ver Licitación",
     "emptyTitle": "Todo al día",
     "emptySubtitle": "No tienes notificaciones pendientes",
-    "markAllRead": "Marcar todo como leído"
+    "markAllRead": "Marcar todo como leído",
+    "closeAria": "Cerrar notificaciones"
   },
   "timeline": {
     "syncingTitle": "Sincronizando Ecosistema...",
@@ -341,7 +348,10 @@
     "replyingTo": "Respondiendo a {{author}}",
     "replyPlaceholder": "Escribe tu respuesta...",
     "commentPlaceholder": "Añadir comentario...",
-    "sendButton": "Enviar"
+    "sendButton": "Enviar",
+    "chatWithContactAria": "Enviar mensaje a {{name}}",
+    "kudoAria": "Dar un kudo a este contacto",
+    "cancelReplyAria": "Cancelar respuesta"
   },
   "tasks": {
     "sectionLabel": "Productividad",
@@ -360,7 +370,12 @@
     "noteLabel": "Nota (opcional)",
     "notePlaceholder": "Detalles adicionales...",
     "saving": "Guardando...",
-    "addTask": "Añadir Tarea"
+    "addTask": "Añadir Tarea",
+    "markCompleteAria": "Marcar \"{{title}}\" como completada",
+    "markIncompleteAria": "Marcar \"{{title}}\" como pendiente",
+    "deleteTaskAria": "Borrar la tarea \"{{title}}\"",
+    "createTaskAria": "Añadir una nueva tarea",
+    "closeNewTaskAria": "Cerrar creación de tarea"
   },
   "feedback": {
     "errorGeneric": "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
@@ -380,7 +395,9 @@
     "placeholderDefault": "Escribe tus sugerencias aquí...",
     "sending": "Enviando información...",
     "submitButton": "Enviar Feedback",
-    "versionFooter": "EG CONNECT - Versión 1.0"
+    "versionFooter": "EG CONNECT - Versión 1.0",
+    "backAria": "Volver",
+    "rateStarAria": "Calificar con {{count}} de 5 estrellas"
   },
   "discover": {
     "shareTitle": "Únete a EG Connect",
@@ -400,7 +417,9 @@
     "viralGrowthBadge": "Viral Growth",
     "noPartnerTitle": "¿No encuentras a tu partner?",
     "noPartnerDesc": "Invita a tus socios y colegas a unirse a la red empresarial más grande de G.E.",
-    "inviteWhatsappButton": "Invitar vía WhatsApp / Link"
+    "inviteWhatsappButton": "Invitar vía WhatsApp / Link",
+    "gridViewAria": "Vista de cuadrícula",
+    "listViewAria": "Vista de lista"
   },
   "searchResults": {
     "searchLabel": "Búsqueda",
@@ -408,6 +427,7 @@
     "noResults": "Sin resultados",
     "emptyStateTitle": "No encontramos nada con ese término",
     "emptyStateDesc": "Prueba con otro nombre, empresa o palabra clave.",
+    "contactUserAria": "Contactar a {{name}}",
     "peopleSection": "Personas",
     "companiesSection": "Empresas",
     "marketplaceSection": "Marketplace",
@@ -447,7 +467,9 @@
     "locationLabel": "Ubicación",
     "locationPlaceholder": "Ej: Hotel Sofitel, Malabo",
     "publishing": "Publicando...",
-    "errorGeneric": "No se pudo publicar el evento. Inténtalo de nuevo."
+    "errorGeneric": "No se pudo publicar el evento. Inténtalo de nuevo.",
+    "createEventAria": "Publicar un nuevo evento",
+    "closeCreateEventAria": "Cerrar publicación de evento"
   },
   "initiatives": {
     "sectionLabel": "Iniciativas",
@@ -467,7 +489,9 @@
     "categoryLabel": "Categoría",
     "creating": "Creando...",
     "launchButton": "Lanzar Iniciativa",
-    "errorGeneric": "No se pudo crear la iniciativa. Inténtalo de nuevo."
+    "errorGeneric": "No se pudo crear la iniciativa. Inténtalo de nuevo.",
+    "createInitiativeAria": "Lanzar una nueva iniciativa",
+    "closeCreateInitiativeAria": "Cerrar creación de iniciativa"
   },
   "investors": {
     "sectionLabel": "Inversionistas",
@@ -488,6 +512,7 @@
     "presentProject": "Presentar mi Proyecto",
     "pitchModalTitle": "Presenta tu Proyecto",
     "pitchModalTo": "A {{name}}",
+    "closePitchModalAria": "Cerrar presentación de proyecto",
     "pitchQuestionLabel": "¿Qué buscas y por qué encaja con este inversionista?",
     "pitchPlaceholder": "Ej: Busco 20.000 USD para escalar mi taller de agroprocesamiento en Bata. Ya tengo clientes en Malabo y...",
     "sendingPitch": "Enviando...",
@@ -543,6 +568,8 @@
     "noNotesSaved": "Sin notas guardadas para este contacto.",
     "locationLabel": "Ubicación",
     "closeManagerButton": "Cerrar Gestor",
+    "closeContactModalAria": "Cerrar detalle de contacto",
+    "closeImportModalAria": "Cerrar selección de contactos de Google",
     "chooseImportTitle": "Elige qué importar",
     "contactsFoundCount": "{{count}} contactos encontrados en Google",
     "noGoogleContactsFound": "No encontramos contactos con nombre en tu cuenta de Google.",
@@ -587,13 +614,27 @@
     "groupNamePlaceholder": "Ej. Proyecto Alquileres",
     "participantsLabel": "Participantes",
     "noMoreMembersToAdd": "Todavía no hay más miembros en la red para añadir.",
-    "createGroupButton": "Crear Grupo"
+    "createGroupButton": "Crear Grupo",
+    "backToConversationsAria": "Volver a conversaciones",
+    "addParticipantAria": "Añadir integrante al grupo",
+    "groupInfoAria": "Ver información del grupo",
+    "conversationInfoAria": "Ver información de la conversación",
+    "attachFileAria": "Adjuntar archivo",
+    "toggleEmojiPickerAria": "Elegir un emoji",
+    "sendMessageAria": "Enviar mensaje",
+    "startRecordingAria": "Grabar mensaje de voz",
+    "stopRecordingAria": "Detener grabación y enviar",
+    "closeAddParticipantAria": "Cerrar añadir integrante",
+    "closeGroupInfoAria": "Cerrar información del grupo",
+    "closeCreateGroupAria": "Cerrar creación de grupo"
   },
   "tenders": {
     "opportunitiesLabel": "Oportunidades",
     "title": "Licitaciones y Proyectos",
     "subtitle": "Accede a contratos prioritarios del sector público y privado en Guinea Ecuatorial.",
     "publishTooltip": "Publicar licitación (admin)",
+    "closeTenderDetailAria": "Cerrar detalle de licitación",
+    "closePublishModalAria": "Cerrar publicación de licitación",
     "searchPlaceholder": "Buscar por proyecto o entidad...",
     "searchLimitedNotice": "Mostrando los primeros {{count}} resultados — usa \"Cargar más\" para ampliar la búsqueda.",
     "filterAll": "Todos",
@@ -633,7 +674,10 @@
     "certificationsTitle": "Certificaciones",
     "leadershipTitle": "Liderazgo",
     "visitWebsiteButton": "Visitar Sitio Web",
-    "noWebsite": "Esta empresa no añadió un sitio web"
+    "noWebsite": "Esta empresa no añadió un sitio web",
+    "closeModalAria": "Cerrar perfil de empresa",
+    "visitWebsiteAria": "Visitar el sitio web de la empresa",
+    "visitLinkedinAria": "Visitar el LinkedIn de la empresa"
   },
   "invite": {
     "title": "Impulsa tu Red",
@@ -688,6 +732,10 @@
     "tabRequest": "Busco",
     "searchPlaceholder": "Buscar por cargo o servicio...",
     "customizeSearchButton": "Personalizar Búsqueda",
+    "createPostAria": "Crear un nuevo anuncio",
+    "clearSearchAria": "Borrar búsqueda",
+    "sharePostAria": "Compartir este anuncio",
+    "closeCreatePostAria": "Cerrar creación de anuncio",
     "advancedFiltersTitle": "Filtros Avanzados",
     "clearAllButton": "Limpiar todo",
     "locationLabel": "Ubicación",
@@ -742,6 +790,14 @@
     "searchPlaceholder": "Buscar por nombre o sector...",
     "gridViewTooltip": "Vista Cuadrícula",
     "listViewTooltip": "Vista Lista",
+    "toggleFiltersAria": "Mostrar u ocultar filtros",
+    "contactCompanyIconAria": "Contactar a esta empresa",
+    "closeRegistrationModalAria": "Cerrar registro de empresa",
+    "removeDepartmentAria": "Quitar este departamento",
+    "removeLeadershipAria": "Quitar este directivo",
+    "removeCertAria": "Quitar esta certificación",
+    "closeCompanyDetailAria": "Cerrar perfil de empresa",
+    "visitSocialLinkAria": "Visitar {{platform}} de la empresa",
     "locationFilterLabel": "Ubicación",
     "allLocationsOption": "Todas",
     "verifiedOnlyLabel": "Solo empresas verificadas",
@@ -877,7 +933,12 @@
     "invisibleModeBadge": "Modo Invisible",
     "publicVisibilityBadge": "Visibilidad Pública",
     "shareNetworkButton": "Compartir Red",
+    "shareProfileIconAria": "Compartir mi perfil",
     "linkCopiedFeedback": "Enlace copiado",
+    "editProfileAria": "Editar perfil",
+    "closeEditAria": "Cerrar edición de perfil",
+    "uploadPhotoAria": "Subir foto de perfil",
+    "closeDeleteModalAria": "Cerrar confirmación de borrado de cuenta",
     "defaultShareTitle": "Mi perfil en EG CONNECT",
     "myProfileFallback": "mi perfil",
     "shareTextBase": "Conéctate conmigo en EG CONNECT: {{name}}",

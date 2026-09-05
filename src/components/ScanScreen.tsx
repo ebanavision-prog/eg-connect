@@ -99,7 +99,7 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="py-6 flex flex-col items-center animate-in fade-in duration-500">
       <div className="w-full flex justify-between items-center mb-8 px-6 md:px-0">
-        <button onClick={onBack} className="p-2 rounded-full hover:bg-surface-container-high transition-all outline-hidden">
+        <button onClick={onBack} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('scan.backAria')}>
           <ArrowLeft className="w-6 h-6 text-primary" />
         </button>
         <div className="text-center">
@@ -171,7 +171,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
         <div className="absolute -right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-20">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-12 h-12 rounded-full glass-effect flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all outline-hidden"
+            className="w-12 h-12 rounded-full glass-effect flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all focus-ring-custom"
+            aria-label={t('scan.uploadPhotoAria')}
           >
             <Image className="w-5 h-5" />
           </button>
@@ -213,7 +214,8 @@ export default function ScanScreen({ onBack }: { onBack: () => void }) {
               <h2 className="font-display font-bold text-xl text-primary">{t('scan.manualFormTitle')}</h2>
               <button
                 onClick={() => { setShowManualForm(false); setManualError(''); }}
-                className="p-2 rounded-full hover:bg-surface-container-high transition-all outline-hidden"
+                className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom"
+                aria-label={t('scan.closeManualFormAria')}
               >
                 <X className="w-5 h-5 text-on-surface-variant" />
               </button>

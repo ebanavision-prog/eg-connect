@@ -144,7 +144,7 @@ export default function CompanyRegistrationWizard({ isOpen, onClose }: CompanyRe
                      ))}
                   </div>
                 </div>
-                <button onClick={() => onClose()} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                <button onClick={() => onClose()} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('companies.closeRegistrationModalAria')}>
                   <X className="w-6 h-6 text-on-surface-variant" />
                 </button>
               </div>
@@ -283,7 +283,7 @@ export default function CompanyRegistrationWizard({ isOpen, onClose }: CompanyRe
                                   setFormData({ ...formData, departments: deps });
                                 }}
                               />
-                              <button onClick={() => handleRemoveDepartment(index)} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all">
+                              <button onClick={() => handleRemoveDepartment(index)} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all focus-ring-custom" aria-label={t('companies.removeDepartmentAria')}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -322,7 +322,7 @@ export default function CompanyRegistrationWizard({ isOpen, onClose }: CompanyRe
                                   setFormData({ ...formData, leadership: l });
                                 }}
                               />
-                              <button onClick={() => handleRemoveLeadership(index)} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all justify-self-end">
+                              <button onClick={() => handleRemoveLeadership(index)} className="p-2 text-error hover:bg-error/10 rounded-xl transition-all justify-self-end focus-ring-custom" aria-label={t('companies.removeLeadershipAria')}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -387,7 +387,7 @@ export default function CompanyRegistrationWizard({ isOpen, onClose }: CompanyRe
                                   }}
                                 />
                               </div>
-                              <button onClick={() => handleRemoveCert(index)} className="p-3 text-error hover:bg-error/10 rounded-xl transition-all">
+                              <button onClick={() => handleRemoveCert(index)} className="p-3 text-error hover:bg-error/10 rounded-xl transition-all focus-ring-custom" aria-label={t('companies.removeCertAria')}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>

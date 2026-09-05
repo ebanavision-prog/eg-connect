@@ -50,7 +50,7 @@ export default function NotificationCenter({ notifications, onClose, onMarkAsRea
               <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest">{t('notificationCenter.subtitle')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-container-low transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-container-low transition-colors focus-ring-custom" aria-label={t('notificationCenter.closeAria')}>
             <X className="w-6 h-6 text-on-surface-variant" />
           </button>
         </div>

@@ -9,3 +9,4 @@ coverage/
 server/config.php
 server/firebase-service-account.json
 .firebase/
+.claude/worktrees/

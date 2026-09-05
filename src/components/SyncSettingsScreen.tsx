@@ -74,7 +74,7 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="py-6 space-y-10 max-w-xl mx-auto">
       <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-3 rounded-full hover:bg-surface-container-high transition-all outline-hidden">
+        <button onClick={onBack} className="p-3 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('syncSettings.backAria')}>
           <ArrowLeft className="w-6 h-6 text-primary" />
         </button>
         <h1 className="font-display font-extrabold text-3xl text-primary tracking-tight">{t('syncSettings.title')}</h1>
@@ -195,7 +195,10 @@ export default function SyncSettingsScreen({ onBack }: { onBack: () => void }) {
               </div>
               <button
                 onClick={() => handleToggle(tier.key)}
-                className={`w-14 h-7 rounded-full relative transition-all outline-hidden shrink-0 ${notifPrefs[tier.key] ? 'bg-primary' : 'bg-outline-variant/30'}`}
+                className={`w-14 h-7 rounded-full relative transition-all focus-ring-custom shrink-0 ${notifPrefs[tier.key] ? 'bg-primary' : 'bg-outline-variant/30'}`}
+                role="switch"
+                aria-checked={!!notifPrefs[tier.key]}
+                aria-label={tier.label}
               >
                 <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-all ${notifPrefs[tier.key] ? 'right-1' : 'left-1'}`} />
               </button>

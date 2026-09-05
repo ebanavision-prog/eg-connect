@@ -208,7 +208,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
       <div className="flex flex-col h-[calc(100vh-200px)] bg-white rounded-[2.5rem] shadow-xl border border-outline/5 overflow-hidden">
         <div className="p-4 border-b border-outline/10 flex justify-between items-center bg-surface-container-high/50 backdrop-blur">
           <div className="flex items-center gap-3">
-            <button onClick={() => setActiveConversationId(null)} className="p-2 -ml-2 rounded-full hover:bg-surface-container transition-colors">
+            <button onClick={() => setActiveConversationId(null)} className="p-2 -ml-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom" aria-label={t('chat.backToConversationsAria')}>
               <ChevronLeft className="w-6 h-6 text-primary" />
             </button>
             <div className="relative">
@@ -229,14 +229,16 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             {activeConversation.isGroup && (
               <button
                 onClick={() => setShowAddParticipant(true)}
-                className="p-2 rounded-full hover:bg-surface-container transition-colors"
+                className="p-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom"
+                aria-label={t('chat.addParticipantAria')}
               >
                 <UserPlus className="w-5 h-5 text-on-surface-variant" />
               </button>
             )}
             <button
               onClick={() => setShowGroupInfo(true)}
-              className="p-2 rounded-full hover:bg-surface-container transition-colors"
+              className="p-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom"
+              aria-label={activeConversation.isGroup ? t('chat.groupInfoAria') : t('chat.conversationInfoAria')}
             >
               <MoreVertical className="w-5 h-5 text-on-surface-variant" />
             </button>
@@ -279,7 +281,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
           {sendError && <p className="text-[10px] font-bold text-error mb-2 text-center">{sendError}</p>}
           <div className="flex items-center gap-3">
             <div className="flex gap-1">
-              <button className="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+              <button className="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant focus-ring-custom" aria-label={t('chat.attachFileAria')}>
                 <Paperclip className="w-5 h-5" />
               </button>
             </div>
@@ -315,7 +317,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className={`absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors ${showEmojiPicker ? 'text-primary bg-surface-container' : 'text-on-surface-variant'}`}
+                    className={`absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom ${showEmojiPicker ? 'text-primary bg-surface-container' : 'text-on-surface-variant'}`}
+                    aria-label={t('chat.toggleEmojiPickerAria')}
                   >
                     <Smile className="w-5 h-5" />
                   </button>
@@ -353,7 +356,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
               )}
             </div>
             {newMessage.trim() ? (
-              <button onClick={handleSendMessage} className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all outline-hidden h-[44px]">
+              <button onClick={handleSendMessage} className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all focus-ring-inverse h-[44px]" aria-label={t('chat.sendMessageAria')}>
                 <Send className="w-5 h-5" />
               </button>
             ) : (
@@ -362,7 +365,8 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                 onMouseUp={stopRecording}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
-                className={`p-3 rounded-2xl shadow-lg transition-all outline-hidden h-[44px] flex items-center justify-center ${isRecording ? 'bg-red-500 text-white scale-125 shadow-red-500/20' : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'}`}
+                className={`p-3 rounded-2xl shadow-lg transition-all focus-ring-inverse h-[44px] flex items-center justify-center ${isRecording ? 'bg-red-500 text-white scale-125 shadow-red-500/20' : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'}`}
+                aria-label={isRecording ? t('chat.stopRecordingAria') : t('chat.startRecordingAria')}
               >
                 {isRecording ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </button>
@@ -379,7 +383,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-black font-display text-on-surface">{t('chat.addParticipantTitle')}</h2>
-                <button onClick={() => setShowAddParticipant(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
+                <button onClick={() => setShowAddParticipant(false)} className="p-2 rounded-full hover:bg-surface-container focus-ring-custom" aria-label={t('chat.closeAddParticipantAria')}><X /></button>
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto p-1">
                 {users
@@ -415,7 +419,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                 <h2 className="text-xl font-black font-display text-on-surface">
                   {activeConversation.isGroup ? t('chat.groupInfoTitle') : t('chat.conversationInfoTitle')}
                 </h2>
-                <button onClick={() => setShowGroupInfo(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
+                <button onClick={() => setShowGroupInfo(false)} className="p-2 rounded-full hover:bg-surface-container focus-ring-custom" aria-label={t('chat.closeGroupInfoAria')}><X /></button>
               </div>
               {activeConversation.isGroup && (
                 <div className="flex items-center gap-3">
@@ -525,7 +529,7 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-black font-display text-on-surface">{t('chat.newGroupButton')}</h2>
-                <button onClick={() => setIsCreatingGroup(false)} className="p-2 rounded-full hover:bg-surface-container"><X /></button>
+                <button onClick={() => setIsCreatingGroup(false)} className="p-2 rounded-full hover:bg-surface-container focus-ring-custom" aria-label={t('chat.closeCreateGroupAria')}><X /></button>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">

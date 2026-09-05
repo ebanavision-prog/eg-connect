@@ -80,17 +80,19 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
         </div>
         <div className="flex gap-2">
           <div className="bg-surface-container-low p-1.5 rounded-[1.2rem] flex border border-outline/5 shadow-sm">
-            <button 
+            <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-md text-primary' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
+              className={`p-2 rounded-xl transition-all focus-ring-custom ${viewMode === 'grid' ? 'bg-white shadow-md text-primary' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
               title={t('companies.gridViewTooltip')}
+              aria-label={t('companies.gridViewTooltip')}
             >
               <Grid className="w-5 h-5" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-md text-primary' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
+              className={`p-2 rounded-xl transition-all focus-ring-custom ${viewMode === 'list' ? 'bg-white shadow-md text-primary' : 'text-on-surface-variant opacity-40 hover:opacity-100'}`}
               title={t('companies.listViewTooltip')}
+              aria-label={t('companies.listViewTooltip')}
             >
               <LayoutList className="w-5 h-5" />
             </button>
@@ -98,9 +100,10 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
           <div className="relative">
             <button
               onClick={() => setShowFilters((prev) => !prev)}
-              className={`relative p-4 border rounded-[1.5rem] transition-colors outline-hidden ${
+              className={`relative p-4 border rounded-[1.5rem] transition-colors focus-ring-custom ${
                 activeFilterCount > 0 ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-surface-container-low border-outline/10 text-on-surface-variant hover:bg-surface-container-high'
               }`}
+              aria-label={t('companies.toggleFiltersAria')}
             >
               <Filter className="w-5 h-5" />
               {activeFilterCount > 0 && (
@@ -212,12 +215,13 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onChat?.({ id: company.ownerId || company.id, name: company.name, avatar: company.logo });
                       }}
-                      className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95"
+                      className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95 focus-ring-custom"
+                      aria-label={t('companies.contactCompanyIconAria')}
                     >
                       <MessageSquare className="w-4 h-4" />
                     </button>
@@ -349,9 +353,10 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
             >
               <div className="relative h-48 bg-primary overflow-hidden">
                 <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50" />
-                <button 
+                <button
                   onClick={() => setSelectedCompany(null)}
-                  className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-all z-20"
+                  className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-all z-20 focus-ring-inverse"
+                  aria-label={t('companies.closeCompanyDetailAria')}
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -467,22 +472,22 @@ export default function CompaniesScreen({ onChat, profileData }: { onChat?: (par
                       <h4 className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">{t('companies.socialMediaTitle')}</h4>
                       <div className="flex gap-3">
                         {selectedCompany.social?.linkedin && (
-                          <a href={`https://${selectedCompany.social.linkedin}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm">
+                          <a href={`https://${selectedCompany.social.linkedin}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm focus-ring-custom" aria-label={t('companies.visitSocialLinkAria', { platform: 'LinkedIn' })}>
                             <Linkedin className="w-5 h-5" />
                           </a>
                         )}
                         {selectedCompany.social?.instagram && (
-                          <a href={`https://${selectedCompany.social.instagram}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm">
+                          <a href={`https://${selectedCompany.social.instagram}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm focus-ring-custom" aria-label={t('companies.visitSocialLinkAria', { platform: 'Instagram' })}>
                             <Instagram className="w-5 h-5" />
                           </a>
                         )}
                         {selectedCompany.social?.twitter && (
-                          <a href={`https://${selectedCompany.social.twitter}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm">
+                          <a href={`https://${selectedCompany.social.twitter}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm focus-ring-custom" aria-label={t('companies.visitSocialLinkAria', { platform: 'Twitter' })}>
                             <Twitter className="w-5 h-5" />
                           </a>
                         )}
                         {selectedCompany.social?.facebook && (
-                          <a href={`https://${selectedCompany.social.facebook}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm">
+                          <a href={`https://${selectedCompany.social.facebook}`} target="_blank" className="p-3 bg-white rounded-xl hover:text-primary transition-all shadow-sm focus-ring-custom" aria-label={t('companies.visitSocialLinkAria', { platform: 'Facebook' })}>
                             <Facebook className="w-5 h-5" />
                           </a>
                         )}
