@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Mic, StopCircle, Play, Users, UserPlus, X, Loader2 } from 'lucide-react';
+import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Users, UserPlus, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
@@ -33,9 +33,6 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [isAddingParticipant, setIsAddingParticipant] = useState<string | null>(null);
@@ -146,22 +143,6 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
     });
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
-  };
-
-  const stopRecording = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setIsRecording(false);
-    if (recordingTime > 0 && activeConversationId && currentUid) {
-      sendMessage(activeConversationId, currentUid, { type: 'audio', audioUrl: '#', audioDuration: recordingTime })
-        .then(() => notifyOtherParticipants(activeConversation || undefined, t('chat.voiceMessagePush')))
-        .catch(() => setSendError(t('chat.audioSendError')));
-    }
-  };
-
   const handleSendMessage = () => {
     if (!newMessage.trim() || !activeConversationId || !currentUid) return;
     const text = newMessage;
@@ -257,15 +238,11 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
                   {msg.type === 'text' ? (
                     <p className="leading-relaxed">{msg.text}</p>
                   ) : (
-                    <div className="flex items-center gap-3 min-w-[150px]">
-                      <div className={`p-2 rounded-full ${isMe ? 'bg-white/20' : 'bg-primary/10'}`}>
-                        <Play className={`w-4 h-4 ${isMe ? 'text-white' : 'text-primary'}`} fill="currentColor" />
-                      </div>
-                      <div className="flex-1 h-1 bg-current opacity-20 rounded-full relative">
-                        <div className="absolute left-0 top-0 h-full w-1/3 bg-current rounded-full" />
-                      </div>
-                      <span className="text-[10px] font-mono">0:{String(msg.audioDuration).padStart(2, '0')}</span>
-                    </div>
+                    // Mensajes de voz retirados (ver docs/PLAN_MEJORA_360.md Fase 3) --
+                    // este mensaje nunca tuvo audio real reproducible (audioUrl era
+                    // siempre '#'). Si queda alguno histórico en Firestore, se muestra
+                    // honesto en vez del reproductor falso que había antes.
+                    <p className="leading-relaxed italic opacity-70">{t('chat.legacyVoiceMessageUnavailable')}</p>
                   )}
                   <div className={`flex items-center gap-1 mt-1 justify-end ${isMe ? 'text-white/60' : 'text-on-surface-variant/60'}`}>
                     <span className="text-[9px] font-medium">{formatTime(msg.createdAt, t('chat.now'))}</span>
@@ -286,91 +263,76 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
               </button>
             </div>
             <div className="flex-1 relative flex items-center bg-surface-container-low rounded-2xl border border-outline/10">
-              {isRecording ? (
-                <div className="flex-1 px-4 py-3 flex items-center justify-between text-primary">
-                  <div className="flex items-center gap-2">
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-red-500 rounded-full" />
-                    <span className="text-sm font-bold">{t('chat.recordingLabel', { time: `${Math.floor(recordingTime / 60)}:${String(recordingTime % 60).padStart(2, '0')}` })}</span>
-                  </div>
-                  <button onClick={stopRecording} className="text-xs font-black uppercase tracking-widest text-red-500">{t('chat.cancelButton')}</button>
-                </div>
-              ) : (
-                <>
-                  <textarea
-                    ref={textareaRef}
-                    rows={1}
-                    placeholder={t('chat.messagePlaceholder')}
-                    className="w-full bg-transparent p-3 pl-4 pr-10 text-sm focus:outline-hidden resize-none transition-all overflow-hidden"
-                    value={newMessage}
-                    onChange={(e) => {
-                      setNewMessage(e.target.value);
-                      e.target.style.height = 'auto';
-                      e.target.style.height = e.target.scrollHeight + 'px';
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className={`absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom ${showEmojiPicker ? 'text-primary bg-surface-container' : 'text-on-surface-variant'}`}
-                    aria-label={t('chat.toggleEmojiPickerAria')}
-                  >
-                    <Smile className="w-5 h-5" />
-                  </button>
-                  <AnimatePresence>
-                    {showEmojiPicker && (
-                      <motion.div
-                        ref={emojiPickerRef}
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-outline/10 p-3 space-y-3 z-20"
-                      >
-                        {EMOJI_GROUPS.map((group) => (
-                          <div key={group.labelKey}>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 px-0.5">{t(group.labelKey)}</p>
-                            <div className="grid grid-cols-8 gap-1">
-                              {group.emojis.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  onClick={() => insertEmoji(emoji)}
-                                  className="text-lg leading-none p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
-            </div>
-            {newMessage.trim() ? (
-              <button onClick={handleSendMessage} className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all focus-ring-inverse h-[44px]" aria-label={t('chat.sendMessageAria')}>
-                <Send className="w-5 h-5" />
-              </button>
-            ) : (
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                placeholder={t('chat.messagePlaceholder')}
+                className="w-full bg-transparent p-3 pl-4 pr-10 text-sm focus:outline-hidden resize-none transition-all overflow-hidden"
+                value={newMessage}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+              />
               <button
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                className={`p-3 rounded-2xl shadow-lg transition-all focus-ring-inverse h-[44px] flex items-center justify-center ${isRecording ? 'bg-red-500 text-white scale-125 shadow-red-500/20' : 'bg-primary text-white shadow-primary/20 hover:bg-primary/90'}`}
-                aria-label={isRecording ? t('chat.stopRecordingAria') : t('chat.startRecordingAria')}
+                type="button"
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className={`absolute right-2 p-2 rounded-full hover:bg-surface-container transition-colors focus-ring-custom ${showEmojiPicker ? 'text-primary bg-surface-container' : 'text-on-surface-variant'}`}
+                aria-label={t('chat.toggleEmojiPickerAria')}
               >
-                {isRecording ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                <Smile className="w-5 h-5" />
               </button>
-            )}
+              <AnimatePresence>
+                {showEmojiPicker && (
+                  <motion.div
+                    ref={emojiPickerRef}
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-outline/10 p-3 space-y-3 z-20"
+                  >
+                    {EMOJI_GROUPS.map((group) => (
+                      <div key={group.labelKey}>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1.5 px-0.5">{t(group.labelKey)}</p>
+                        <div className="grid grid-cols-8 gap-1">
+                          {group.emojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => insertEmoji(emoji)}
+                              className="text-lg leading-none p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {/* Sin mensajes de voz -- ver docs/PLAN_MEJORA_360.md Fase 3: Storage
+                real exige Blaze (apagado a proposito en este proyecto) y
+                base64-en-Firestore no es viable para audio (multiplica la
+                cuota gratuita en cada sincronizacion). Patron tipo LinkedIn:
+                un unico boton de enviar, deshabilitado sin texto. */}
+            <button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim()}
+              className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all focus-ring-inverse h-[44px] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              aria-label={t('chat.sendMessageAria')}
+            >
+              <Send className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
