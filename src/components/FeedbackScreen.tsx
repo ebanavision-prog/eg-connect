@@ -62,9 +62,10 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
           <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('feedback.title')}</h1>
           <p className="text-on-surface-variant font-sans mt-2">{t('feedback.subtitle')}</p>
         </div>
-        <button 
+        <button
           onClick={onBack}
-          className="p-3 bg-surface-container-high rounded-full hover:bg-surface-container-highest transition-all"
+          className="p-3 bg-surface-container-high rounded-full hover:bg-surface-container-highest transition-all focus-ring-custom"
+          aria-label={t('feedback.backAria')}
         >
           <ArrowLeft className="w-5 h-5 text-on-surface" />
         </button>
@@ -104,7 +105,8 @@ export default function FeedbackScreen({ onBack }: FeedbackScreenProps) {
               <button
                 key={star}
                 onClick={() => setRating(star)}
-                className="p-1 transition-transform active:scale-75"
+                className="p-1 transition-transform active:scale-75 focus-ring-custom"
+                aria-label={t('feedback.rateStarAria', { count: star })}
               >
                 <Star 
                   className={`w-8 h-8 transition-colors ${rating >= star ? 'text-secondary fill-secondary' : 'text-surface-container-highest'}`} 

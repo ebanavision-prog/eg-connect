@@ -141,9 +141,10 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
               con serverTimestamp()), no un string — renderizarlo directo mostraba
               "[object Object]". lastMet es el campo pensado para mostrar aquí. */}
           <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">{contact.lastMet}</span>
-          <button 
+          <button
             onClick={() => onChat?.({ id: contact.id, name: contact.name, avatar: contact.avatar })}
-            className="p-2 rounded-full bg-primary/5 text-primary hover:bg-primary/10 transition-colors outline-hidden"
+            className="p-2 rounded-full bg-primary/5 text-primary hover:bg-primary/10 transition-colors focus-ring-custom"
+            aria-label={t('feedItem.chatWithContactAria', { name: contact.name })}
           >
             <MessageSquare className="w-4 h-4" />
           </button>
@@ -352,13 +353,14 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
 
       {/* Quick Comment Input */}
       <div className="flex gap-3 items-center pt-2">
-        <button 
+        <button
           onClick={handleKudo}
-          className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl transition-all border ${
-            hasKudoed 
-              ? 'bg-secondary/10 border-secondary text-secondary shadow-inner' 
+          className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl transition-all border focus-ring-custom ${
+            hasKudoed
+              ? 'bg-secondary/10 border-secondary text-secondary shadow-inner'
               : 'bg-surface-container-low border-outline/5 text-outline hover:border-secondary/20 hover:text-secondary'
           }`}
+          aria-label={t('feedItem.kudoAria')}
         >
           <Sparkles className={`w-4 h-4 ${hasKudoed ? 'fill-secondary' : ''}`} />
           <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{kudos}</span>
@@ -370,7 +372,7 @@ const FeedItem: FC<FeedItemProps> = ({ contact, onChat, currentUserName = 'Yo' }
               <span className="text-[9px] font-bold text-secondary uppercase tracking-wider">
                 {t('feedItem.replyingTo', { author: comments.find(c => c.id === replyingTo)?.author })}
               </span>
-              <button onClick={() => setReplyingTo(null)} className="text-secondary">
+              <button onClick={() => setReplyingTo(null)} className="text-secondary focus-ring-custom" aria-label={t('feedItem.cancelReplyAria')}>
                 <span className="material-symbols-outlined text-xs">close</span>
               </button>
             </div>

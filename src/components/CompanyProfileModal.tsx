@@ -34,9 +34,10 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
           {/* Header/Cover */}
           <div className="h-32 bg-primary relative shrink-0">
              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-             <button 
+             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-20"
+              className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-20 focus-ring-inverse"
+              aria-label={t('companyProfileModal.closeModalAria')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -58,12 +59,12 @@ export default function CompanyProfileModal({ company, isOpen, onClose }: Compan
                 </div>
                 <div className="flex gap-2">
                   {company.social?.website && (
-                    <a href={company.social.website} target="_blank" rel="noreferrer" className="p-2 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all">
+                    <a href={company.social.website} target="_blank" rel="noreferrer" className="p-2 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all focus-ring-custom" aria-label={t('companyProfileModal.visitWebsiteAria')}>
                       <Globe className="w-5 h-5" />
                     </a>
                   )}
                   {company.social?.linkedin && (
-                    <a href={company.social.linkedin} target="_blank" rel="noreferrer" className="p-2 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all">
+                    <a href={company.social.linkedin} target="_blank" rel="noreferrer" className="p-2 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all focus-ring-custom" aria-label={t('companyProfileModal.visitLinkedinAria')}>
                       <Linkedin className="w-5 h-5" />
                     </a>
                   )}

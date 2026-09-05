@@ -61,15 +61,17 @@ export default function DiscoverScreen({ users, onContact }: DiscoverScreenProps
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-black text-primary">{t('discover.title')}</h2>
           <div className="flex bg-surface-container-high p-1 rounded-xl">
-            <button 
+            <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/40'}`}
+              className={`p-2 rounded-lg transition-all focus-ring-custom ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/40'}`}
+              aria-label={t('discover.gridViewAria')}
             >
               <Grid className="w-4 h-4" />
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/40'}`}
+              className={`p-2 rounded-lg transition-all focus-ring-custom ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-on-surface-variant/40'}`}
+              aria-label={t('discover.listViewAria')}
             >
               <ListIcon className="w-4 h-4" />
             </button>

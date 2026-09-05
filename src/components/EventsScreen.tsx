@@ -79,7 +79,8 @@ export default function EventsScreen({ profileData }: { profileData?: UserProfil
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden"
+          className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all focus-ring-inverse"
+          aria-label={t('events.createEventAria')}
         >
           <Plus className="w-6 h-6" />
         </button>
@@ -182,7 +183,7 @@ export default function EventsScreen({ profileData }: { profileData?: UserProfil
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
                   <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('events.modalTitle')}</h2>
-                  <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                  <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('events.closeCreateEventAria')}>
                     <X className="w-6 h-6 text-on-surface-variant" />
                   </button>
                 </div>

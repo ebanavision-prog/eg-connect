@@ -65,7 +65,11 @@ export default function TasksScreen() {
 
   const renderTask = (task: Task) => (
     <div key={task.id} className="editorial-card p-6 flex items-start gap-4 border-none shadow-md hover:shadow-xl transition-all">
-      <button onClick={() => handleToggle(task)} className="pt-0.5 text-primary shrink-0">
+      <button
+        onClick={() => handleToggle(task)}
+        className="pt-0.5 text-primary shrink-0 focus-ring-custom"
+        aria-label={task.completed ? t('tasks.markIncompleteAria', { title: task.title }) : t('tasks.markCompleteAria', { title: task.title })}
+      >
         {task.completed ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6 text-outline-variant" />}
       </button>
       <div className="flex-1 min-w-0">
@@ -85,7 +89,7 @@ export default function TasksScreen() {
           </p>
         )}
       </div>
-      <button onClick={() => handleDelete(task)} className="text-outline-variant hover:text-error transition-colors p-2 outline-hidden shrink-0">
+      <button onClick={() => handleDelete(task)} className="text-outline-variant hover:text-error transition-colors p-2 focus-ring-custom shrink-0" aria-label={t('tasks.deleteTaskAria', { title: task.title })}>
         <Trash2 className="w-4 h-4" />
       </button>
     </div>
@@ -100,7 +104,8 @@ export default function TasksScreen() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden"
+          className="p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all focus-ring-inverse"
+          aria-label={t('tasks.createTaskAria')}
         >
           <Plus className="w-6 h-6" />
         </button>
@@ -133,7 +138,7 @@ export default function TasksScreen() {
             <div className="p-8 space-y-6">
               <div className="flex justify-between items-start">
                 <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('tasks.newTaskTitle')}</h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('tasks.closeNewTaskAria')}>
                   <X className="w-6 h-6 text-on-surface-variant" />
                 </button>
               </div>

@@ -197,9 +197,10 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
           </div>
           <h1 className="text-4xl font-extrabold font-display text-on-surface">{t('marketplace.title')}</h1>
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="group relative p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden overflow-hidden"
+          className="group relative p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all focus-ring-inverse overflow-hidden"
+          aria-label={t('marketplace.createPostAria')}
         >
           <div className="absolute inset-0 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
           <Plus className="w-6 h-6 relative z-10" />
@@ -276,21 +277,23 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-surface-container-high text-outline hover:text-error transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-surface-container-high text-outline hover:text-error transition-colors focus-ring-custom"
+                  aria-label={t('marketplace.clearSearchAria')}
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-            <button 
+            <button
               onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-              className={`p-4 rounded-[1.5rem] border transition-all outline-hidden flex items-center gap-2 ${
-                isFilterPanelOpen 
-                  ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
+              className={`p-4 rounded-[1.5rem] border transition-all focus-ring-custom flex items-center gap-2 ${
+                isFilterPanelOpen
+                  ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
                   : 'bg-surface-container-low border-outline/10 text-on-surface-variant hover:bg-surface-container-high'
               }`}
+              aria-label={t('marketplace.customizeSearchButton')}
             >
               <Filter className={`w-5 h-5 transition-transform duration-300 ${isFilterPanelOpen ? 'rotate-180' : ''}`} />
               <span className="text-xs font-bold hidden md:inline">{t('marketplace.customizeSearchButton')}</span>
@@ -575,12 +578,13 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleShare(post);
                       }}
-                      className="p-2.5 bg-surface-container-high text-on-surface-variant rounded-full hover:bg-primary hover:text-white transition-all active:scale-95"
+                      className="p-2.5 bg-surface-container-high text-on-surface-variant rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 focus-ring-custom"
+                      aria-label={t('marketplace.sharePostAria')}
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
@@ -662,9 +666,10 @@ export default function MarketplaceScreen({ activeProfile, onContact, initialSea
                       {t('marketplace.postingAsPrefix')} <span className="font-bold text-primary">{profileData?.name || t('marketplace.youFallback')}</span>
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsModalOpen(false)}
-                    className="p-2 rounded-full hover:bg-surface-container-high transition-all"
+                    className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom"
+                    aria-label={t('marketplace.closeCreatePostAria')}
                   >
                     <X className="w-6 h-6 text-on-surface-variant" />
                   </button>

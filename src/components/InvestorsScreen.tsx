@@ -253,7 +253,7 @@ export default function InvestorsScreen({ users, onContact, profileData }: Inves
                     <h2 className="text-xl font-extrabold font-display text-on-surface">{t('investors.pitchModalTitle')}</h2>
                     <p className="text-xs text-on-surface-variant mt-1">{t('investors.pitchModalTo', { name: pitchTarget.name })}</p>
                   </div>
-                  <button onClick={() => setPitchTarget(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                  <button onClick={() => setPitchTarget(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('investors.closePitchModalAria')}>
                     <X className="w-5 h-5 text-on-surface-variant" />
                   </button>
                 </div>

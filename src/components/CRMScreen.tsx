@@ -124,8 +124,9 @@ export default function CRMScreen() {
         <button
           onClick={handleImportGoogle}
           disabled={isImporting}
-          className="bg-white border-2 border-outline/10 text-primary p-4 rounded-2xl shadow-sm active:scale-90 transition-all disabled:opacity-50"
+          className="bg-white border-2 border-outline/10 text-primary p-4 rounded-2xl shadow-sm active:scale-90 transition-all disabled:opacity-50 focus-ring-custom"
           title={t('crm.importGoogleTooltip')}
+          aria-label={t('crm.importGoogleTooltip')}
         >
           {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
         </button>
@@ -253,11 +254,12 @@ export default function CRMScreen() {
               className="w-full max-w-md bg-white rounded-[3rem] overflow-hidden shadow-2xl relative"
             >
               <div className="h-24 bg-gradient-to-r from-primary to-primary-container p-6 relative">
-                 <button 
+                 <button
                   onClick={() => setSelectedContact(null)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white"
+                  className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white focus-ring-inverse"
+                  aria-label={t('crm.closeContactModalAria')}
                 >
-                  <Filter className="w-5 h-5 rotate-45" /> 
+                  <Filter className="w-5 h-5 rotate-45" />
                 </button>
               </div>
               
@@ -348,7 +350,7 @@ export default function CRMScreen() {
                     <h2 className="text-xl font-extrabold font-display text-on-surface">{t('crm.chooseImportTitle')}</h2>
                     <p className="text-xs text-on-surface-variant mt-1">{t('crm.contactsFoundCount', { count: googleContacts.length })}</p>
                   </div>
-                  <button onClick={() => setGoogleContacts(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                  <button onClick={() => setGoogleContacts(null)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('crm.closeImportModalAria')}>
                     <X className="w-5 h-5 text-on-surface-variant" />
                   </button>
                 </div>

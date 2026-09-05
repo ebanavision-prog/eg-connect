@@ -85,7 +85,8 @@ export default function InitiativesScreen({ profileData }: { profileData?: UserP
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="group relative p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all outline-hidden overflow-hidden"
+          className="group relative p-3 bg-primary text-white rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all focus-ring-inverse overflow-hidden"
+          aria-label={t('initiatives.createInitiativeAria')}
         >
           <Plus className="w-6 h-6 relative z-10" />
         </button>
@@ -205,7 +206,7 @@ export default function InitiativesScreen({ profileData }: { profileData?: UserP
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-start">
                   <h2 className="text-2xl font-extrabold font-display text-on-surface">{t('initiatives.modalTitle')}</h2>
-                  <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all">
+                  <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-surface-container-high transition-all focus-ring-custom" aria-label={t('initiatives.closeCreateInitiativeAria')}>
                     <X className="w-6 h-6 text-on-surface-variant" />
                   </button>
                 </div>

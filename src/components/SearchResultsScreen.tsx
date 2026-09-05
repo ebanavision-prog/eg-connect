@@ -92,7 +92,7 @@ export default function SearchResultsScreen({ query, users, onContact, onNavigat
                   <p className="font-bold text-on-surface truncate">{u.name}</p>
                   <p className="text-xs text-on-surface-variant truncate">{u.profession || u.role}</p>
                 </div>
-                <button onClick={() => onContact({ id: u.uid, name: u.name, avatar: u.avatar })} className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all">
+                <button onClick={() => onContact({ id: u.uid, name: u.name, avatar: u.avatar })} className="p-2.5 bg-primary/5 text-primary rounded-xl hover:bg-primary hover:text-white transition-all focus-ring-custom" aria-label={t('searchResults.contactUserAria', { name: u.name })}>
                   <MessageSquare className="w-4 h-4" />
                 </button>
               </div>

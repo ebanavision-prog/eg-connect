@@ -28,6 +28,7 @@
       },
       "cta": "Start the Experience"
     },
+    "backAria": "Go back",
     "auth": {
       "title": "Welcome",
       "subtitle": "Sign in to your business account",
@@ -64,6 +65,7 @@
       "title": "Create Your Profile",
       "subtitle": "Help us build the business ecosystem of Equatorial Guinea.",
       "uploadPhoto": "Upload your best photo",
+      "uploadPhotoAria": "Upload profile photo",
       "profileTypeLabel": "Profile Type",
       "companyNameLabel": "Company Name",
       "fullNameLabel": "Full Name",
@@ -178,6 +180,7 @@
     "footer": "Built for the Ecosystem of Equatorial Guinea"
   },
   "syncSettings": {
+    "backAria": "Go back",
     "title": "Sync & Alerts",
     "statusTitle": "Status",
     "online": "Online",
@@ -276,6 +279,9 @@
     "autoScanCard": "Physical Card",
     "noCameraLabel": "No Camera",
     "manualCard": "Manual",
+    "backAria": "Go back",
+    "uploadPhotoAria": "Upload a photo of the business card",
+    "closeManualFormAria": "Close manual form",
     "manualFormTitle": "Add Manual Contact",
     "namePlaceholder": "Full name",
     "rolePlaceholder": "Role",
@@ -301,7 +307,8 @@
     "viewTender": "View Tender",
     "emptyTitle": "All caught up",
     "emptySubtitle": "You have no pending notifications",
-    "markAllRead": "Mark all as read"
+    "markAllRead": "Mark all as read",
+    "closeAria": "Close notifications"
   },
   "timeline": {
     "syncingTitle": "Syncing Ecosystem...",
@@ -341,7 +348,10 @@
     "replyingTo": "Replying to {{author}}",
     "replyPlaceholder": "Write your reply...",
     "commentPlaceholder": "Add a comment...",
-    "sendButton": "Send"
+    "sendButton": "Send",
+    "chatWithContactAria": "Send a message to {{name}}",
+    "kudoAria": "Give this contact a kudo",
+    "cancelReplyAria": "Cancel reply"
   },
   "tasks": {
     "sectionLabel": "Productivity",
@@ -360,7 +370,12 @@
     "noteLabel": "Note (optional)",
     "notePlaceholder": "Additional details...",
     "saving": "Saving...",
-    "addTask": "Add Task"
+    "addTask": "Add Task",
+    "markCompleteAria": "Mark \"{{title}}\" as complete",
+    "markIncompleteAria": "Mark \"{{title}}\" as pending",
+    "deleteTaskAria": "Delete the task \"{{title}}\"",
+    "createTaskAria": "Add a new task",
+    "closeNewTaskAria": "Close task creation"
   },
   "feedback": {
     "errorGeneric": "Couldn't send your message. Please try again.",
@@ -380,7 +395,9 @@
     "placeholderDefault": "Write your suggestions here...",
     "sending": "Sending...",
     "submitButton": "Send Feedback",
-    "versionFooter": "EG CONNECT - Version 1.0"
+    "versionFooter": "EG CONNECT - Version 1.0",
+    "backAria": "Go back",
+    "rateStarAria": "Rate {{count}} out of 5 stars"
   },
   "discover": {
     "shareTitle": "Join EG Connect",
@@ -400,7 +417,9 @@
     "viralGrowthBadge": "Viral Growth",
     "noPartnerTitle": "Can't find your partner?",
     "noPartnerDesc": "Invite your partners and colleagues to join the largest business network in E.G.",
-    "inviteWhatsappButton": "Invite via WhatsApp / Link"
+    "inviteWhatsappButton": "Invite via WhatsApp / Link",
+    "gridViewAria": "Grid view",
+    "listViewAria": "List view"
   },
   "searchResults": {
     "searchLabel": "Search",
@@ -408,6 +427,7 @@
     "noResults": "No results",
     "emptyStateTitle": "We couldn't find anything for that term",
     "emptyStateDesc": "Try a different name, company, or keyword.",
+    "contactUserAria": "Contact {{name}}",
     "peopleSection": "People",
     "companiesSection": "Companies",
     "marketplaceSection": "Marketplace",
@@ -447,7 +467,9 @@
     "locationLabel": "Location",
     "locationPlaceholder": "e.g. Hotel Sofitel, Malabo",
     "publishing": "Publishing...",
-    "errorGeneric": "Couldn't publish the event. Please try again."
+    "errorGeneric": "Couldn't publish the event. Please try again.",
+    "createEventAria": "Publish a new event",
+    "closeCreateEventAria": "Close event publishing"
   },
   "initiatives": {
     "sectionLabel": "Initiatives",
@@ -467,7 +489,9 @@
     "categoryLabel": "Category",
     "creating": "Creating...",
     "launchButton": "Launch Initiative",
-    "errorGeneric": "Couldn't create the initiative. Please try again."
+    "errorGeneric": "Couldn't create the initiative. Please try again.",
+    "createInitiativeAria": "Launch a new initiative",
+    "closeCreateInitiativeAria": "Close initiative creation"
   },
   "investors": {
     "sectionLabel": "Investors",
@@ -488,6 +512,7 @@
     "presentProject": "Pitch My Project",
     "pitchModalTitle": "Pitch Your Project",
     "pitchModalTo": "To {{name}}",
+    "closePitchModalAria": "Close project pitch",
     "pitchQuestionLabel": "What are you looking for and why does it fit this investor?",
     "pitchPlaceholder": "e.g. I'm looking for $20,000 to scale my agro-processing workshop in Bata. I already have clients in Malabo and...",
     "sendingPitch": "Sending...",
@@ -543,6 +568,8 @@
     "noNotesSaved": "No notes saved for this contact.",
     "locationLabel": "Location",
     "closeManagerButton": "Close Manager",
+    "closeContactModalAria": "Close contact details",
+    "closeImportModalAria": "Close Google contact selection",
     "chooseImportTitle": "Choose what to import",
     "contactsFoundCount": "{{count}} contacts found in Google",
     "noGoogleContactsFound": "We couldn't find any named contacts in your Google account.",
@@ -587,13 +614,27 @@
     "groupNamePlaceholder": "e.g. Rental Project",
     "participantsLabel": "Participants",
     "noMoreMembersToAdd": "There are no more network members to add yet.",
-    "createGroupButton": "Create Group"
+    "createGroupButton": "Create Group",
+    "backToConversationsAria": "Back to conversations",
+    "addParticipantAria": "Add participant to group",
+    "groupInfoAria": "View group info",
+    "conversationInfoAria": "View conversation info",
+    "attachFileAria": "Attach a file",
+    "toggleEmojiPickerAria": "Choose an emoji",
+    "sendMessageAria": "Send message",
+    "startRecordingAria": "Record a voice message",
+    "stopRecordingAria": "Stop recording and send",
+    "closeAddParticipantAria": "Close add participant",
+    "closeGroupInfoAria": "Close group info",
+    "closeCreateGroupAria": "Close create group"
   },
   "tenders": {
     "opportunitiesLabel": "Opportunities",
     "title": "Tenders & Projects",
     "subtitle": "Access priority public and private sector contracts in Equatorial Guinea.",
     "publishTooltip": "Publish tender (admin)",
+    "closeTenderDetailAria": "Close tender details",
+    "closePublishModalAria": "Close tender publishing",
     "searchPlaceholder": "Search by project or entity...",
     "searchLimitedNotice": "Showing the first {{count}} results — use \"Load more\" to widen the search.",
     "filterAll": "All",
@@ -633,7 +674,10 @@
     "certificationsTitle": "Certifications",
     "leadershipTitle": "Leadership",
     "visitWebsiteButton": "Visit Website",
-    "noWebsite": "This company hasn't added a website"
+    "noWebsite": "This company hasn't added a website",
+    "closeModalAria": "Close company profile",
+    "visitWebsiteAria": "Visit the company's website",
+    "visitLinkedinAria": "Visit the company's LinkedIn"
   },
   "invite": {
     "title": "Grow Your Network",
@@ -688,6 +732,10 @@
     "tabRequest": "Looking For",
     "searchPlaceholder": "Search by role or service...",
     "customizeSearchButton": "Customize Search",
+    "createPostAria": "Create a new listing",
+    "clearSearchAria": "Clear search",
+    "sharePostAria": "Share this listing",
+    "closeCreatePostAria": "Close listing creation",
     "advancedFiltersTitle": "Advanced Filters",
     "clearAllButton": "Clear all",
     "locationLabel": "Location",
@@ -742,6 +790,14 @@
     "searchPlaceholder": "Search by name or sector...",
     "gridViewTooltip": "Grid View",
     "listViewTooltip": "List View",
+    "toggleFiltersAria": "Show or hide filters",
+    "contactCompanyIconAria": "Contact this company",
+    "closeRegistrationModalAria": "Close company registration",
+    "removeDepartmentAria": "Remove this department",
+    "removeLeadershipAria": "Remove this executive",
+    "removeCertAria": "Remove this certification",
+    "closeCompanyDetailAria": "Close company profile",
+    "visitSocialLinkAria": "Visit the company's {{platform}}",
     "locationFilterLabel": "Location",
     "allLocationsOption": "All",
     "verifiedOnlyLabel": "Verified companies only",
@@ -877,7 +933,12 @@
     "invisibleModeBadge": "Invisible Mode",
     "publicVisibilityBadge": "Public Visibility",
     "shareNetworkButton": "Share Network",
+    "shareProfileIconAria": "Share my profile",
     "linkCopiedFeedback": "Link copied",
+    "editProfileAria": "Edit profile",
+    "closeEditAria": "Close profile editing",
+    "uploadPhotoAria": "Upload profile photo",
+    "closeDeleteModalAria": "Close account deletion confirmation",
     "defaultShareTitle": "My profile on EG CONNECT",
     "myProfileFallback": "my profile",
     "shareTextBase": "Connect with me on EG CONNECT: {{name}}",

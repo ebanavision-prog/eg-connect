@@ -276,9 +276,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
             className="flex-1 flex flex-col pt-12"
           >
             <div className="p-8 space-y-8 relative z-10 w-full max-w-md mx-auto">
-              <button 
+              <button
                 onClick={() => setStep('welcome')}
-                className="p-2 bg-on-surface/5 rounded-xl self-start"
+                className="p-2 bg-on-surface/5 rounded-xl self-start focus-ring-custom"
+                aria-label={t('onboarding.backAria')}
               >
                 <ChevronLeft className="w-5 h-5 text-on-surface-variant" />
               </button>
@@ -420,9 +421,10 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
             className="flex-1 flex flex-col pt-12"
           >
             <div className="p-8 space-y-8 relative z-10 w-full max-w-md mx-auto">
-              <button 
+              <button
                 onClick={() => setStep('auth')}
-                className="p-2 bg-on-surface/5 rounded-xl self-start"
+                className="p-2 bg-on-surface/5 rounded-xl self-start focus-ring-custom"
+                aria-label={t('onboarding.backAria')}
               >
                 <ChevronLeft className="w-5 h-5 text-on-surface-variant" />
               </button>
@@ -493,9 +495,9 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
                     <div className="w-28 h-28 rounded-3xl overflow-hidden border-4 border-primary/20 shadow-2xl">
                       <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
                     </div>
-                    <label className="absolute -bottom-2 -right-2 bg-secondary text-white p-2.5 rounded-2xl shadow-lg cursor-pointer hover:scale-110 active:scale-90 transition-all border-4 border-white">
+                    <label className="absolute -bottom-2 -right-2 bg-secondary text-white p-2.5 rounded-2xl shadow-lg cursor-pointer hover:scale-110 active:scale-90 transition-all border-4 border-white focus-within:ring-2 focus-within:ring-primary/50 focus-within:ring-offset-2">
                       <Camera className="w-5 h-5" />
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} aria-label={t('onboarding.register.uploadPhotoAria')} />
                     </label>
                   </div>
                   <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-60">{t('onboarding.register.uploadPhoto')}</p>
