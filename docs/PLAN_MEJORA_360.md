@@ -121,9 +121,9 @@ Priorizado por impacto real en el usuario, no por tamaño del cambio:
 **Fase 2 completa en su totalidad** (salvo la corrida real de la migración de backfill en producción, que requiere credenciales humanas — ver arriba).
 
 ### Fase 3 — Funcionalidades y crecimiento
-- Grabación de audio real (o retirar la feature si no se prioriza)
-- Descomposición de los 5 componentes más grandes
-- Pase de accesibilidad (aria-labels, foco, contraste)
+- **Mensajes de voz reales — decisión pendiente de confirmar (2026-09-05), recomendación: retirar la feature.** `MediaRecorder`/Storage real exige activar Blaze (Firebase Storage está apagado a propósito en este proyecto — ver `firebaseService.ts:400-408` — y base64-en-Firestore no es viable para audio: un clip corto pesa 100 KB-1 MB, y cada `onSnapshot` en tiempo real re-descarga ese blob completo en cada sincronización, multiplicando el consumo de cuota gratuita de Spark). Recomendado retirar la UI de grabación de `ChatScreen.tsx` hasta que Fase 4 active Blaze de verdad, en vez de construirla ahora sobre una ruta gratis que en realidad no lo es. **No ejecutado todavía** — a la espera de que el usuario lo confirme.
+- ~~Descomposición de los 2 componentes de mayor retorno~~ — **hecho** (2026-09-05, merges `5f2cd57`/`4046c3b`): wizard de registro de empresa extraído de `CompaniesScreen.tsx` (1047→521 líneas) a `CompanyRegistrationWizard.tsx`; sidebar de navegación extraído de `App.tsx` (752→~470 líneas) a `AppSidebar.tsx`. Cero cambio de comportamiento, verificado (`tsc`/build limpios, `test:rules` 49/49). **Sigue pendiente**: los otros 3 componentes grandes que el diagnóstico original señaló (`ProfileScreen.tsx` 777, `OnboardingScreen.tsx` 711, `MarketplaceScreen.tsx` 747) — no tocados todavía.
+- ~~Pase de accesibilidad (aria-labels, foco, contraste)~~ — **hecho** (2026-09-05, merge `60905f7`): ~50 botones-icono + 2 toggles sin nombre accesible en 19 pantallas reciben `aria-label`/`role="switch"`, siguiendo el patrón ya usado en `MapScreen.tsx`; 28 claves `*Aria` nuevas en `es.json`/`en.json` (874 claves, 1:1). Foco visible vía 2 utilidades Tailwind nuevas (`.focus-ring-custom`/`.focus-ring-inverse`) en `src/index.css`. Contraste revisado, sin hallazgos que corregir. Verificado igual (`tsc`/build/`test:rules` 49/49).
 
 ### Fase 4 — Escala (cuando el volumen lo justifique, no antes)
 - Evaluar activar Blaze: Storage real, App Check, posible migración de PHP→Cloud Functions
