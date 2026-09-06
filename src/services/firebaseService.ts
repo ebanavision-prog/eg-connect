@@ -231,12 +231,23 @@ export const getUserData = async (uid: string) => {
 export const saveUserData = async (uid: string, data: any) => {
   const path = `users/${uid}`;
   try {
-    await setDoc(doc(db, path), {
+    // `createdAt` solo se incluye en el payload si el llamador lo pasa
+    // explícitamente (la creación real del perfil lo hace, vía
+    // registerWithUsername). Si se incluyera siempre con un fallback a
+    // serverTimestamp(), un guardado PARCIAL (p. ej. solo `{ companyId }`
+    // al enlazar una empresa) regeneraría `createdAt` con un timestamp
+    // nuevo en cada llamada -- y como `createdAt` no está en la whitelist
+    // de campos actualizables de firestore.rules, esa escritura quedaría
+    // rechazada con "Missing or insufficient permissions" (bug real
+    // encontrado en vivo: el enlace de companyId desde CompaniesScreen/
+    // OnboardingScreen fallaba silenciosamente por esto).
+    const payload: Record<string, unknown> = {
       ...data,
       uid,
-      updatedAt: serverTimestamp(),
-      createdAt: data.createdAt || serverTimestamp()
-    }, { merge: true });
+      updatedAt: serverTimestamp()
+    };
+    if (data.createdAt) payload.createdAt = data.createdAt;
+    await setDoc(doc(db, path), payload, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }

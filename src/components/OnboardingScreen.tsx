@@ -4,8 +4,9 @@ import { ArrowRight, Shield, Zap, Globe, User, Calendar, Check, Phone, Camera, L
 import { useTranslation } from 'react-i18next';
 import NetworkBackground from './NetworkBackground';
 import Logo from './Logo';
-import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, registerWithUsername, resetPassword, uploadAvatarIfNeeded } from '../services/firebaseService';
+import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, registerWithUsername, resetPassword, uploadAvatarIfNeeded, createCompany } from '../services/firebaseService';
 import { onAuthStateChanged } from 'firebase/auth';
+import { serverTimestamp } from 'firebase/firestore';
 
 export default function OnboardingScreen({ onComplete }: { onComplete: (data: { uid: string; name: string; phone: string; birthday: string; profession: string; city: string; role: string; avatar: string; profileType: string }) => void }) {
   const { t } = useTranslation();
@@ -137,6 +138,40 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
 
   const months = t('onboarding.months', { returnObjects: true }) as string[];
 
+  // Enlace hacia adelante (ver docs/PLAN_MEJORA_360.md sección 3/7 Fase 2:
+  // `companies` es la entidad canónica) -- mismo patrón que ya usan
+  // CompaniesScreen.tsx/ProfileScreen.tsx. El registro inicial (este
+  // archivo) era el único de los 3 caminos hacia "soy una empresa" que
+  // todavía no creaba el doc canónico en companies/ -- por eso una empresa
+  // registrada desde el onboarding nunca aparecía en el directorio de
+  // Companies. Best-effort: si esto falla, el usuario ya quedó creado de
+  // todas formas (lo principal), solo queda sin companyId hasta que edite
+  // su perfil de nuevo.
+  const linkCompanyIfNeeded = async (uid: string, resolvedName: string, resolvedAvatar: string) => {
+    if (profileType !== 'company') return undefined;
+    try {
+      const newCompanyId = await createCompany(uid, {
+        name: resolvedName || '',
+        industry: profession || 'Servicios',
+        description: '',
+        location: city || '',
+        employees: employees || '1-10',
+        yearsInMarket: yearsInMarket || '0-2',
+        website: '',
+        logo: resolvedAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedName || '')}&background=045C68&color=fff&size=256`,
+        tags: profession ? [profession] : [],
+        social: { website: '' }
+      });
+      if (newCompanyId) {
+        await saveUserData(uid, { companyId: newCompanyId });
+        return newCompanyId;
+      }
+    } catch (linkError) {
+      console.error('Empresa creada pero no se pudo enlazar al perfil del usuario:', linkError);
+    }
+    return undefined;
+  };
+
   const handleFinish = async (e: any) => {
     e.preventDefault();
     if (!auth.currentUser) {
@@ -161,7 +196,11 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
           // registerWithUsername already calls saveUserData and returns user
           // onAuthStateChanged will handle the rest or we can call onComplete
           const data = await getUserData(auth.currentUser?.uid || '');
-          if (data) onComplete(data as any);
+          if (data) {
+            const companyId = await linkCompanyIfNeeded(auth.currentUser?.uid || '', (data as any).name, (data as any).avatar);
+            if (companyId) (data as any).companyId = companyId;
+            onComplete(data as any);
+          }
         } catch (err) {
           setError(t('onboarding.register.errorCreateAccount'));
         } finally {
@@ -174,8 +213,15 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
     if ((profileType === 'individual' && name && phone && birthDay && birthMonth) || (profileType === 'company' && name && phone)) {
       setLoading(true);
       const avatarUrl = await uploadAvatarIfNeeded(`avatars/${auth.currentUser.uid}`, avatar);
+      // App.tsx solo monta OnboardingScreen cuando getUserData() ya devolvió
+      // null para este uid (ver App.tsx, efecto de onAuthStateChanged) --
+      // este `data` es SIEMPRE la primera creación real del documento, nunca
+      // una edición de uno existente. Por eso es seguro pasar `createdAt`
+      // explícito acá (a diferencia del enlace de companyId más abajo, que
+      // sí es un guardado parcial sobre un doc ya existente).
       const data = {
         uid: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
         name,
         phone,
         birthday: profileType === 'individual' ? `${birthMonth}-${birthDay.padStart(2, '0')}` : '',
@@ -189,6 +235,8 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
         referredBy: referredBy || null
       };
       await saveUserData(auth.currentUser.uid, data);
+      const companyId = await linkCompanyIfNeeded(auth.currentUser.uid, name, avatarUrl);
+      if (companyId) (data as any).companyId = companyId;
       onComplete(data);
       setLoading(false);
     }
