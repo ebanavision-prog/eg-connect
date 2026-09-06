@@ -235,6 +235,7 @@
       "tasks": "Mis Tareas",
       "syncSettings": "Sincronización",
       "feedback": "Feedback y Propuestas",
+      "growth": "Panel de Crecimiento",
       "switchProfileLabel": "Intercambiar Perfil",
       "accountLabel": "Cuenta",
       "myProfile": "Mi Perfil",
@@ -616,7 +617,6 @@
     "addParticipantAria": "Añadir integrante al grupo",
     "groupInfoAria": "Ver información del grupo",
     "conversationInfoAria": "Ver información de la conversación",
-    "attachFileAria": "Adjuntar archivo",
     "toggleEmojiPickerAria": "Elegir un emoji",
     "sendMessageAria": "Enviar mensaje",
     "closeAddParticipantAria": "Cerrar añadir integrante",
@@ -1003,5 +1003,21 @@
       "Diciembre"
     ],
     "birthdayFormat": "{{day}} de {{month}}"
+  },
+  "growthAnalytics": {
+    "title": "Panel de Crecimiento",
+    "backAria": "Volver",
+    "goBack": "Volver",
+    "loading": "Cargando datos reales...",
+    "notAuthorized": "No tenés acceso a este panel.",
+    "totalUsers": "Usuarios Totales",
+    "signups7d": "Nuevos (7 días)",
+    "signups30d": "{{count}} en los últimos 30 días",
+    "active7d": "Activos (7 días)",
+    "referredPct": "Vía Referido",
+    "ambassadorCount": "{{count}} Embajadores",
+    "topReferrersTitle": "Quién trae más gente",
+    "noReferralsYet": "Todavía nadie invitó a nadie.",
+    "unknownUser": "Usuario eliminado"
   }
 }

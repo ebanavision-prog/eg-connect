@@ -144,6 +144,16 @@ async function main() {
     await assertFails(updateDoc(doc(userA, 'users/user-a'), { companyId: 'company-a', isAdmin: true }));
   });
 
+  // --- users: lastActiveAt (tracking de actividad para re-enganche, ver
+  // .github/workflows/reengagement.yml) ---
+  await check('El dueño SÍ puede actualizar su propio lastActiveAt', async () => {
+    await assertSucceeds(updateDoc(doc(userA, 'users/user-a'), { lastActiveAt: new Date() }));
+  });
+
+  await check('Un usuario NO puede escribir el lastActiveAt de otro usuario', async () => {
+    await assertFails(updateDoc(doc(userB, 'users/user-a'), { lastActiveAt: new Date() }));
+  });
+
   // --- users: borrado de cuenta (derecho al olvido) ---
   await check('El dueño SÍ puede borrar su propio documento de usuario', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

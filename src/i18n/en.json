@@ -235,6 +235,7 @@
       "tasks": "My Tasks",
       "syncSettings": "Sync Settings",
       "feedback": "Feedback & Suggestions",
+      "growth": "Growth Panel",
       "switchProfileLabel": "Switch Profile",
       "accountLabel": "Account",
       "myProfile": "My Profile",
@@ -616,7 +617,6 @@
     "addParticipantAria": "Add participant to group",
     "groupInfoAria": "View group info",
     "conversationInfoAria": "View conversation info",
-    "attachFileAria": "Attach a file",
     "toggleEmojiPickerAria": "Choose an emoji",
     "sendMessageAria": "Send message",
     "closeAddParticipantAria": "Close add participant",
@@ -1003,5 +1003,21 @@
       "December"
     ],
     "birthdayFormat": "{{month}} {{day}}"
+  },
+  "growthAnalytics": {
+    "title": "Growth Panel",
+    "backAria": "Go back",
+    "goBack": "Go back",
+    "loading": "Loading real data...",
+    "notAuthorized": "You don't have access to this panel.",
+    "totalUsers": "Total Users",
+    "signups7d": "New (7 days)",
+    "signups30d": "{{count}} in the last 30 days",
+    "active7d": "Active (7 days)",
+    "referredPct": "Via Referral",
+    "ambassadorCount": "{{count}} Ambassadors",
+    "topReferrersTitle": "Who's bringing the most people",
+    "noReferralsYet": "Nobody has invited anyone yet.",
+    "unknownUser": "Deleted user"
   }
 }

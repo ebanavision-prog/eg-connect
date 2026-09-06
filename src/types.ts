@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'chat' | 'tenders' | 'crm' | 'investors' | 'initiatives' | 'search';
+export type Screen = 'home' | 'timeline' | 'scan' | 'feedback' | 'map' | 'profile' | 'groups' | 'summary' | 'invite' | 'tasks' | 'onboarding' | 'contact-detail' | 'insight-detail' | 'my-cards' | 'sync-settings' | 'events' | 'marketplace' | 'companies' | 'company-detail' | 'chat' | 'tenders' | 'crm' | 'investors' | 'initiatives' | 'search' | 'growth-analytics';
 
 // Modela el documento real de `/users/{uid}` en Firestore. Derivado de un grep
 // exhaustivo de `profileData.`/`userProfile.`/`realUsers`/`getAllUsers()` en
@@ -52,6 +52,17 @@ export interface UserProfile {
   referredBy?: string;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+  // Se actualiza en cada sesión real confirmada (App.tsx, onAuthStateChanged)
+  // -- no en cada acción, solo al abrir/recuperar sesión. Usado por el panel
+  // de crecimiento (GrowthAnalyticsScreen.tsx) y el re-enganche automático
+  // (scripts/reengagement-push.mjs) para detectar usuarios inactivos.
+  lastActiveAt?: Timestamp | null;
+  // Escrito únicamente por scripts/reengagement-push.mjs (Admin SDK, corre
+  // fuera del cliente vía .github/workflows/reengagement.yml) -- nunca
+  // aparece en la whitelist de update de firestore.rules porque el Admin
+  // SDK no pasa por las reglas de seguridad, y ningún código de cliente
+  // debe escribir este campo.
+  lastReengagementPushAt?: Timestamp | null;
   // Leídos en ProfileScreen.tsx pero sin ningún campo de edición ni camino de
   // escritura en todo el código hoy — siempre `undefined` en la práctica.
   linkedin?: string;

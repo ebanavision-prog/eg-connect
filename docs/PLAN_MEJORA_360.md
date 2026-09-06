@@ -154,6 +154,26 @@ Objetivo del usuario: tener una versión mínimamente usable y compartible para 
 
 **Limpieza:** se generaron y usaron 2 claves de cuenta de servicio temporales (una para la migración/reseteo de producción, otra para limpiar ~6 cuentas de prueba `smoketest*` creadas durante esta verificación) — ambas borradas del disco local inmediatamente después de usarse, siguiendo el mismo patrón de higiene de credenciales establecido en la sesión anterior (ver `docs/MIGRACION_EMPRESA.md`). Producción quedó en 0 usuarios/0 empresas otra vez, lista para los primeros usuarios reales.
 
-**Pendiente real, no resuelto en esta sesión:**
-- Domain custom `connect.ebanavision.com` — el usuario inició el proceso en la consola de Firebase Hosting; falta agregar los registros DNS (TXT de verificación + A) en el panel de DNS de `ebanavision.com` y esperar propagación/SSL. Mientras tanto, `https://gen-lang-client-0951010679.web.app` ya sirve el código actual y es compartible tal cual.
-- Compresión de imágenes antes de guardar como base64 (bug de robustez del límite de 1 MiB de Firestore, ver sección Fase 4 arriba) — sigue sin tocar.
+Dominio custom y compresión de imágenes: ambos resueltos, ver secciones siguientes.
+
+---
+
+## 2026-09-06 — 4 mejoras de crecimiento (fase de pruebas → primeros usuarios reales)
+
+Con la app ya en producción real, el foco pasó a lo que hace falta para que compartir el link (y que la red realmente crezca) funcione bien. Se auditó primero qué mecánica de crecimiento ya existía de verdad (link de invitación con `?ref=<uid>` real, tracking de `referredBy`, insignia de Embajador a 5 referidos, compartir por WhatsApp/share nativo, tarjeta QR de marca, push real en segundo plano vía `public/sw.js`) — el motor ya estaba construido; lo que faltaba eran 4 huecos concretos.
+
+1. **Open Graph / Twitter Card tags** (`index.html`) — no existía ninguno; un link de invitación pegado en WhatsApp se veía como texto plano sin preview. Agregadas las etiquetas está­ticas apuntando a `https://connect.ebanavision.com` (URL fija, no `window.location.origin`, porque estas etiquetas las lee el bot de WhatsApp/Facebook antes de que corra el JS de la SPA) usando `icon-512.png` como imagen.
+
+2. **Panel de Crecimiento** (`src/components/GrowthAnalyticsScreen.tsx`, nuevo) — antes no había ninguna forma de ver cuántos usuarios reales hay, cuántos entraron esta semana, ni quién trae más gente sin consultar Firestore a mano. Nuevo panel de solo lectura, gateado a `isAdmin` en el sidebar (mismo patrón ya usado en `CompaniesScreen.tsx`/`TendersScreen.tsx` — oculto en la UI, no una regla de Firestore nueva). Todos los números salen de un único `useFirestoreCollection('users')` real: usuarios totales, altas en 7/30 días, activos en 7 días (nuevo campo `lastActiveAt`), % vía referido, ranking real de top referentes, conteo de Embajadores (reutiliza `REFERRAL_GOAL` exportado de `InviteScreen.tsx`).
+
+3. **Re-enganche automático de usuarios inactivos** — sin Cloud Functions (decisión de cero gasto), la única forma de que corra solo es un cron gratis de GitHub Actions. Nuevo `scripts/reengagement-push.mjs` (Admin SDK directo, mismo patrón de seguridad que `migrate-company-model.mjs`: dry-run por defecto, detecta emulador vs producción) + `.github/workflows/reengagement.yml` (cron semanal lunes 10am WAT + `workflow_dispatch` manual). Considera inactivo a quien no tiene `lastActiveAt`/`createdAt` de hace 7+ días, salta a quien ya recibió un nudge esta semana (`lastReengagementPushAt`), y limpia tokens FCM muertos que FCM reporte como no registrados. Probado en vivo contra el emulador con datos sembrados (detectó correctamente al usuario inactivo, ignoró al activo). Nuevo campo `lastActiveAt` se escribe en cada sesión real confirmada (`App.tsx`, `onAuthStateChanged`) y se agregó a la whitelist de `firestore.rules` (con su test de reglas correspondiente, 51/51 ahora).
+
+   **Pendiente real, requiere al usuario**: agregar el secreto `FIREBASE_SERVICE_ACCOUNT_KEY` en GitHub (Settings → Secrets and variables → Actions) con el JSON completo de una clave de cuenta de servicio — el workflow falla explícitamente con un mensaje claro si falta. No se automatizó la creación del secreto (es una credencial persistente, requiere acción explícita del dueño del repo).
+
+4. **Dos bugs cerrados**:
+   - Compresión de imágenes antes de guardar como base64 (`src/utils/imageCompression.ts`, nuevo — redimensiona a 512px máx + JPEG calidad 0.82 vía canvas antes de convertir a data URL). Conectado en `OnboardingScreen.tsx` y `ProfileScreen.tsx` (los únicos 2 sitios reales de subida de avatar; `ScanScreen.tsx` no aplica, esa imagen nunca se guarda, solo se manda al proxy de Gemini para OCR). Con fallback al comportamiento anterior sin comprimir si la compresión falla.
+   - Botón "Adjuntar archivo" del chat retirado (`ChatScreen.tsx`) — mismo criterio que los mensajes de voz: sin Storage activo no hay dónde subir el archivo de verdad, así que no se finge la función.
+
+**Verificado**: `tsc`/build limpios, `test:rules` 51/51 contra emulador real, script de re-enganche probado en vivo contra el emulador con datos sembrados. Deployado a producción (hosting + firestore:rules) — `https://connect.ebanavision.com` y `https://gen-lang-client-0951010679.web.app` sirven la versión con las 4 mejoras.
+
+**Nota operativa real**: producción está en 0 usuarios ahora mismo (limpiada a propósito), así que nadie es `isAdmin` todavía — el Panel de Crecimiento no será visible para nadie hasta que alguien se registre y otro admin (o el propio dueño vía Admin SDK, ver el comentario de `isCallerAdmin()` en `firestore.rules`) le active `isAdmin: true` a esa cuenta.

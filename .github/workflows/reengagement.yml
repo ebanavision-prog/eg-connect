@@ -1,0 +1,67 @@
+name: Re-enganche semanal
+
+# Corre scripts/reengagement-push.mjs contra PRODUCCIÓN real cada lunes.
+# Reemplaza a una Cloud Function programada (que exigiría el plan Blaze,
+# ver docs/EVALUACION_BLAZE_2026-09-05.md) -- GitHub Actions ya tiene cron
+# gratis, y el script usa el Admin SDK directamente.
+#
+# Requiere un secreto de repo llamado FIREBASE_SERVICE_ACCOUNT_KEY con el
+# contenido completo (JSON) de una clave de cuenta de servicio de
+# gen-lang-client-0951010679 (Firebase Console -> Configuración del proyecto
+# -> Cuentas de servicio -> Generar nueva clave privada). Sin ese secreto
+# configurado, este workflow falla explícitamente en el paso de checkeo, en
+# vez de fallar de forma confusa más adelante.
+on:
+  schedule:
+    # 09:00 UTC los lunes = 10:00 en Guinea Ecuatorial (WAT, UTC+1).
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run (solo reporta, no manda push de verdad)'
+        type: boolean
+        default: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  reengagement:
+    name: Push a usuarios inactivos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verificar que el secreto de la cuenta de servicio existe
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" ]; then
+            echo "::error::Falta el secreto FIREBASE_SERVICE_ACCOUNT_KEY en la configuración del repo (Settings -> Secrets and variables -> Actions)."
+            exit 1
+          fi
+
+      - name: Escribir la credencial a un archivo temporal
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}' > /tmp/service-account.json
+
+      - name: Correr el re-enganche
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            node scripts/reengagement-push.mjs --dry-run=true
+          else
+            node scripts/reengagement-push.mjs --dry-run=false
+          fi
+
+      - name: Borrar la credencial temporal
+        if: always()
+        run: rm -f /tmp/service-account.json

@@ -8,6 +8,24 @@
     <link rel="icon" type="image/png" href="/icons/favicon-32.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>EG CONNECT - Networking & Accountability</title>
+
+    <!-- Open Graph / redes sociales -- sin esto, un link de invitación
+         compartido por WhatsApp (el canal principal de crecimiento, ver
+         InviteScreen.tsx) se mostraba como texto plano sin preview. La URL
+         canónica es fija a connect.ebanavision.com (el dominio real de
+         producción) en vez de window.location.origin porque estas etiquetas
+         son estáticas de build, leídas por el bot de WhatsApp/Facebook antes
+         de que el JS de la SPA corra -- no pueden ser dinámicas por request. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EG CONNECT" />
+    <meta property="og:title" content="EG CONNECT — Networking y emprendimiento en Guinea Ecuatorial" />
+    <meta property="og:description" content="La plataforma definitiva para el networking y emprendimiento en Guinea Ecuatorial. Empresas, marketplace, licitaciones e inversores en un solo lugar." />
+    <meta property="og:image" content="https://connect.ebanavision.com/icons/icon-512.png" />
+    <meta property="og:url" content="https://connect.ebanavision.com" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="EG CONNECT — Networking y emprendimiento en Guinea Ecuatorial" />
+    <meta name="twitter:description" content="La plataforma definitiva para el networking y emprendimiento en Guinea Ecuatorial." />
+    <meta name="twitter:image" content="https://connect.ebanavision.com/icons/icon-512.png" />
   </head>
   <body>
     <div id="root"></div>

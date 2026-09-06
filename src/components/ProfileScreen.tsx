@@ -13,6 +13,7 @@ import { Contact, Task, ServicePost, UserProfile } from '../types';
 import { auth, saveUserData, uploadAvatarIfNeeded, exportAllUserData, deleteAccount, createCompany } from '../services/firebaseService';
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import NetworkBackground from './NetworkBackground';
+import { compressImageToDataUrl } from '../utils/imageCompression';
 
 export default function ProfileScreen({ 
   onSettings, 
@@ -136,13 +137,18 @@ export default function ProfileScreen({
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    try {
+      setEditForm({ ...editForm, avatar: await compressImageToDataUrl(file) });
+    } catch (error) {
+      // Ver src/utils/imageCompression.ts -- si la compresión falla, se cae
+      // al comportamiento anterior sin comprimir en vez de bloquear el
+      // guardado del perfil.
+      console.warn('No se pudo comprimir la foto, se usa sin comprimir:', error);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditForm({ ...editForm, avatar: reader.result as string });
-      };
+      reader.onloadend = () => setEditForm({ ...editForm, avatar: reader.result as string });
       reader.readAsDataURL(file);
     }
   };

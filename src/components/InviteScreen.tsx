@@ -11,7 +11,9 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection';
 import { generateShareCard } from '../services/shareCardService';
 import { UserProfile } from '../types';
 
-const REFERRAL_GOAL = 5;
+// Exportado para que GrowthAnalyticsScreen.tsx use el mismo umbral al contar
+// "Embajadores" en el panel de crecimiento -- una sola fuente de verdad.
+export const REFERRAL_GOAL = 5;
 
 // Igual que VITE_GEMINI_PROXY_URL en aiService.ts y VITE_FIREBASE_STORAGE_ENABLED
 // en firebaseService.ts: config opcional. A diferencia de esas dos, el botón

@@ -7,6 +7,7 @@ import Logo from './Logo';
 import { auth, loginWithGoogle, saveUserData, getUserData, loginWithUsername, registerWithUsername, resetPassword, uploadAvatarIfNeeded, createCompany } from '../services/firebaseService';
 import { onAuthStateChanged } from 'firebase/auth';
 import { serverTimestamp } from 'firebase/firestore';
+import { compressImageToDataUrl } from '../utils/imageCompression';
 
 export default function OnboardingScreen({ onComplete }: { onComplete: (data: { uid: string; name: string; phone: string; birthday: string; profession: string; city: string; role: string; avatar: string; profileType: string }) => void }) {
   const { t } = useTranslation();
@@ -125,13 +126,18 @@ export default function OnboardingScreen({ onComplete }: { onComplete: (data: { 
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    try {
+      setAvatar(await compressImageToDataUrl(file));
+    } catch (error) {
+      // Ver src/utils/imageCompression.ts -- si la compresión falla por
+      // algún motivo real (navegador raro, imagen corrupta), no se bloquea
+      // el registro: se cae al comportamiento anterior sin comprimir.
+      console.warn('No se pudo comprimir la foto, se usa sin comprimir:', error);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
+      reader.onloadend = () => setAvatar(reader.result as string);
       reader.readAsDataURL(file);
     }
   };

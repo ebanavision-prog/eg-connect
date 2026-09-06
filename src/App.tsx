@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { WifiOff, RefreshCcw } from 'lucide-react';
 import { localDataService } from './services/localDataService';
-import { auth, getUserData, getAllUsers } from './services/firebaseService';
+import { auth, getUserData, getAllUsers, saveUserData } from './services/firebaseService';
+import { serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import {
   History,
@@ -36,6 +37,7 @@ import AppSidebar from './components/AppSidebar';
 // El resto de pantallas se carga bajo demanda: Home es lo único que hace
 // falta de inmediato en la primera carga, todo lo demás baja el bundle
 // inicial en vez de venir todo junto (ver aviso de tamaño en `npm run build`).
+const GrowthAnalyticsScreen = lazy(() => import('./components/GrowthAnalyticsScreen'));
 const TimelineScreen = lazy(() => import('./components/TimelineScreen'));
 const ScanScreen = lazy(() => import('./components/ScanScreen'));
 const MapScreen = lazy(() => import('./components/MapScreen'));
@@ -118,6 +120,16 @@ export default function App() {
             setOnboarded(true);
             // Sync with local service for backward compatibility if needed
             localDataService.saveUserProfile(data as any);
+            // Marca de actividad real (para el re-enganche automático de
+            // usuarios inactivos, ver .github/workflows/reengagement.yml y
+            // scripts/reengagement-push.mjs) -- se guarda cada vez que hay
+            // una sesión real confirmada (login fresco o refresh de la
+            // pestaña con sesión ya activa), no solo en el login inicial.
+            // Best-effort: si esto falla, no debe romper el resto del flujo
+            // de carga del perfil.
+            saveUserData(user.uid, { lastActiveAt: serverTimestamp() }).catch((err) => {
+              console.warn('No se pudo actualizar lastActiveAt:', err);
+            });
           } else {
             setOnboarded(false);
           }
@@ -291,6 +303,7 @@ export default function App() {
       case 'investors': return <InvestorsScreen users={realUsers} onContact={startChat} profileData={profileData} />;
       case 'initiatives': return <InitiativesScreen profileData={profileData} />;
       case 'search': return <SearchResultsScreen query={globalSearchTerm} users={realUsers} onContact={startChat} onNavigate={(s) => setActiveScreen(s as Screen)} />;
+      case 'growth-analytics': return <GrowthAnalyticsScreen onBack={() => setActiveScreen('home')} profileData={profileData} />;
       default: return <HomeScreen
         onNavigate={handleNavClick}
         onSearch={handleGlobalSearch}

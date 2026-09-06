@@ -19,7 +19,8 @@ import {
   Handshake,
   Rocket,
   LayoutDashboard,
-  Share2
+  Share2,
+  TrendingUp
 } from 'lucide-react';
 
 import { Screen, UserProfile } from '../types';
@@ -185,6 +186,15 @@ export default function AppSidebar({
                 <Heart className="w-5 h-5" />
                 <span className="font-bold">{t('nav.sidebar.feedback')}</span>
               </button>
+              {profileData?.isAdmin && (
+                <button
+                  onClick={() => onNavigate('growth-analytics')}
+                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${activeScreen === 'growth-analytics' ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface'}`}
+                >
+                  <TrendingUp className="w-5 h-5 text-secondary" />
+                  <span className="font-bold">{t('nav.sidebar.growth')}</span>
+                </button>
+              )}
 
               <div className="pt-8 space-y-2">
                 <p className="text-[10px] font-bold text-outline-variant uppercase tracking-widest mb-4 px-4">{t('nav.sidebar.switchProfileLabel')}</p>

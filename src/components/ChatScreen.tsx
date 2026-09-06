@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Send, ChevronLeft, MoreVertical, Paperclip, Smile, ShieldCheck, CheckCheck, MessageSquare, Users, UserPlus, X, Loader2 } from 'lucide-react';
+import { Search, Send, ChevronLeft, MoreVertical, Smile, ShieldCheck, CheckCheck, MessageSquare, Users, UserPlus, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { where, orderBy } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
@@ -256,12 +256,12 @@ export default function ChatScreen({ initialParticipant, users }: ChatScreenProp
 
         <div className="p-4 border-t border-outline/10 bg-white shadow-lg">
           {sendError && <p className="text-[10px] font-bold text-error mb-2 text-center">{sendError}</p>}
+          {/* Adjuntar archivo retirado -- mismo criterio que los mensajes de
+              voz (ver docs/PLAN_MEJORA_360.md Fase 3): sin Storage activo
+              (apagado a propósito, cero gasto), no hay dónde subir el
+              archivo de verdad. El botón nunca tuvo onClick; en vez de
+              fingir la función, se retira hasta que se active Storage. */}
           <div className="flex items-center gap-3">
-            <div className="flex gap-1">
-              <button className="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant focus-ring-custom" aria-label={t('chat.attachFileAria')}>
-                <Paperclip className="w-5 h-5" />
-              </button>
-            </div>
             <div className="flex-1 relative flex items-center bg-surface-container-low rounded-2xl border border-outline/10">
               <textarea
                 ref={textareaRef}
